@@ -23,6 +23,7 @@ $estCivil = trim($data['est_civil'] ?? '');
 $empresaId = isset($data['empresa_id']) && $data['empresa_id'] !== '' ? (int)$data['empresa_id'] : null;
 $domicilio = trim($data['domicilio'] ?? '');
 $cuil = trim($data['cuil'] ?? '');
+$dni = trim($data['dni'] ?? '');
 $telefono = trim($data['telefono'] ?? '');
 $legajo = trim($data['nro_legajo'] ?? '') ?: null;
 $credencial = trim($data['nro_credencial'] ?? '') ?: null;
@@ -38,7 +39,7 @@ $tipo = isset($data['tipo']) && $data['tipo'] !== '' ? (int)$data['tipo'] : 1;
 $urlLeg = trim($data['url_leg'] ?? '') ?: null;
 $nacionalidad = trim($data['nacionalidad'] ?? '') ?: null;
 
-if (!$nombre || !$fechaNac || !$estCivil || !$domicilio || !$cuil || !$telefono || !$email || !$contrasena) {
+if (!$nombre || !$fechaNac || !$estCivil || !$domicilio || !$cuil || !$dni || !$telefono || !$email || !$contrasena) {
     http_response_code(400);
     echo json_encode(['error' => 'Complete todos los campos obligatorios']);
     exit;
@@ -86,15 +87,23 @@ if ($stmt->fetch()) {
     exit;
 }
 
+$stmt = $db->prepare('SELECT id_empleado FROM empleados WHERE DNI = ?');
+$stmt->execute([$dni]);
+if ($stmt->fetch()) {
+    http_response_code(409);
+    echo json_encode(['error' => 'Ya existe un usuario con ese DNI']);
+    exit;
+}
+
 $hash = password_hash($contrasena, PASSWORD_DEFAULT);
 
 $stmt = $db->prepare(
     "INSERT INTO empleados
-        (nombre, fecha_nac, est_civil, empresa_id, domicilio, CUIL, telefono,
+        (nombre, fecha_nac, est_civil, empresa_id, domicilio, CUIL, DNI, telefono,
          nro_legajo, nro_credencial, fecha_venc_cred, activo, objetivo_id,
          hora_entrada, hora_salida, pendiente, email, contrasena, tipo, url_leg, nacionalidad)
      VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 );
 $stmt->execute([
     $nombre,
@@ -103,6 +112,7 @@ $stmt->execute([
     $empresaId,
     $domicilio,
     $cuil,
+    $dni,
     $telefono,
     $legajo,
     $credencial,

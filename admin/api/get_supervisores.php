@@ -12,13 +12,13 @@ if (empty($_SESSION['es_admin'])) {
 try {
     $db = getDB();
     $stmt = $db->query(
-    "SELECT s.id_empleado AS id_supervisor, s.nombre, '' AS apellido, s.CUIL AS dni, s.telefono, s.email,
+    "SELECT s.id_empleado AS id_supervisor, s.nombre, '' AS apellido, COALESCE(NULLIF(s.DNI, ''), s.CUIL) AS dni, s.telefono, s.email,
             s.email AS usuario, s.activo AS estado,
             COUNT(o.id_objetivo) AS objetivos_count
      FROM empleados s
      LEFT JOIN objetivos o ON o.supervisor_id = s.id_empleado
      WHERE s.tipo = 2
-     GROUP BY s.id_empleado, s.nombre, s.CUIL, s.telefono, s.email, s.activo
+     GROUP BY s.id_empleado, s.nombre, s.DNI, s.CUIL, s.telefono, s.email, s.activo
      ORDER BY s.nombre"
     );
 

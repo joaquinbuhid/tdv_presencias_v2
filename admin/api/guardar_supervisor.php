@@ -19,12 +19,13 @@ $data = json_decode(file_get_contents('php://input'), true);
 $id = isset($data['id']) ? (int)$data['id'] : 0;
 $nombre = trim($data['nombre'] ?? '');
 $apellido = trim($data['apellido'] ?? '');
-$cuil = trim($data['cuil'] ?? $data['dni'] ?? '');
+$dni = trim($data['dni'] ?? '');
+$cuil = trim($data['cuil'] ?? $dni);
 $telefono = trim($data['telefono'] ?? '');
 $email = trim($data['email'] ?? $data['usuario'] ?? '');
 $contrasena = $data['contrasena'] ?? '';
 
-if (!$nombre || !$apellido || !$cuil || !$telefono || !$email) {
+if (!$nombre || !$apellido || !$dni || !$telefono || !$email) {
     http_response_code(400);
     echo json_encode(['error' => 'Nombre, apellido, CUIL/DNI, telefono y email son requeridos']);
     exit;
@@ -43,11 +44,11 @@ if ($id === 0 && !$contrasena) {
 }
 
 $db = getDB();
-$stmt = $db->prepare("SELECT id_empleado FROM empleados WHERE CUIL = ? AND id_empleado != ?");
-$stmt->execute([$cuil, $id]);
+$stmt = $db->prepare("SELECT id_empleado FROM empleados WHERE (DNI = ? OR CUIL = ?) AND id_empleado != ?");
+$stmt->execute([$dni, $dni, $id]);
 if ($stmt->fetch()) {
     http_response_code(409);
-    echo json_encode(['error' => "El CUIL/DNI $cuil ya esta registrado"]);
+    echo json_encode(['error' => "El DNI $dni ya esta registrado"]);
     exit;
 }
 
@@ -65,25 +66,25 @@ if ($id === 0) {
     $hash = password_hash($contrasena, PASSWORD_BCRYPT);
     $stmt = $db->prepare(
         "INSERT INTO empleados
-            (nombre, fecha_nac, est_civil, domicilio, CUIL, telefono, email, contrasena, activo, pendiente, tipo)
-         VALUES (?, '1900-01-01', 'No informado', 'No informado', ?, ?, ?, ?, 1, 0, 2)"
+            (nombre, fecha_nac, est_civil, domicilio, CUIL, DNI, telefono, email, contrasena, activo, pendiente, tipo)
+         VALUES (?, '1900-01-01', 'No informado', 'No informado', ?, ?, ?, ?, ?, 1, 0, 2)"
     );
-    $stmt->execute([$nombreCompleto, $cuil, $telefono, $email, $hash]);
+    $stmt->execute([$nombreCompleto, $cuil, $dni, $telefono, $email, $hash]);
     echo json_encode(['success' => true, 'id' => $db->lastInsertId(), 'accion' => 'creado']);
 } else {
     if ($contrasena) {
         $hash = password_hash($contrasena, PASSWORD_BCRYPT);
         $stmt = $db->prepare(
-            "UPDATE empleados SET nombre=?, CUIL=?, telefono=?, email=?, contrasena=?
+            "UPDATE empleados SET nombre=?, CUIL=?, DNI=?, telefono=?, email=?, contrasena=?
              WHERE id_empleado=? AND tipo = 2"
         );
-        $stmt->execute([$nombreCompleto, $cuil, $telefono, $email, $hash, $id]);
+        $stmt->execute([$nombreCompleto, $cuil, $dni, $telefono, $email, $hash, $id]);
     } else {
         $stmt = $db->prepare(
-            "UPDATE empleados SET nombre=?, CUIL=?, telefono=?, email=?
+            "UPDATE empleados SET nombre=?, CUIL=?, DNI=?, telefono=?, email=?
              WHERE id_empleado=? AND tipo = 2"
         );
-        $stmt->execute([$nombreCompleto, $cuil, $telefono, $email, $id]);
+        $stmt->execute([$nombreCompleto, $cuil, $dni, $telefono, $email, $id]);
     }
     echo json_encode(['success' => true, 'id' => $id, 'accion' => 'actualizado']);
 }

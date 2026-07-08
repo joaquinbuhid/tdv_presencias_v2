@@ -84,26 +84,28 @@ function findOrCreateEmpleado(PDO $db, array &$map, array $old, int $tipo, strin
     $oldId = (int)($old['id_vigilador'] ?? $old['id_supervisor'] ?? 0);
     $nombre = trim(norm($old['nombre'] ?? '') . ' ' . norm($old['apellido'] ?? ''));
     $nombre = $nombre !== '' ? $nombre : ucfirst($prefix) . ' ' . $oldId;
-    $cuil = norm($old['dni'] ?? '', $prefix . '-' . $oldId);
+    $dni = norm($old['dni'] ?? '', $prefix . '-' . $oldId);
+    $cuil = norm($old['cuil'] ?? '', $dni);
     $telefono = norm($old['telefono'] ?? '', 'No informado');
     $email = norm($old['email'] ?? '', generatedEmail($prefix, $oldId));
     $hash = norm($old['contrasena'] ?? '', password_hash('migrado' . $oldId, PASSWORD_DEFAULT));
 
-    $stmt = $db->prepare("SELECT id_empleado FROM empleados WHERE CUIL = ? OR email = ? LIMIT 1");
-    $stmt->execute([$cuil, $email]);
+    $stmt = $db->prepare("SELECT id_empleado FROM empleados WHERE DNI = ? OR CUIL = ? OR email = ? LIMIT 1");
+    $stmt->execute([$dni, $dni, $email]);
     $id = $stmt->fetchColumn();
 
     if (!$id) {
         $stmt = $db->prepare(
             "INSERT INTO empleados
-                (nombre, fecha_nac, est_civil, domicilio, CUIL, telefono, email, contrasena,
+                (nombre, fecha_nac, est_civil, domicilio, CUIL, DNI, telefono, email, contrasena,
                  activo, objetivo_id, hora_entrada, hora_salida, pendiente, tipo)
              VALUES
-                (?, '1900-01-01', 'No informado', 'No informado', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                (?, '1900-01-01', 'No informado', 'No informado', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $nombre,
             $cuil,
+            $dni,
             $telefono,
             $email,
             $hash,
@@ -118,11 +120,11 @@ function findOrCreateEmpleado(PDO $db, array &$map, array $old, int $tipo, strin
     } else {
         $update = $db->prepare(
             "UPDATE empleados
-             SET tipo = ?, objetivo_id = COALESCE(objetivo_id, ?), hora_entrada = COALESCE(hora_entrada, ?),
+             SET DNI = COALESCE(DNI, ?), tipo = ?, objetivo_id = COALESCE(objetivo_id, ?), hora_entrada = COALESCE(hora_entrada, ?),
                  hora_salida = COALESCE(hora_salida, ?)
              WHERE id_empleado = ?"
         );
-        $update->execute([$tipo, $objetivoId, $old['hora_entrada'] ?? null, $old['hora_salida'] ?? null, $id]);
+        $update->execute([$dni, $tipo, $objetivoId, $old['hora_entrada'] ?? null, $old['hora_salida'] ?? null, $id]);
     }
 
     $map[$oldId] = (int)$id;

@@ -11,7 +11,7 @@ if (empty($_SESSION['es_admin'])) {
 
 $db = getDB();
 $stmt = $db->query(
-    "SELECT e.id_empleado, e.nombre, '' AS apellido, e.CUIL AS dni, e.telefono, e.email,
+    "SELECT e.id_empleado, e.nombre, '' AS apellido, COALESCE(NULLIF(e.DNI, ''), e.CUIL) AS dni, e.telefono, e.email,
             e.email AS usuario, e.activo, e.pendiente, e.objetivo_id,
             e.hora_entrada, e.hora_salida,
             o.nombre AS objetivo_nombre

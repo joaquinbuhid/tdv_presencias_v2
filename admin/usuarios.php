@@ -96,6 +96,10 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
                 <input type="text" id="cuil" required maxlength="20" placeholder="20-30111222-3">
             </div>
             <div class="form-group">
+                <label for="dni">DNI <span style="color:var(--danger)">*</span></label>
+                <input type="text" id="dni" required maxlength="20" placeholder="30111222">
+            </div>
+            <div class="form-group">
                 <label for="fecha_nac">Fecha de nacimiento <span style="color:var(--danger)">*</span></label>
                 <input type="date" id="fecha_nac" required>
             </div>
@@ -245,6 +249,7 @@ form.addEventListener('submit', async (e) => {
         empresa_id: field('empresa_id'),
         domicilio: field('domicilio'),
         cuil: field('cuil'),
+        dni: field('dni'),
         telefono: field('telefono'),
         nro_legajo: field('nro_legajo'),
         nro_credencial: field('nro_credencial'),
@@ -261,7 +266,7 @@ form.addEventListener('submit', async (e) => {
         nacionalidad: field('nacionalidad'),
     };
 
-    if (!payload.nombre || !payload.fecha_nac || !payload.est_civil || !payload.domicilio || !payload.cuil || !payload.telefono || !payload.email || !payload.contrasena) {
+    if (!payload.nombre || !payload.fecha_nac || !payload.est_civil || !payload.domicilio || !payload.cuil || !payload.dni || !payload.telefono || !payload.email || !payload.contrasena) {
         showError('Complete todos los campos obligatorios.');
         return;
     }

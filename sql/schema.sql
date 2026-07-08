@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS empleados (
   empresa_id int(11) DEFAULT NULL,
   domicilio text NOT NULL,
   CUIL varchar(20) NOT NULL,
+  DNI varchar(20) DEFAULT NULL,
   telefono varchar(20) NOT NULL,
   nro_legajo varchar(20) DEFAULT NULL,
   nro_credencial varchar(20) DEFAULT NULL,
@@ -52,6 +53,7 @@ CREATE TABLE IF NOT EXISTS empleados (
   PRIMARY KEY (id_empleado),
   KEY idx_empleados_email (email),
   KEY idx_empleados_cuil (CUIL),
+  KEY idx_empleados_dni (DNI),
   KEY idx_empleados_tipo (tipo),
   KEY idx_empleados_objetivo (objetivo_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
