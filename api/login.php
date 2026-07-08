@@ -22,16 +22,22 @@ if ($usuario === '' || $clave === '') {
     exit;
 }
 
-$db = getDB();
-$stmt = $db->prepare(
-    "SELECT e.id_empleado, e.nombre, e.contrasena, e.activo, e.pendiente, e.tipo,
-            o.id_objetivo, o.nombre AS objetivo_nombre
-     FROM empleados e
-     LEFT JOIN objetivos o ON e.objetivo_id = o.id_objetivo
-     WHERE e.email = ?"
-);
-$stmt->execute([$usuario]);
-$row = $stmt->fetch();
+try {
+    $db = getDB();
+    $stmt = $db->prepare(
+        "SELECT e.id_empleado, e.nombre, e.contrasena, e.activo, e.pendiente, e.tipo,
+                o.id_objetivo, o.nombre AS objetivo_nombre
+         FROM empleados e
+         LEFT JOIN objetivos o ON e.objetivo_id = o.id_objetivo
+         WHERE e.email = ?"
+    );
+    $stmt->execute([$usuario]);
+    $row = $stmt->fetch();
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error consultando usuarios']);
+    exit;
+}
 
 if (!$row || !password_verify($clave, $row['contrasena'])) {
     http_response_code(401);
@@ -70,6 +76,8 @@ if ($esSupervisor) {
     $_SESSION['supervisor_id'] = (int)$row['id_empleado'];
     $_SESSION['es_supervisor'] = true;
 }
+
+session_write_close();
 
 echo json_encode([
     'success' => true,

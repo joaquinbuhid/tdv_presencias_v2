@@ -248,12 +248,16 @@ async function refrescar() {
     document.getElementById('countdown').textContent = countdown;
 
     try {
-        const data = await fetch('api/get_presentes.php').then(r => r.json());
+        const res = await fetch('api/get_presentes.php');
+        const data = await readJson(res);
+        if (!res.ok) throw new Error(data.error || 'Error al cargar presencias.');
         renderCards(data);
         document.getElementById('ultimaActz').textContent =
             new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
     } catch (e) {
         console.error(e);
+        document.getElementById('cardsGrid').innerHTML =
+            `<p style="color:var(--danger);grid-column:1/-1;text-align:center;padding:2rem;">${esc(e.message || 'Error al cargar presencias.')}</p>`;
     }
 
     timer = setInterval(() => {
@@ -344,6 +348,15 @@ function renderCards(guards) {
 function esc(s) {
     if (!s) return '';
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function readJson(res) {
+    const raw = await res.text();
+    try {
+        return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        throw new Error('La API devolvio una respuesta invalida.');
+    }
 }
 
 // Arrancar

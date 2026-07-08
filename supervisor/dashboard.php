@@ -312,7 +312,9 @@ async function refrescar() {
         document.getElementById('ultimaActz').textContent =
             new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
     } catch (e) {
-        mostrarError('Error al actualizar presencias.');
+        mostrarError(e.message || 'Error al actualizar presencias.');
+        document.getElementById('cardsGrid').innerHTML =
+            `<p style="color:var(--danger);grid-column:1/-1;text-align:center;padding:2rem;">${esc(e.message || 'Error al actualizar presencias.')}</p>`;
     }
 
     timer = setInterval(() => {
@@ -471,7 +473,13 @@ async function apiFetch(url, method = 'GET', data = null) {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (data) opts.body = JSON.stringify(data);
     const res  = await fetch(url, opts);
-    const json = await res.json();
+    const raw = await res.text();
+    let json = {};
+    try {
+        json = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        throw new Error('La API devolvio una respuesta invalida.');
+    }
     if (!res.ok) throw new Error(json.error || 'Error del servidor');
     return json;
 }

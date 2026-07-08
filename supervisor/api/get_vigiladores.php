@@ -39,27 +39,32 @@ $sql = "SELECT
         LEFT JOIN tipo_novedad tn ON n.tipo_novedad = tn.id_tipo
         WHERE e.activo = 1 AND e.pendiente = 0 AND COALESCE(e.tipo, 1) = 1
         $where
-        GROUP BY e.id_empleado
+        GROUP BY e.id_empleado, e.nombre, e.hora_entrada, e.hora_salida, o.id_objetivo, o.nombre
         ORDER BY o.nombre, e.nombre";
 
-$stmt = $db->query($sql);
-$rows = $stmt->fetchAll();
-$ahora = date('H:i');
+try {
+    $stmt = $db->query($sql);
+    $rows = $stmt->fetchAll();
+    $ahora = date('H:i');
 
-foreach ($rows as &$r) {
-    $ts = $r['turno_salida'] ? substr($r['turno_salida'], 0, 5) : null;
+    foreach ($rows as &$r) {
+        $ts = $r['turno_salida'] ? substr($r['turno_salida'], 0, 5) : null;
 
-    if ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
-        $r['estado'] = 'completado';
-    } elseif ($r['hora_entrada_hoy']) {
-        $r['estado'] = ($ts && $ahora > $ts) ? 'sin-salida' : 'presente';
-    } else {
-        $r['estado'] = ($ts && $ahora > $ts) ? 'ausente' : 'por-iniciar';
+        if ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
+            $r['estado'] = 'completado';
+        } elseif ($r['hora_entrada_hoy']) {
+            $r['estado'] = ($ts && $ahora > $ts) ? 'sin-salida' : 'presente';
+        } else {
+            $r['estado'] = ($ts && $ahora > $ts) ? 'ausente' : 'por-iniciar';
+        }
+
+        foreach (['hora_entrada_hoy','hora_salida_hoy','turno_entrada','turno_salida'] as $c) {
+            if ($r[$c]) $r[$c] = substr($r[$c], 0, 5);
+        }
     }
 
-    foreach (['hora_entrada_hoy','hora_salida_hoy','turno_entrada','turno_salida'] as $c) {
-        if ($r[$c]) $r[$c] = substr($r[$c], 0, 5);
-    }
+    echo json_encode($rows);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error consultando presencias']);
 }
-
-echo json_encode($rows);

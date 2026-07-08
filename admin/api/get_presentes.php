@@ -9,8 +9,9 @@ if (empty($_SESSION['es_admin'])) {
     exit;
 }
 
-$db = getDB();
-$stmt = $db->query(
+try {
+    $db = getDB();
+    $stmt = $db->query(
     "SELECT
         e.id_empleado, e.nombre, '' AS apellido,
         o.id_objetivo, o.nombre AS objetivo_nombre,
@@ -25,29 +26,33 @@ $stmt = $db->query(
      LEFT JOIN novedades n ON e.id_empleado = n.empleado_id AND n.fecha = CURDATE()
      LEFT JOIN tipo_novedad tn ON n.tipo_novedad = tn.id_tipo
      WHERE e.activo = 1 AND e.pendiente = 0 AND COALESCE(e.tipo, 1) = 1
-     GROUP BY e.id_empleado
+     GROUP BY e.id_empleado, e.nombre, o.id_objetivo, o.nombre, e.hora_entrada, e.hora_salida
      ORDER BY o.nombre, e.nombre"
-);
+    );
 
-$rows = $stmt->fetchAll();
-$ahora = date('H:i');
+    $rows = $stmt->fetchAll();
+    $ahora = date('H:i');
 
-foreach ($rows as &$r) {
-    $tSalida = $r['turno_salida'] ? substr($r['turno_salida'], 0, 5) : null;
+    foreach ($rows as &$r) {
+        $tSalida = $r['turno_salida'] ? substr($r['turno_salida'], 0, 5) : null;
 
-    if (!$r['id_objetivo']) {
-        $r['estado'] = 'sin-objetivo';
-    } elseif ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
-        $r['estado'] = 'completado';
-    } elseif ($r['hora_entrada_hoy']) {
-        $r['estado'] = ($tSalida && $ahora > $tSalida) ? 'sin-salida' : 'presente';
-    } else {
-        $r['estado'] = ($tSalida && $ahora > $tSalida) ? 'ausente' : 'por-iniciar';
+        if (!$r['id_objetivo']) {
+            $r['estado'] = 'sin-objetivo';
+        } elseif ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
+            $r['estado'] = 'completado';
+        } elseif ($r['hora_entrada_hoy']) {
+            $r['estado'] = ($tSalida && $ahora > $tSalida) ? 'sin-salida' : 'presente';
+        } else {
+            $r['estado'] = ($tSalida && $ahora > $tSalida) ? 'ausente' : 'por-iniciar';
+        }
+
+        foreach (['hora_entrada_hoy','hora_salida_hoy','ultima_actividad','turno_entrada','turno_salida'] as $campo) {
+            if ($r[$campo]) $r[$campo] = substr($r[$campo], 0, 5);
+        }
     }
 
-    foreach (['hora_entrada_hoy','hora_salida_hoy','ultima_actividad','turno_entrada','turno_salida'] as $campo) {
-        if ($r[$campo]) $r[$campo] = substr($r[$campo], 0, 5);
-    }
+    echo json_encode($rows);
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Error consultando presencias']);
 }
-
-echo json_encode($rows);

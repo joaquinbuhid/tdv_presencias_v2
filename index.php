@@ -89,7 +89,17 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ usuario, contrasena: clave })
         });
-        const data = await res.json();
+        const raw = await res.text();
+        let data = {};
+        try {
+            data = raw ? JSON.parse(raw) : {};
+        } catch (parseErr) {
+            if (res.ok) {
+                window.location.reload();
+                return;
+            }
+            throw parseErr;
+        }
 
         if (res.ok && data.success) {
             btn.textContent = 'Accediendo...';
