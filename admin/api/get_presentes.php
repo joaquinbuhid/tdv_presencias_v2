@@ -36,6 +36,8 @@ try {
     foreach ($rows as &$r) {
         $tEntrada = $r['turno_entrada'] ? substr($r['turno_entrada'], 0, 5) : null;
         $tSalida = $r['turno_salida'] ? substr($r['turno_salida'], 0, 5) : null;
+        if ($tEntrada === '00:00') $tEntrada = null;
+        if ($tSalida === '00:00') $tSalida = null;
         $sinHorario = !$tEntrada && !$tSalida;
 
         if (!$r['id_objetivo']) {
@@ -49,7 +51,12 @@ try {
         }
 
         foreach (['hora_entrada_hoy','hora_salida_hoy','ultima_actividad','turno_entrada','turno_salida'] as $campo) {
-            if ($r[$campo]) $r[$campo] = substr($r[$campo], 0, 5);
+            if ($r[$campo]) {
+                $r[$campo] = substr($r[$campo], 0, 5);
+                if (($campo === 'turno_entrada' || $campo === 'turno_salida') && $r[$campo] === '00:00') {
+                    $r[$campo] = null;
+                }
+            }
         }
     }
 

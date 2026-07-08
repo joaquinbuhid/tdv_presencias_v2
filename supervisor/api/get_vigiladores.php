@@ -50,6 +50,8 @@ try {
     foreach ($rows as &$r) {
         $te = $r['turno_entrada'] ? substr($r['turno_entrada'], 0, 5) : null;
         $ts = $r['turno_salida'] ? substr($r['turno_salida'], 0, 5) : null;
+        if ($te === '00:00') $te = null;
+        if ($ts === '00:00') $ts = null;
         $sinHorario = !$te && !$ts;
 
         if ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
@@ -61,7 +63,12 @@ try {
         }
 
         foreach (['hora_entrada_hoy','hora_salida_hoy','turno_entrada','turno_salida'] as $c) {
-            if ($r[$c]) $r[$c] = substr($r[$c], 0, 5);
+            if ($r[$c]) {
+                $r[$c] = substr($r[$c], 0, 5);
+                if (($c === 'turno_entrada' || $c === 'turno_salida') && $r[$c] === '00:00') {
+                    $r[$c] = null;
+                }
+            }
         }
     }
 
