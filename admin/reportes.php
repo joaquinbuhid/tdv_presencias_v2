@@ -117,7 +117,8 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-links">
         <a href="dashboard.php">&#x1F7E2; En vivo</a>
-        <a href="empleados.php">&#x1F464; empleados</a>
+        <a href="usuarios.php">&#x2795; Usuarios</a>
+        <a href="vigiladores.php">&#x1F464; Empleados</a>
         <a href="supervisores.php">&#x1F4BC; Supervisores</a>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
         <a href="reportes.php" class="active">
