@@ -430,7 +430,16 @@ async function apiFetch(url, method = 'GET', data = null) {
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (data) opts.body = JSON.stringify(data);
     const res  = await fetch(url, opts);
-    const json = await res.json();
+    const raw = await res.text();
+    let json = {};
+    try {
+        json = raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        if (res.ok) {
+            return { success: true, warning: 'Respuesta no JSON, pero la operacion fue aceptada.' };
+        }
+        throw new Error('La API devolvio una respuesta invalida.');
+    }
     if (!res.ok) throw new Error(json.error || 'Error del servidor');
     return json;
 }

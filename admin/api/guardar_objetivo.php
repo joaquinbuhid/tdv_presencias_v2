@@ -1,72 +1,76 @@
 <?php
+ob_start();
 session_start();
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 require_once '../../config/db.php';
 
-if (empty($_SESSION['es_admin'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'No autorizado']);
+function jsonResponse(array $payload, int $status = 200): void {
+    http_response_code($status);
+    while (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    echo json_encode($payload);
     exit;
+}
+
+if (empty($_SESSION['es_admin'])) {
+    jsonResponse(['error' => 'No autorizado'], 401);
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido']);
-    exit;
+    jsonResponse(['error' => 'Metodo no permitido'], 405);
 }
 
-$data          = json_decode(file_get_contents('php://input'), true);
-$id            = isset($data['id'])            ? (int)$data['id']           : 0;
-$nombre        = trim($data['nombre']          ?? '');
-$descripcion   = trim($data['descripcion']     ?? '');
-$coord_lat     = isset($data['coord_lat'])     ? (float)$data['coord_lat']  : null;
-$coord_long    = isset($data['coord_long'])    ? (float)$data['coord_long'] : null;
-$radio         = isset($data['rad_metros'])  ? (int)$data['rad_metros'] : 200;
-$supervisor_id = isset($data['supervisor_id']) && $data['supervisor_id'] !== ''
-                 ? (int)$data['supervisor_id'] : null;
+$data = json_decode(file_get_contents('php://input'), true);
+if (!is_array($data)) {
+    jsonResponse(['error' => 'JSON invalido'], 400);
+}
+
+$id = isset($data['id']) ? (int)$data['id'] : 0;
+$nombre = trim($data['nombre'] ?? '');
+$descripcion = trim($data['descripcion'] ?? '');
+$coordLat = array_key_exists('coord_lat', $data) ? (float)$data['coord_lat'] : null;
+$coordLong = array_key_exists('coord_long', $data) ? (float)$data['coord_long'] : null;
+$radio = isset($data['rad_metros']) ? (int)$data['rad_metros'] : 200;
+$supervisorId = isset($data['supervisor_id']) && $data['supervisor_id'] !== ''
+    ? (int)$data['supervisor_id']
+    : null;
 
 if (!$nombre) {
-    http_response_code(400);
-    echo json_encode(['error' => 'El nombre es requerido']);
-    exit;
+    jsonResponse(['error' => 'El nombre es requerido'], 400);
 }
-if ($coord_lat === null || $coord_long === null) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Las coordenadas son requeridas']);
-    exit;
+if ($coordLat === null || $coordLong === null) {
+    jsonResponse(['error' => 'Las coordenadas son requeridas'], 400);
 }
-if ($coord_lat < -90 || $coord_lat > 90) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Latitud inválida (debe estar entre -90 y 90)']);
-    exit;
+if ($coordLat < -90 || $coordLat > 90) {
+    jsonResponse(['error' => 'Latitud invalida (debe estar entre -90 y 90)'], 400);
 }
-if ($coord_long < -180 || $coord_long > 180) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Longitud inválida (debe estar entre -180 y 180)']);
-    exit;
+if ($coordLong < -180 || $coordLong > 180) {
+    jsonResponse(['error' => 'Longitud invalida (debe estar entre -180 y 180)'], 400);
 }
 if ($radio < 1) {
-    http_response_code(400);
-    echo json_encode(['error' => 'El radio debe ser mayor a 0']);
-    exit;
+    jsonResponse(['error' => 'El radio debe ser mayor a 0'], 400);
 }
 
-$db = getDB();
+try {
+    $db = getDB();
 
-if ($id === 0) {
-    $stmt = $db->prepare(
-        "INSERT INTO objetivos (nombre, descripcion, coord_lat, coord_long, rad_metros, supervisor_id)
-         VALUES (?, ?, ?, ?, ?, ?)"
-    );
-    $stmt->execute([$nombre, $descripcion ?: null, $coord_lat, $coord_long, $radio, $supervisor_id]);
-    echo json_encode(['success' => true, 'id' => $db->lastInsertId(), 'accion' => 'creado']);
-} else {
+    if ($id === 0) {
+        $stmt = $db->prepare(
+            "INSERT INTO objetivos (nombre, descripcion, coord_lat, coord_long, rad_metros, supervisor_id)
+             VALUES (?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([$nombre, $descripcion ?: null, $coordLat, $coordLong, $radio, $supervisorId]);
+        jsonResponse(['success' => true, 'id' => (int)$db->lastInsertId(), 'accion' => 'creado']);
+    }
+
     $stmt = $db->prepare(
         "UPDATE objetivos
          SET nombre=?, descripcion=?, coord_lat=?, coord_long=?, rad_metros=?, supervisor_id=?
          WHERE id_objetivo=?"
     );
-    $stmt->execute([$nombre, $descripcion ?: null, $coord_lat, $coord_long, $radio, $supervisor_id, $id]);
-    echo json_encode(['success' => true, 'id' => $id, 'accion' => 'actualizado']);
+    $stmt->execute([$nombre, $descripcion ?: null, $coordLat, $coordLong, $radio, $supervisorId, $id]);
+    jsonResponse(['success' => true, 'id' => $id, 'accion' => 'actualizado']);
+} catch (PDOException $e) {
+    jsonResponse(['error' => 'Error guardando objetivo'], 500);
 }
-
