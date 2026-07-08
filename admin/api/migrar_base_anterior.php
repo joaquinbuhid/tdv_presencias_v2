@@ -14,9 +14,14 @@ function jsonResponse(array $payload, int $status = 200): void {
 }
 
 function oldTable(PDO $db, string $table): bool {
-    $stmt = $db->prepare("SHOW TABLES LIKE ?");
+    $stmt = $db->prepare("
+        SELECT COUNT(*)
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = ?
+    ");
     $stmt->execute([$table]);
-    return (bool)$stmt->fetchColumn();
+    return (int)$stmt->fetchColumn() > 0;
 }
 
 function rows(PDO $db, string $sql): array {
