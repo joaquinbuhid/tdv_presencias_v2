@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (empty($_SESSION['es_admin'])) {
     header('Location: ../index.php');
@@ -11,7 +11,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV â€” Presencias en vivo</title>
+    <title>TDV - Presencias en vivo</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .admin-nav {
@@ -163,7 +163,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
         <h2 style="font-size:1.2rem;color:var(--primary);margin:0;">
-            Presencias â€” <span id="fechaHoy"></span>
+            Presencias - <span id="fechaHoy"></span>
         </h2>
         <div style="display:flex;align-items:center;gap:.5rem;
                     background:var(--card);border-radius:10px;
@@ -180,15 +180,15 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
     <!-- Resumen -->
     <div class="summary-strip">
         <div class="summary-card">
-            <div class="num num-presente"  id="cntPresente">â€”</div>
+            <div class="num num-presente"  id="cntPresente">0</div>
             <div class="lbl">En turno</div>
         </div>
         <div class="summary-card">
-            <div class="num num-ausente"   id="cntAusente">â€”</div>
+            <div class="num num-ausente"   id="cntAusente">0</div>
             <div class="lbl">Ausentes</div>
         </div>
         <div class="summary-card">
-            <div class="num num-completado" id="cntCompletado">â€”</div>
+            <div class="num num-completado" id="cntCompletado">0</div>
             <div class="lbl">Turno completo</div>
         </div>
         <div class="summary-card" id="cardSinSalida" style="display:none;">
@@ -196,14 +196,14 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
             <div class="lbl">Sin registrar salida</div>
         </div>
         <div class="summary-card">
-            <div class="num num-total"     id="cntTotal">â€”</div>
+            <div class="num num-total"     id="cntTotal">0</div>
             <div class="lbl">Total</div>
         </div>
     </div>
 
     <!-- Barra de refresh -->
     <div class="refresh-bar">
-        <span>Ãšltima actualizaciÃ³n: <strong id="ultimaActz">â€”</strong></span>
+        <span>Ultima actualizacion: <strong id="ultimaActz">-</strong></span>
         <div style="display:flex;align-items:center;gap:.8rem;">
             <span>Actualizando en <span class="refresh-countdown" id="countdown">30</span>s</span>
             <button class="refresh-btn" onclick="refrescar()">&#x21BB; Ahora</button>
@@ -273,6 +273,11 @@ function renderCards(guards) {
 
     if (!guards.length) {
         grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;">Sin empleados activos registrados.</p>';
+        document.getElementById('cntPresente').textContent = 0;
+        document.getElementById('cntAusente').textContent = 0;
+        document.getElementById('cntCompletado').textContent = 0;
+        document.getElementById('cntTotal').textContent = 0;
+        document.getElementById('cardSinSalida').style.display = 'none';
         return;
     }
 
@@ -301,12 +306,12 @@ function renderCards(guards) {
         if (g.estado === 'sin-salida') sinSalida++;
 
         const turnoTxt = (g.turno_entrada && g.turno_salida)
-            ? `<span style="font-size:.72rem;color:var(--text-muted);">Turno: ${esc(g.turno_entrada)} â€” ${esc(g.turno_salida)} hs</span>`
+            ? `<span style="font-size:.72rem;color:var(--text-muted);">Turno: ${esc(g.turno_entrada)} - ${esc(g.turno_salida)} hs</span>`
             : '';
 
         const alertaSinSalida = g.estado === 'sin-salida'
             ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.4rem;font-weight:600;">
-                 âš  Hora de salida superada sin registrar egreso
+                 ! Hora de salida superada sin registrar egreso
                </div>`
             : '';
 
@@ -321,11 +326,11 @@ function renderCards(guards) {
             <div class="gc-times" style="margin-top:.5rem;">
                 <div class="gc-time-item">
                     <span class="tl">Entrada</span>
-                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : 'â€”'}</span>
+                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : '-'}</span>
                 </div>
                 <div class="gc-time-item">
                     <span class="tl">Salida</span>
-                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : 'â€”'}</span>
+                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : '-'}</span>
                 </div>
             </div>
             ${alertaSinSalida}

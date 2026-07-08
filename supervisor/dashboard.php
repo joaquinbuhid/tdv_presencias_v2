@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (empty($_SESSION['supervisor_id'])) {
     header('Location: ../index.php');
@@ -11,7 +11,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV â€” Panel Supervisor</title>
+    <title>TDV - Panel Supervisor</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .sup-nav {
@@ -139,7 +139,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($supNombre) ?></strong>
-        <a href="../api/logout.php" style="color:rgba(255,255,255,.6);font-size:.78rem;text-decoration:none;">Cerrar sesiÃ³n</a>
+        <a href="../api/logout.php" style="color:rgba(255,255,255,.6);font-size:.78rem;text-decoration:none;">Cerrar sesion</a>
     </div>
 </nav>
 
@@ -148,7 +148,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
     <!-- Encabezado con fecha y reloj -->
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;">
         <h2 style="font-size:1.2rem;color:var(--primary);margin:0;">
-            Presencias â€” <span id="fechaHoy"></span>
+            Presencias - <span id="fechaHoy"></span>
         </h2>
         <div style="display:flex;align-items:center;gap:.5rem;
                     background:var(--card);border-radius:10px;
@@ -166,7 +166,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
     <div class="obj-selector-card">
         <label for="selectObjetivo">&#x1F3AF; objetivos:</label>
         <select id="selectObjetivo">
-            <option value="0">â€” Todos mis objetivos â€”</option>
+            <option value="0">- Todos mis objetivos -</option>
         </select>
     </div>
 
@@ -177,15 +177,15 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
     <!-- Resumen -->
     <div class="summary-strip">
         <div class="summary-card">
-            <div class="num num-presente"   id="cntPresente">â€”</div>
+            <div class="num num-presente"   id="cntPresente">0</div>
             <div class="lbl">En turno</div>
         </div>
         <div class="summary-card">
-            <div class="num num-ausente"    id="cntAusente">â€”</div>
+            <div class="num num-ausente"    id="cntAusente">0</div>
             <div class="lbl">Ausentes</div>
         </div>
         <div class="summary-card">
-            <div class="num num-completado" id="cntCompletado">â€”</div>
+            <div class="num num-completado" id="cntCompletado">0</div>
             <div class="lbl">Turno completo</div>
         </div>
         <div class="summary-card" id="cardSinSalida" style="display:none;">
@@ -193,14 +193,14 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
             <div class="lbl">Sin registrar salida</div>
         </div>
         <div class="summary-card">
-            <div class="num num-total"      id="cntTotal">â€”</div>
+            <div class="num num-total"      id="cntTotal">0</div>
             <div class="lbl">Total</div>
         </div>
     </div>
 
     <!-- Barra de refresh -->
     <div class="refresh-bar">
-        <span>Ãšltima actualizaciÃ³n: <strong id="ultimaActz">â€”</strong></span>
+        <span>Ultima actualizacion: <strong id="ultimaActz">-</strong></span>
         <div style="display:flex;align-items:center;gap:.8rem;">
             <span>Actualizando en <span class="refresh-countdown" id="countdown">30</span>s</span>
             <button class="refresh-btn" onclick="refrescar()">&#x21BB; Ahora</button>
@@ -360,11 +360,11 @@ function renderCards(guards) {
         if (g.estado === 'sin-salida') sinSalida++;
 
         const turnoTxt = (g.turno_entrada && g.turno_salida)
-            ? `<span style="font-size:.72rem;color:var(--text-muted);">Turno: ${esc(g.turno_entrada)} â€” ${esc(g.turno_salida)} hs</span>`
+            ? `<span style="font-size:.72rem;color:var(--text-muted);">Turno: ${esc(g.turno_entrada)} - ${esc(g.turno_salida)} hs</span>`
             : '<span style="font-size:.72rem;color:var(--text-muted);">Sin turno asignado</span>';
 
         const alertaSinSalida = g.estado === 'sin-salida'
-            ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.4rem;font-weight:600;">âš  Hora de salida superada sin registrar egreso</div>`
+            ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.4rem;font-weight:600;">! Hora de salida superada sin registrar egreso</div>`
             : '';
 
         const objLine = document.getElementById('selectObjetivo').value === '0'
@@ -386,11 +386,11 @@ function renderCards(guards) {
             <div class="gc-times" style="margin-top:.5rem;">
                 <div class="gc-time-item">
                     <span class="tl">Entrada hoy</span>
-                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : 'â€”'}</span>
+                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : '-'}</span>
                 </div>
                 <div class="gc-time-item">
                     <span class="tl">Salida hoy</span>
-                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : 'â€”'}</span>
+                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : '-'}</span>
                 </div>
             </div>
             ${alertaSinSalida}

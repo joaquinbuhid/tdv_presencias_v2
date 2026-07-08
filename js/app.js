@@ -1,11 +1,11 @@
-﻿/* ============================================================
+/* ============================================================
    TDV - Dashboard principal
    ============================================================ */
 
-const MAX_LOC_WAIT_MS   = 8000;  // Esperar hasta 8 segundos para obtener ubicaciÃ³n
-const TARGET_ACCURACY_M = 50;    // PrecisiÃ³n objetivos: 50 metros
+const MAX_LOC_WAIT_MS   = 8000;  // Esperar hasta 8 segundos para obtener ubicación
+const TARGET_ACCURACY_M = 50;    // Precisión objetivos: 50 metros
 
-// ---- InicializaciÃ³n ----------------------------------------
+// ---- Inicialización ----------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
     cargarTipos();
@@ -32,7 +32,7 @@ async function cargarTipos() {
     }
 }
 
-// ---- Estado del dÃ­a ----------------------------------------
+// ---- Estado del día ----------------------------------------
 
 async function cargarEstado() {
     const cont = document.getElementById('estadoContent');
@@ -49,7 +49,7 @@ async function cargarEstado() {
             const tag  = tagClass(r.tipo_nombre);
             li.innerHTML = `
                 <span class="tag ${tag}">${escHtml(r.tipo_nombre)}</span>
-                <span>${escHtml(r.observaciones || 'â€”')}</span>
+                <span>${escHtml(r.observaciones || '—')}</span>
                 <span class="estado-hora">${escHtml(r.hora.substr(0,5))} hs</span>
             `;
             ul.appendChild(li);
@@ -70,7 +70,7 @@ function tagClass(tipo) {
     return 'tag-default';
 }
 
-// ---- EnvÃ­o del formulario -----------------------------------
+// ---- Envío del formulario -----------------------------------
 
 async function onSubmit(e) {
     e.preventDefault();
@@ -84,7 +84,7 @@ async function onSubmit(e) {
     }
 
     const btn = document.getElementById('btnRegistrar');
-    setBoton(btn, true, 'Obteniendo ubicaciÃ³n...');
+    setBoton(btn, true, 'Obteniendo ubicación...');
     setLocStatus('active', null);
     mostrarProgress(true);
 
@@ -93,8 +93,8 @@ async function onSubmit(e) {
         posicion = await obtenerUbicacionPrecisa((elapsed, total, acc) => {
             const pct = Math.min(100, Math.round((elapsed / total) * 100));
             document.getElementById('progressBar').style.width = pct + '%';
-            const accTxt = acc !== null ? ` (precisiÃ³n: ${acc} m)` : '';
-            setLocStatus('active', `Obteniendo ubicaciÃ³n...${accTxt}`);
+            const accTxt = acc !== null ? ` (precisión: ${acc} m)` : '';
+            setLocStatus('active', `Obteniendo ubicación...${accTxt}`);
         });
     } catch (err) {
         mostrarProgress(false);
@@ -106,7 +106,7 @@ async function onSubmit(e) {
 
     mostrarProgress(false);
     document.getElementById('progressBar').style.width = '100%';
-    setLocStatus('ok', `UbicaciÃ³n obtenida (precisiÃ³n: ${Math.round(posicion.coords.accuracy)} m)`);
+    setLocStatus('ok', `Ubicación obtenida (precisión: ${Math.round(posicion.coords.accuracy)} m)`);
     setBoton(btn, true, 'Enviando...');
 
     const observaciones = document.getElementById('observaciones').value.trim();
@@ -119,7 +119,7 @@ async function onSubmit(e) {
             lng: posicion.coords.longitude,
         });
 
-        mostrarExito(`${resp.mensaje} â€” ${resp.fecha} ${resp.hora} hs`);
+        mostrarExito(`${resp.mensaje} — ${resp.fecha} ${resp.hora} hs`);
         document.getElementById('observaciones').value = '';
         document.getElementById('tipoNovedad').value   = '';
         setLocStatus('ok', `Registrado a ${resp.distancia} m del objetivos.`);
@@ -133,12 +133,12 @@ async function onSubmit(e) {
     setBoton(btn, false, 'Confirmar asistencia');
 }
 
-// ---- GeolocalizaciÃ³n con espera de precisiÃ³n ---------------
+// ---- Geolocalización con espera de precisión ---------------
 
 function obtenerUbicacionPrecisa(onProgress) {
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-            reject(new Error('GeolocalizaciÃ³n no disponible en este dispositivo.'));
+            reject(new Error('Geolocalización no disponible en este dispositivo.'));
             return;
         }
 
@@ -158,7 +158,7 @@ function obtenerUbicacionPrecisa(onProgress) {
             clearInterval(tick);
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
             if (pos) resolve(pos);
-            else reject(new Error('No se pudo obtener la ubicaciÃ³n. Verifique que el GPS estÃ© activo.'));
+            else reject(new Error('No se pudo obtener la ubicación. Verifique que el GPS esté activo.'));
         };
 
         const timer = setTimeout(() => finalizar(mejorPosicion), MAX_LOC_WAIT_MS);
@@ -168,7 +168,7 @@ function obtenerUbicacionPrecisa(onProgress) {
                 if (!mejorPosicion || pos.coords.accuracy < mejorPosicion.coords.accuracy) {
                     mejorPosicion = pos;
                 }
-                // Resolver antes si ya alcanzamos precisiÃ³n suficiente
+                // Resolver antes si ya alcanzamos precisión suficiente
                 if (pos.coords.accuracy <= TARGET_ACCURACY_M) {
                     clearTimeout(timer);
                     finalizar(mejorPosicion);
@@ -179,11 +179,11 @@ function obtenerUbicacionPrecisa(onProgress) {
                 clearInterval(tick);
                 if (watchId !== null) navigator.geolocation.clearWatch(watchId);
                 const msgs = {
-                    1: 'Permiso de ubicaciÃ³n denegado. Habilite la ubicaciÃ³n en su dispositivo.',
-                    2: 'No se pudo obtener la ubicaciÃ³n. Verifique que el GPS estÃ© activo.',
-                    3: 'Tiempo de espera agotado al obtener la ubicaciÃ³n.'
+                    1: 'Permiso de ubicación denegado. Habilite la ubicación en su dispositivo.',
+                    2: 'No se pudo obtener la ubicación. Verifique que el GPS esté activo.',
+                    3: 'Tiempo de espera agotado al obtener la ubicación.'
                 };
-                reject(new Error(msgs[err.code] || 'Error al obtener ubicaciÃ³n.'));
+                reject(new Error(msgs[err.code] || 'Error al obtener ubicación.'));
             },
             { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_LOC_WAIT_MS }
         );

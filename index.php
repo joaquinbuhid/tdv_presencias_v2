@@ -1,6 +1,6 @@
-﻿<?php
+<?php
 session_start();
-// Si ya tiene sesiÃ³n, ir al dashboard
+// Si ya tiene sesión, ir al dashboard
 if (isset($_SESSION['empleado_id'])) {
     header('Location: dashboard.php');
     exit;
@@ -13,7 +13,7 @@ if (isset($_SESSION['empleado_id'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>TDV â€” Ingresar</title>
+    <title>TDV — Ingresar</title>
     <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
@@ -41,10 +41,10 @@ if (isset($_SESSION['empleado_id'])) {
             </div>
 
             <div class="form-group">
-                <label for="contrasena">ContraseÃ±a</label>
+                <label for="contrasena">Contraseña</label>
                 <input type="password" id="contrasena" name="contrasena"
                        autocomplete="current-password"
-                       placeholder="Ingrese su contraseÃ±a"
+                       placeholder="Ingrese su contraseña"
                        required>
             </div>
 
@@ -54,10 +54,10 @@ if (isset($_SESSION['empleado_id'])) {
         </form>
 
         <p style="text-align:center;margin-top:1.2rem;font-size:.88rem;color:var(--text-muted);">
-            Â¿Primera vez? <a href="registro.php" style="color:var(--accent);">Solicitar cuenta</a>
+            ¿Primera vez? <a href="registro.php" style="color:var(--accent);">Solicitar cuenta</a>
         </p>
         <p class="app-footer" style="margin-top:.8rem;">
-            VersiÃ³n 1.0 &mdash; <?= date('Y') ?>
+            Versión 1.0 &mdash; <?= date('Y') ?>
         </p>
     </div>
 </div>
@@ -107,7 +107,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
                 ? 'admin/dashboard.php'
                 : (data.es_supervisor ? 'supervisor/dashboard.php' : 'dashboard.php');
         } else {
-            errMsg.textContent = data.error || 'Error al iniciar sesiÃ³n.';
+            errMsg.textContent = data.error || 'Error al iniciar sesión.';
             errDiv.classList.add('show');
             btn.disabled    = false;
             btn.textContent = 'Ingresar';
@@ -125,19 +125,19 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 <div class="help-dropdown-wrap" id="helpWrap">
     <div class="help-dropdown-panel" id="helpPanel">
         <div class="help-dropdown-inner">
-            <div class="help-dropdown-title">&#x2753; Â¿CÃ³mo ingresar?</div>
+            <div class="help-dropdown-title">&#x2753; ¿Cómo ingresar?</div>
 
             <div class="help-step">
                 <div class="help-step-num">1</div>
                 <div class="help-step-text">
-                    Si es la <strong>primera vez</strong> que ingresa, presione en <strong>"Solicitar cuenta"</strong> (el enlace debajo del botÃ³n Ingresar).
+                    Si es la <strong>primera vez</strong> que ingresa, presione en <strong>"Solicitar cuenta"</strong> (el enlace debajo del botón Ingresar).
                 </div>
             </div>
 
             <div class="help-step">
                 <div class="help-step-num">2</div>
                 <div class="help-step-text">
-                    Rellene todos los datos solicitados. Genere su <strong>usuario y contraseÃ±a</strong>. El usuario puede ser cualquiera (por ejemplo: <strong>nombreapellido</strong>). La contraseÃ±a tambiÃ©n puede ser del formato que prefiera.
+                    Rellene todos los datos solicitados. Genere su <strong>usuario y contraseña</strong>. El usuario puede ser cualquiera (por ejemplo: <strong>nombreapellido</strong>). La contraseña también puede ser del formato que prefiera.
                 </div>
             </div>
 
@@ -158,12 +158,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             <div class="help-step">
                 <div class="help-step-num">5</div>
                 <div class="help-step-text">
-                    Una vez habilitada, podrÃ¡ <strong>ingresar con normalidad</strong> usando su usuario y contraseÃ±a.
+                    Una vez habilitada, podrá <strong>ingresar con normalidad</strong> usando su usuario y contraseña.
                 </div>
             </div>
 
             <div class="help-note">
-                <span>&#x1F4A1; Tip:</span> Si ya tiene cuenta y no puede ingresar, verifique que su usuario y contraseÃ±a estÃ©n correctos o comunÃ­quese con su supervisor.
+                <span>&#x1F4A1; Tip:</span> Si ya tiene cuenta y no puede ingresar, verifique que su usuario y contraseña estén correctos o comuníquese con su supervisor.
             </div>
         </div>
     </div>

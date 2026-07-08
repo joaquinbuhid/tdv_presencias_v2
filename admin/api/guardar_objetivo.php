@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 header('Content-Type: application/json');
 require_once '../../config/db.php';
@@ -11,7 +11,7 @@ if (empty($_SESSION['es_admin'])) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'MÃ©todo no permitido']);
+    echo json_encode(['error' => 'Método no permitido']);
     exit;
 }
 
@@ -37,12 +37,12 @@ if ($coord_lat === null || $coord_long === null) {
 }
 if ($coord_lat < -90 || $coord_lat > 90) {
     http_response_code(400);
-    echo json_encode(['error' => 'Latitud invÃ¡lida (debe estar entre -90 y 90)']);
+    echo json_encode(['error' => 'Latitud inválida (debe estar entre -90 y 90)']);
     exit;
 }
 if ($coord_long < -180 || $coord_long > 180) {
     http_response_code(400);
-    echo json_encode(['error' => 'Longitud invÃ¡lida (debe estar entre -180 y 180)']);
+    echo json_encode(['error' => 'Longitud inválida (debe estar entre -180 y 180)']);
     exit;
 }
 if ($radio < 1) {

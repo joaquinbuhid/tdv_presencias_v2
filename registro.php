@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (isset($_SESSION['empleado_id'])) {
     header('Location: dashboard.php');
@@ -11,7 +11,7 @@ if (isset($_SESSION['empleado_id'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>TDV â€” Registrarse</title>
+    <title>TDV — Registrarse</title>
     <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
@@ -27,7 +27,7 @@ if (isset($_SESSION['empleado_id'])) {
 
         <div class="alert alert-info show" style="margin-bottom:1.2rem;">
             <span>&#x2139;</span>
-            <span>Tu cuenta quedarÃ¡ <strong>pendiente de aprobaciÃ³n</strong> hasta que un administrador la habilite.</span>
+            <span>Tu cuenta quedará <strong>pendiente de aprobación</strong> hasta que un administrador la habilite.</span>
         </div>
 
         <div class="alert alert-danger"  id="regError"   role="alert"><span>&#9888;</span><span id="regErrorMsg"></span></div>
@@ -42,7 +42,7 @@ if (isset($_SESSION['empleado_id'])) {
                 </div>
                 <div class="form-group">
                     <label for="apellido">Apellido <span style="color:var(--danger)">*</span></label>
-                    <input type="text" id="apellido" required placeholder="PÃ©rez">
+                    <input type="text" id="apellido" required placeholder="Pérez">
                 </div>
             </div>
 
@@ -52,7 +52,7 @@ if (isset($_SESSION['empleado_id'])) {
                     <input type="text" id="dni" required placeholder="30111222" maxlength="15">
                 </div>
                 <div class="form-group">
-                    <label for="telefono">TelÃ©fono</label>
+                    <label for="telefono">Teléfono</label>
                     <input type="text" id="telefono" placeholder="1144455566">
                 </div>
             </div>
@@ -64,12 +64,12 @@ if (isset($_SESSION['empleado_id'])) {
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 1rem;">
                 <div class="form-group">
-                    <label for="pass1">ContraseÃ±a <span style="color:var(--danger)">*</span></label>
-                    <input type="password" id="pass1" required autocomplete="new-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+                    <label for="pass1">Contraseña <span style="color:var(--danger)">*</span></label>
+                    <input type="password" id="pass1" required autocomplete="new-password" placeholder="••••••••">
                 </div>
                 <div class="form-group">
                     <label for="pass2">Confirmar <span style="color:var(--danger)">*</span></label>
-                    <input type="password" id="pass2" required autocomplete="new-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+                    <input type="password" id="pass2" required autocomplete="new-password" placeholder="••••••••">
                 </div>
             </div>
 
@@ -80,7 +80,7 @@ if (isset($_SESSION['empleado_id'])) {
         </form>
 
         <p style="text-align:center;margin-top:1.2rem;font-size:.88rem;color:var(--text-muted);">
-            Â¿Ya tenÃ©s cuenta? <a href="index.php" style="color:var(--accent);">Iniciar sesiÃ³n</a>
+            ¿Ya tenés cuenta? <a href="index.php" style="color:var(--accent);">Iniciar sesión</a>
         </p>
     </div>
 </div>
@@ -110,11 +110,11 @@ document.getElementById('formRegistro').addEventListener('submit', async functio
         err.classList.add('show'); return;
     }
     if (pass1 !== pass2) {
-        document.getElementById('regErrorMsg').textContent = 'Las contraseÃ±as no coinciden.';
+        document.getElementById('regErrorMsg').textContent = 'Las contraseñas no coinciden.';
         err.classList.add('show'); return;
     }
     if (pass1.length < 6) {
-        document.getElementById('regErrorMsg').textContent = 'La contraseÃ±a debe tener al menos 6 caracteres.';
+        document.getElementById('regErrorMsg').textContent = 'La contraseña debe tener al menos 6 caracteres.';
         err.classList.add('show'); return;
     }
 
@@ -132,7 +132,7 @@ document.getElementById('formRegistro').addEventListener('submit', async functio
         if (res.ok && data.success) {
             document.getElementById('formRegistro').style.display = 'none';
             document.getElementById('regSuccessMsg').textContent =
-                'Solicitud enviada. Un administrador revisarÃ¡ tu cuenta a la brevedad.';
+                'Solicitud enviada. Un administrador revisará tu cuenta a la brevedad.';
             ok.classList.add('show');
         } else {
             document.getElementById('regErrorMsg').textContent = data.error || 'Error al registrarse.';

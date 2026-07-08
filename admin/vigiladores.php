@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (empty($_SESSION['es_admin'])) {
     header('Location: ../index.php');
@@ -11,7 +11,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV â€” GestiÃ³n de empleados</title>
+    <title>TDV — Gestión de empleados</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         /* Nav (igual que dashboard) */
@@ -128,9 +128,9 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 
 <div style="max-width:1200px;margin:0 auto;padding:1.2rem 1rem 2rem;">
 
-    <!-- Pendientes (se muestra sÃ³lo si hay) -->
+    <!-- Pendientes (se muestra sólo si hay) -->
     <div id="pendientesBanner" style="display:none;" class="pending-banner">
-        <strong>&#9888; Hay solicitudes de cuenta pendientes de aprobaciÃ³n.</strong>
+        <strong>&#9888; Hay solicitudes de cuenta pendientes de aprobación.</strong>
         Ver en la tabla de abajo (marcadas en amarillo).
     </div>
 
@@ -183,7 +183,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
                     <input type="text" id="fDni" required maxlength="15">
                 </div>
                 <div class="form-group">
-                    <label for="fTelefono">TelÃ©fono</label>
+                    <label for="fTelefono">Teléfono</label>
                     <input type="text" id="fTelefono">
                 </div>
             </div>
@@ -196,16 +196,16 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="fPass">ContraseÃ±a <span id="passRequired" style="color:var(--danger)">*</span></label>
-                    <input type="password" id="fPass" autocomplete="new-password" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
+                    <label for="fPass">Contraseña <span id="passRequired" style="color:var(--danger)">*</span></label>
+                    <input type="password" id="fPass" autocomplete="new-password" placeholder="••••••••">
                     <small id="passHint" style="display:none;color:var(--text-muted);font-size:.75rem;">
-                        Dejar vacÃ­o para mantener la actual.
+                        Dejar vacío para mantener la actual.
                     </small>
                 </div>
                 <div class="form-group">
                     <label for="fObjetivo">objetivos asignado</label>
                     <select id="fObjetivo">
-                        <option value="">â€” Sin objetivos â€”</option>
+                        <option value="">— Sin objetivos —</option>
                     </select>
                 </div>
             </div>
@@ -287,14 +287,14 @@ async function cargarVigiladores() {
                     <button class="btn btn-success btn-sm" onclick="toggleEstado(${v.id_empleado},'activar')">&#9654; Activar</button>`;
             }
             const turno = (v.hora_entrada && v.hora_salida)
-                ? `<span class="turno-pill">${v.hora_entrada.substr(0,5)} â€” ${v.hora_salida.substr(0,5)}</span>`
-                : '<span style="color:var(--text-muted)">â€”</span>';
+                ? `<span class="turno-pill">${v.hora_entrada.substr(0,5)} — ${v.hora_salida.substr(0,5)}</span>`
+                : '<span style="color:var(--text-muted)">—</span>';
             const bg = v.pendiente == 1 ? 'background:#fffde7;' : '';
             return `<tr style="${bg}">
                 <td><strong>${esc(v.apellido)}, ${esc(v.nombre)}</strong><br>
                     <small style="color:var(--text-muted);">@${esc(v.usuario)}</small></td>
                 <td>${esc(v.dni)}</td>
-                <td>${esc(v.objetivo_nombre || 'â€”')}</td>
+                <td>${esc(v.objetivo_nombre || '—')}</td>
                 <td>${turno}</td>
                 <td>${estadoPill}</td>
                 <td><div class="actions">${acciones}</div></td>
@@ -381,7 +381,7 @@ async function onGuardar(e) {
         errDiv.classList.add('show'); return;
     }
     if (!id && !pass) {
-        document.getElementById('modalErrorMsg').textContent = 'Ingrese una contraseÃ±a.';
+        document.getElementById('modalErrorMsg').textContent = 'Ingrese una contraseña.';
         errDiv.classList.add('show'); return;
     }
 
@@ -412,7 +412,7 @@ async function onGuardar(e) {
 // ---- Toggle estado ----------------------------------------
 async function toggleEstado(id, accion) {
     const labels = { aprobar:'Aprobar', activar:'Activar', desactivar:'Desactivar' };
-    if (accion === 'desactivar' && !confirm('Â¿Desactivar este vigilador?')) return;
+    if (accion === 'desactivar' && !confirm('¿Desactivar este vigilador?')) return;
 
     try {
         const resp = await apiFetch('api/toggle_estado.php', 'POST', { id, accion });

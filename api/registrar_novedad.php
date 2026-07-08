@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 header('Content-Type: application/json');
 require_once '../config/db.php';
@@ -11,7 +11,7 @@ if (!isset($_SESSION['empleado_id'])) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'MÃ©todo no permitido']);
+    echo json_encode(['error' => 'Método no permitido']);
     exit;
 }
 
@@ -40,11 +40,11 @@ $stmt->execute([$tipo_id]);
 $tipo = $stmt->fetch();
 if (!$tipo) {
     http_response_code(400);
-    echo json_encode(['error' => 'Tipo de novedad no vÃ¡lido']);
+    echo json_encode(['error' => 'Tipo de novedad no válido']);
     exit;
 }
 
-// --- VerificaciÃ³n: el vigilador no haya registrado este tipo hoy ---
+// --- Verificación: el vigilador no haya registrado este tipo hoy ---
 $stmt = $db->prepare(
     "SELECT id_novedad FROM novedades
      WHERE empleado_id = ? AND tipo_novedad = ? AND fecha = ?"
@@ -53,12 +53,12 @@ $stmt->execute([$empleado_id, $tipo_id, $fecha]);
 if ($stmt->fetch()) {
     http_response_code(409);
     echo json_encode([
-        'error' => "Ya registrÃ³ \"{$tipo['nombre']}\" el dÃ­a de hoy."
+        'error' => "Ya registró \"{$tipo['nombre']}\" el día de hoy."
     ]);
     exit;
 }
 
-// --- VerificaciÃ³n 2: ubicaciÃ³n dentro del radio del objetivos ---
+// --- Verificación 2: ubicación dentro del radio del objetivos ---
 $stmt = $db->prepare(
     "SELECT o.coord_lat, o.coord_long, o.rad_metros, o.nombre AS objetivo_nombre
      FROM empleados v
@@ -80,7 +80,7 @@ $radio     = (int)$objetivos['rad_metros'];
 if ($distancia > $radio) {
     http_response_code(403);
     echo json_encode([
-        'error'     => "Fuera del Ã¡rea permitida. Se encuentra a " . round($distancia) . " m del objetivos \"{$objetivos['objetivo_nombre']}\" (radio mÃ¡ximo: {$radio} m).",
+        'error'     => "Fuera del área permitida. Se encuentra a " . round($distancia) . " m del objetivos \"{$objetivos['objetivo_nombre']}\" (radio máximo: {$radio} m).",
         'distancia' => round($distancia),
         'radio'     => $radio,
     ]);

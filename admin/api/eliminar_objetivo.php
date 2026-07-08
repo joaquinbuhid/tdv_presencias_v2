@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 header('Content-Type: application/json');
 require_once '../../config/db.php';
@@ -11,7 +11,7 @@ if (empty($_SESSION['es_admin'])) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'MÃ©todo no permitido']);
+    echo json_encode(['error' => 'Método no permitido']);
     exit;
 }
 
@@ -20,7 +20,7 @@ $id   = isset($data['id']) ? (int)$data['id'] : 0;
 
 if (!$id) {
     http_response_code(400);
-    echo json_encode(['error' => 'ID invÃ¡lido']);
+    echo json_encode(['error' => 'ID inválido']);
     exit;
 }
 

@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (empty($_SESSION['es_admin'])) {
     header('Location: ../index.php');
@@ -11,7 +11,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV â€” Objetivos</title>
+    <title>TDV — Objetivos</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .admin-nav {
@@ -158,10 +158,10 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         <div class="maps-hint">
             <span>&#x1F5FA;</span>
             <span>
-                Para obtener coordenadas: abrÃ­
+                Para obtener coordenadas: abrí
                 <a href="https://maps.google.com" target="_blank" rel="noopener">Google Maps</a>,
-                buscÃ¡ la ubicaciÃ³n, hacÃ© <strong>click derecho</strong> sobre el punto exacto
-                y copiÃ¡ las coordenadas que aparecen (ej: <code>-34.6037, -58.3816</code>).
+                buscá la ubicación, hacé <strong>click derecho</strong> sobre el punto exacto
+                y copiá las coordenadas que aparecen (ej: <code>-34.6037, -58.3816</code>).
             </span>
         </div>
 
@@ -174,11 +174,11 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
             </div>
 
             <div class="form-group">
-                <label for="fDescripcion">DescripciÃ³n</label>
-                <textarea id="fDescripcion" rows="2" placeholder="DescripciÃ³n del puesto..."></textarea>
+                <label for="fDescripcion">Descripción</label>
+                <textarea id="fDescripcion" rows="2" placeholder="Descripción del puesto..."></textarea>
             </div>
 
-            <!-- BotÃ³n GPS -->
+            <!-- Botón GPS -->
             <div style="margin-bottom:.8rem;">
                 <button type="button" id="btnGps"
                     style="display:inline-flex;align-items:center;gap:.5rem;
@@ -189,7 +189,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
                     onmouseout="this.style.background='#ebf5fb'"
                     onclick="obtenerGPS()">
                     <span id="gpsIcon">&#x1F4CD;</span>
-                    <span id="gpsTxt">Usar mi ubicaciÃ³n actual</span>
+                    <span id="gpsTxt">Usar mi ubicación actual</span>
                 </button>
                 <span id="gpsStatus" style="font-size:.78rem;color:var(--text-muted);margin-left:.6rem;"></span>
             </div>
@@ -199,29 +199,29 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
                     <label for="fLat">Latitud <span style="color:var(--danger)">*</span></label>
                     <input type="number" id="fLat" required step="any"
                            min="-90" max="90" placeholder="-34.603760">
-                    <p class="field-hint">NÃºmero negativo para Sur (Argentina)</p>
+                    <p class="field-hint">Número negativo para Sur (Argentina)</p>
                 </div>
                 <div class="form-group">
                     <label for="fLng">Longitud <span style="color:var(--danger)">*</span></label>
                     <input type="number" id="fLng" required step="any"
                            min="-180" max="180" placeholder="-58.381620">
-                    <p class="field-hint">NÃºmero negativo para Oeste (Argentina)</p>
+                    <p class="field-hint">Número negativo para Oeste (Argentina)</p>
                 </div>
             </div>
 
             <div class="form-group">
-                <label for="fRadio">Radio de verificaciÃ³n (metros) <span style="color:var(--danger)">*</span></label>
+                <label for="fRadio">Radio de verificación (metros) <span style="color:var(--danger)">*</span></label>
                 <input type="number" id="fRadio" required min="1" max="5000" value="200">
                 <p class="field-hint">
-                    Distancia mÃ¡xima permitida desde el punto central para marcar asistencia.
-                    200 m es un valor tÃ­pico para un edificio.
+                    Distancia máxima permitida desde el punto central para marcar asistencia.
+                    200 m es un valor típico para un edificio.
                 </p>
             </div>
 
             <div class="form-group">
                 <label for="fSupervisor">Supervisor asignado</label>
                 <select id="fSupervisor">
-                    <option value="">â€” Sin supervisor â€”</option>
+                    <option value="">— Sin supervisor —</option>
                 </select>
             </div>
 
@@ -272,7 +272,7 @@ async function cargarObjetivos() {
             const supHtml = o.supervisor_nombre
                 ? `<span style="font-weight:600">${esc(o.supervisor_nombre)}</span>
                    ${o.supervisor_telefono ? `<br><small style="color:var(--text-muted)">${esc(o.supervisor_telefono)}</small>` : ''}`
-                : `<span style="color:var(--text-muted)">â€”</span>`;
+                : `<span style="color:var(--text-muted)">—</span>`;
             return `<tr>
                 <td>
                     <strong>${esc(o.nombre)}</strong>
@@ -401,7 +401,7 @@ async function onGuardar(e) {
 
 // ---- Eliminar ---------------------------------------------
 async function eliminar(id, nombre) {
-    if (!confirm(`Â¿Eliminar el objetivos "${nombre}"?\nEsta acciÃ³n no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar el objetivos "${nombre}"?\nEsta acción no se puede deshacer.`)) return;
 
     try {
         const resp = await apiFetch('api/eliminar_objetivo.php', 'POST', { id });
@@ -443,7 +443,7 @@ function esc(s) {
 // ---- GPS para coordenadas del objetivos -------------------
 function obtenerGPS() {
     if (!navigator.geolocation) {
-        document.getElementById('gpsStatus').textContent = 'GeolocalizaciÃ³n no disponible en este navegador.';
+        document.getElementById('gpsStatus').textContent = 'Geolocalización no disponible en este navegador.';
         return;
     }
 
@@ -454,7 +454,7 @@ function obtenerGPS() {
 
     btn.disabled      = true;
     icon.innerHTML    = '<span class="spinner spinner-dark" style="width:14px;height:14px;border-width:2px;"></span>';
-    txt.textContent   = 'Obteniendo ubicaciÃ³n...';
+    txt.textContent   = 'Obteniendo ubicación...';
     status.textContent = '';
 
     navigator.geolocation.getCurrentPosition(
@@ -466,22 +466,22 @@ function obtenerGPS() {
             document.getElementById('fLat').value = lat.toFixed(8);
             document.getElementById('fLng').value = lng.toFixed(8);
 
-            icon.textContent   = 'âœ…';
-            txt.textContent    = 'UbicaciÃ³n obtenida';
-            status.innerHTML   = `PrecisiÃ³n: <strong>${acc} m</strong> &nbsp;Â·&nbsp;
+            icon.textContent   = '✅';
+            txt.textContent    = 'Ubicación obtenida';
+            status.innerHTML   = `Precisión: <strong>${acc} m</strong> &nbsp;·&nbsp;
                 <a href="https://www.google.com/maps?q=${lat},${lng}" target="_blank"
                    style="color:var(--accent);font-size:.78rem;">Ver en mapa</a>`;
             btn.disabled = false;
         },
         (err) => {
             const msgs = {
-                1: 'Permiso denegado. Habilite la ubicaciÃ³n en el navegador.',
-                2: 'No se pudo obtener la ubicaciÃ³n. Verifique que el GPS estÃ© activo.',
+                1: 'Permiso denegado. Habilite la ubicación en el navegador.',
+                2: 'No se pudo obtener la ubicación. Verifique que el GPS esté activo.',
                 3: 'Tiempo de espera agotado.'
             };
-            icon.textContent  = 'ðŸ“';
-            txt.textContent   = 'Usar mi ubicaciÃ³n actual';
-            status.textContent = msgs[err.code] || 'Error al obtener ubicaciÃ³n.';
+            icon.textContent  = '📍';
+            txt.textContent   = 'Usar mi ubicación actual';
+            status.textContent = msgs[err.code] || 'Error al obtener ubicación.';
             status.style.color = 'var(--danger)';
             btn.disabled = false;
         },

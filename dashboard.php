@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if (!isset($_SESSION['empleado_id'])) {
     header('Location: index.php');
@@ -30,7 +30,7 @@ $vigi = $stmt->fetch();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>TDV â€” Panel</title>
+    <title>TDV — Panel</title>
     <link rel="stylesheet" href="css/style.css?v=2">
 </head>
 <body>
@@ -43,7 +43,7 @@ $vigi = $stmt->fetch();
     <div class="header-user">
         <strong><?= htmlspecialchars($vigi['nombre']) ?></strong>
         <a href="api/logout.php" style="color:rgba(255,255,255,.75);font-size:.95rem;text-decoration:none;">
-            Cerrar sesiÃ³n
+            Cerrar sesión
         </a>
     </div>
 </header>
@@ -71,7 +71,7 @@ $vigi = $stmt->fetch();
         </div>
     </div>
 
-    <!-- Estado del dÃ­a -->
+    <!-- Estado del día -->
     <div class="card" id="cardEstado">
         <div class="card-title">&#x1F4CB; Registros de hoy</div>
         <div id="estadoContent">
@@ -95,7 +95,7 @@ $vigi = $stmt->fetch();
             <div class="form-group">
                 <label for="tipoNovedad">Tipo de novedad</label>
                 <select id="tipoNovedad" required>
-                    <option value="">â€” Seleccione â€”</option>
+                    <option value="">— Seleccione —</option>
                 </select>
             </div>
 
@@ -104,10 +104,10 @@ $vigi = $stmt->fetch();
                 <textarea id="observaciones" placeholder="Ingrese observaciones..."></textarea>
             </div>
 
-            <!-- Estado de geolocalizaciÃ³n -->
+            <!-- Estado de geolocalización -->
             <div class="loc-status" id="locStatus">
                 <span>&#x1F4F1;</span>
-                <span id="locMsg">La ubicaciÃ³n se obtendrÃ¡ al confirmar.</span>
+                <span id="locMsg">La ubicación se obtendrá al confirmar.</span>
             </div>
             <div class="progress-wrap" id="progressWrap" style="display:none;">
                 <div class="progress-bar" id="progressBar"></div>
@@ -152,27 +152,27 @@ $vigi = $stmt->fetch();
         <form id="formReporte" novalidate>
 
             <div class="form-group">
-                <label for="repAccion">Â¿QuÃ© estabas intentando hacer? <span style="font-weight:400;color:var(--text-muted)">(opcional)</span></label>
+                <label for="repAccion">¿Qué estabas intentando hacer? <span style="font-weight:400;color:var(--text-muted)">(opcional)</span></label>
                 <select id="repAccion">
-                    <option value="">â€” SeleccionÃ¡ â€”</option>
-                    <option>Iniciar sesiÃ³n</option>
+                    <option value="">— Seleccioná —</option>
+                    <option>Iniciar sesión</option>
                     <option>Confirmar asistencia / entrada</option>
                     <option>Confirmar salida</option>
                     <option>Registrar una novedad</option>
-                    <option>Ver mis registros del dÃ­a</option>
+                    <option>Ver mis registros del día</option>
                     <option>Otro</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="repMensaje">Â¿QuÃ© mensaje de error apareciÃ³ en pantalla? <span style="font-weight:400;color:var(--text-muted)">(opcional)</span></label>
-                <input type="text" id="repMensaje" placeholder="Ej: Â«Fuera del Ã¡rea permitidaÂ»">
+                <label for="repMensaje">¿Qué mensaje de error apareció en pantalla? <span style="font-weight:400;color:var(--text-muted)">(opcional)</span></label>
+                <input type="text" id="repMensaje" placeholder="Ej: «Fuera del área permitida»">
             </div>
 
             <div class="form-group">
-                <label for="repDesc">DescripciÃ³n del problema <span style="color:var(--danger)">*</span></label>
+                <label for="repDesc">Descripción del problema <span style="color:var(--danger)">*</span></label>
                 <textarea id="repDesc" rows="3"
-                    placeholder="ContÃ¡ con detalle quÃ© pasÃ³, quÃ© esperabas que ocurriera y quÃ© ocurriÃ³ en cambio..."></textarea>
+                    placeholder="Contá con detalle qué pasó, qué esperabas que ocurriera y qué ocurrió en cambio..."></textarea>
             </div>
 
             <button type="submit" class="btn btn-primary" id="btnEnviarRep">
@@ -188,7 +188,7 @@ $vigi = $stmt->fetch();
 <div class="help-dropdown-wrap" id="helpWrapDash">
     <div class="help-dropdown-panel" id="helpPanelDash">
         <div class="help-dropdown-inner">
-            <div class="help-dropdown-title">&#x2753; Â¿CÃ³mo registrar asistencia?</div>
+            <div class="help-dropdown-title">&#x2753; ¿Cómo registrar asistencia?</div>
 
             <div class="help-step">
                 <div class="help-step-num">1</div>
@@ -200,19 +200,19 @@ $vigi = $stmt->fetch();
             <div class="help-step">
                 <div class="help-step-num">2</div>
                 <div class="help-step-text">
-                    Si estÃ¡ <strong>ingresando</strong> a su puesto, seleccione <strong>"Entrada"</strong>. Si ya se estÃ¡ <strong>retirando</strong>, seleccione <strong>"Salida"</strong>.
+                    Si está <strong>ingresando</strong> a su puesto, seleccione <strong>"Entrada"</strong>. Si ya se está <strong>retirando</strong>, seleccione <strong>"Salida"</strong>.
                 </div>
             </div>
 
             <div class="help-step">
                 <div class="help-step-num">3</div>
                 <div class="help-step-text">
-                    Para ambos casos, <strong>espere a que la ubicaciÃ³n se calibre</strong> correctamente antes de confirmar.
+                    Para ambos casos, <strong>espere a que la ubicación se calibre</strong> correctamente antes de confirmar.
                 </div>
             </div>
 
             <div class="help-note">
-                <span>&#x26A0; Importante:</span> Si detecta algÃºn problema, por favor haga el reporte usando el botÃ³n <strong>"Reportar un problema"</strong> que se encuentra en la parte inferior de la pantalla.
+                <span>&#x26A0; Importante:</span> Si detecta algún problema, por favor haga el reporte usando el botón <strong>"Reportar un problema"</strong> que se encuentra en la parte inferior de la pantalla.
             </div>
         </div>
     </div>
@@ -221,7 +221,7 @@ $vigi = $stmt->fetch();
 
 <script>
 (function reloj() {
-    const DIAS   = ['Domingo','Lunes','Martes','MiÃ©rcoles','Jueves','Viernes','SÃ¡bado'];
+    const DIAS   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
     const MESES  = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
     function tick() {
         const n  = new Date();
@@ -265,7 +265,7 @@ document.getElementById('formReporte').addEventListener('submit', async function
     const descripcion   = document.getElementById('repDesc').value.trim();
 
     if (!descripcion) {
-        document.getElementById('repErrorMsg').textContent = 'Por favor describÃ­ el problema.';
+        document.getElementById('repErrorMsg').textContent = 'Por favor describí el problema.';
         errDiv.classList.add('show'); return;
     }
 
