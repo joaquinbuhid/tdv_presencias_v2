@@ -152,6 +152,9 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
             <div class="form-group">
                 <label for="fEmail">Email <span style="color:var(--danger)">*</span></label>
                 <input type="email" id="fEmail" required>
+                <small style="display:block;color:var(--text-muted);font-size:.75rem;margin-top:.25rem;">
+                    Este email sera el usuario de acceso del supervisor.
+                </small>
                 <input type="hidden" id="fUsuario">
             </div>
 

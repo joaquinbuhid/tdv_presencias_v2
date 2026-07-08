@@ -11,7 +11,7 @@ if (empty($_SESSION['supervisor_id'])) {
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
-    echo json_encode(['error' => 'Método no permitido']);
+    echo json_encode(['error' => 'Metodo no permitido']);
     exit;
 }
 
@@ -30,7 +30,7 @@ if (!$vigiladorId || !$horaEntrada || !$horaSalida) {
 $re = '/^\d{2}:\d{2}$/';
 if (!preg_match($re, $horaEntrada) || !preg_match($re, $horaSalida)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Formato de hora inválido']);
+    echo json_encode(['error' => 'Formato de hora invalido']);
     exit;
 }
 
