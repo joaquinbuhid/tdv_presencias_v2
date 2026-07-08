@@ -67,6 +67,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         <a href="supervisores.php">Supervisores</a>
         <a href="objetivos.php">Objetivos</a>
         <a href="reportes.php">Reportes</a>
+        <a href="migracion.php">Migracion</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -292,3 +293,5 @@ form.addEventListener('submit', async (e) => {
 </script>
 </body>
 </html>
+
+

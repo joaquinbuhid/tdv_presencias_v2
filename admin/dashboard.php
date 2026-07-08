@@ -152,6 +152,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         <a href="supervisores.php">&#x1F4BC; Supervisores</a>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
         <a href="reportes.php" style="position:relative;">&#x26A0; Reportes<span id="navBadgeRep" class="nav-badge" style="display:none;">!</span></a>
+        <a href="migracion.php">Migracion</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -369,4 +370,6 @@ refrescar();
 </script>
 </body>
 </html>
+
+
 

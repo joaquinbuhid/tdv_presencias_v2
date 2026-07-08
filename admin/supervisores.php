@@ -11,7 +11,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV — Supervisores</title>
+    <title>TDV â€” Supervisores</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .admin-nav {
@@ -86,6 +86,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         <a href="supervisores.php" class="active">&#x1F4BC; Supervisores</a>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
         <a href="reportes.php">&#x26A0; Reportes</a>
+        <a href="migracion.php">Migracion</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -143,7 +144,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
                     <input type="text" id="fDni" required maxlength="15">
                 </div>
                 <div class="form-group">
-                    <label for="fTelefono">Teléfono</label>
+                    <label for="fTelefono">TelÃ©fono</label>
                     <input type="text" id="fTelefono">
                 </div>
             </div>
@@ -157,11 +158,11 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
             <div id="wrapCambiarClave" style="display:none;margin-bottom:.2rem;">
                 <label style="font-size:.85rem;display:flex;align-items:center;gap:.5rem;cursor:pointer;">
                     <input type="checkbox" id="fCambiarClave" onchange="toggleClave()">
-                    Cambiar contraseña
+                    Cambiar contraseÃ±a
                 </label>
             </div>
             <div id="wrapClaveInput" class="form-group">
-                <label for="fContrasena">Contraseña <span style="color:var(--danger)" id="lblClaveReq">*</span></label>
+                <label for="fContrasena">ContraseÃ±a <span style="color:var(--danger)" id="lblClaveReq">*</span></label>
                 <input type="password" id="fContrasena" autocomplete="new-password">
             </div>
 
@@ -202,9 +203,9 @@ async function cargarSupervisores() {
             return `<tr>
                 <td><strong>${esc(s.apellido)}, ${esc(s.nombre)}</strong></td>
                 <td>${esc(s.dni)}</td>
-                <td>${s.telefono ? esc(s.telefono) : '<span style="color:var(--text-muted)">—</span>'}</td>
-                <td>${s.email    ? esc(s.email)    : '<span style="color:var(--text-muted)">—</span>'}</td>
-                <td>${s.usuario  ? esc(s.usuario)  : '<span style="color:var(--text-muted)">—</span>'}</td>
+                <td>${s.telefono ? esc(s.telefono) : '<span style="color:var(--text-muted)">â€”</span>'}</td>
+                <td>${s.email    ? esc(s.email)    : '<span style="color:var(--text-muted)">â€”</span>'}</td>
+                <td>${s.usuario  ? esc(s.usuario)  : '<span style="color:var(--text-muted)">â€”</span>'}</td>
                 <td>
                     <span class="obj-count" title="Objetivos asignados">${objCount} objetivos${objCount !== 1 ? 's' : ''}</span>
                 </td>
@@ -218,7 +219,7 @@ async function cargarSupervisores() {
                 <thead><tr>
                     <th>Nombre</th>
                     <th>DNI</th>
-                    <th>Teléfono</th>
+                    <th>TelÃ©fono</th>
                     <th>Email</th>
                     <th>Usuario</th>
                     <th>Objetivos</th>
@@ -238,7 +239,7 @@ function abrirModal(id) {
     document.getElementById('fId').value = id;
     document.getElementById('modalTitle').textContent = id ? 'Editar supervisor' : 'Nuevo supervisor';
 
-    // Contraseña: requerida en creación, opcional en edición
+    // ContraseÃ±a: requerida en creaciÃ³n, opcional en ediciÃ³n
     const wrapCambiar  = document.getElementById('wrapCambiarClave');
     const wrapClave    = document.getElementById('wrapClaveInput');
     const lblReq       = document.getElementById('lblClaveReq');
@@ -313,7 +314,7 @@ async function onGuardar(e) {
         errDiv.classList.add('show'); return;
     }
     if (id === 0 && !contrasena) {
-        document.getElementById('modalErrorMsg').textContent = 'La contraseña es requerida.';
+        document.getElementById('modalErrorMsg').textContent = 'La contraseÃ±a es requerida.';
         errDiv.classList.add('show'); return;
     }
 
@@ -336,7 +337,7 @@ async function onGuardar(e) {
 }
 
 async function toggleEstado(id, accion) {
-    if (accion === 'desactivar' && !confirm('¿Desactivar este supervisor?')) return;
+    if (accion === 'desactivar' && !confirm('Â¿Desactivar este supervisor?')) return;
     try {
         const resp = await apiFetch('api/toggle_supervisor.php', 'POST', { id, accion });
         mostrarExito(resp.mensaje);
@@ -373,4 +374,6 @@ function esc(s) {
 </script>
 </body>
 </html>
+
+
 

@@ -11,7 +11,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV — Reportes de error</title>
+    <title>TDV â€” Reportes de error</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .admin-nav {
@@ -173,7 +173,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         </div>
         <div class="form-group">
             <label for="mNotas">Notas internas <span style="font-weight:400;color:var(--text-muted)">(opcional)</span></label>
-            <textarea id="mNotas" rows="3" placeholder="Diagnóstico, solución aplicada..."></textarea>
+            <textarea id="mNotas" rows="3" placeholder="DiagnÃ³stico, soluciÃ³n aplicada..."></textarea>
         </div>
         <div style="display:flex;gap:.8rem;justify-content:flex-end;margin-top:1rem;">
             <button class="btn btn-outline" style="width:auto" onclick="cerrarModal()">Cancelar</button>
@@ -234,7 +234,7 @@ async function cargar(estado) {
                 <div class="rep-header">
                     <div>
                         <div class="rep-quien">&#x1F464; ${esc(r.vigilador_nombre)}</div>
-                        <div class="rep-meta">DNI ${esc(r.dni)} &nbsp;·&nbsp; ${esc(r.fecha)} ${esc(r.hora.substr(0,5))} hs &nbsp;·&nbsp; IP: ${esc(r.ip_dispositivo || '—')}</div>
+                        <div class="rep-meta">DNI ${esc(r.dni)} &nbsp;Â·&nbsp; ${esc(r.fecha)} ${esc(r.hora.substr(0,5))} hs &nbsp;Â·&nbsp; IP: ${esc(r.ip_dispositivo || 'â€”')}</div>
                     </div>
                     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.3rem;">
                         ${estadoPill}
@@ -244,7 +244,7 @@ async function cargar(estado) {
 
                 ${r.accion ? `
                 <div class="rep-campo">
-                    <div class="rep-label">¿Qué estaba haciendo?</div>
+                    <div class="rep-label">Â¿QuÃ© estaba haciendo?</div>
                     <div class="rep-valor">${esc(r.accion)}</div>
                 </div>` : ''}
 
@@ -255,7 +255,7 @@ async function cargar(estado) {
                 </div>` : ''}
 
                 <div class="rep-campo">
-                    <div class="rep-label">Descripción del problema</div>
+                    <div class="rep-label">DescripciÃ³n del problema</div>
                     <div class="rep-valor">${esc(r.descripcion)}</div>
                 </div>
 
@@ -345,4 +345,6 @@ function esc(s) {
 </script>
 </body>
 </html>
+
+
 
