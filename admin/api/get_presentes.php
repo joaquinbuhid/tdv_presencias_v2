@@ -40,10 +40,10 @@ try {
             $r['estado'] = 'sin-objetivo';
         } elseif ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
             $r['estado'] = 'completado';
-        } elseif ($r['hora_entrada_hoy']) {
-            $r['estado'] = ($tSalida && $ahora > $tSalida) ? 'sin-salida' : 'presente';
+        } elseif ($r['hora_entrada_hoy'] || $r['hora_salida_hoy']) {
+            $r['estado'] = 'incompleto';
         } else {
-            $r['estado'] = ($tSalida && $ahora > $tSalida) ? 'ausente' : 'por-iniciar';
+            $r['estado'] = ($tSalida && $ahora > $tSalida) ? 'ausente' : 'sin-registro';
         }
 
         foreach (['hora_entrada_hoy','hora_salida_hoy','ultima_actividad','turno_entrada','turno_salida'] as $campo) {

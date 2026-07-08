@@ -60,7 +60,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         .summary-card .lbl { font-size: .78rem; color: var(--text-muted); margin-top: .2rem; }
         .num-presente   { color: var(--success); }
         .num-ausente    { color: var(--danger);  }
-        .num-completado { color: var(--accent);  }
+        .num-completado { color: var(--text);  }
         .num-total      { color: var(--primary); }
 
         /* Guard cards grid */
@@ -80,9 +80,11 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         .guard-card:hover { transform: translateY(-2px); }
         .guard-card.presente    { border-left-color: var(--success); }
         .guard-card.ausente     { border-left-color: var(--danger);  }
-        .guard-card.completado  { border-left-color: var(--accent);  }
-        .guard-card.sin-salida  { border-left-color: #e67e22; background: #fffaf5; }
-        .guard-card.por-iniciar { border-left-color: var(--border); }
+        .guard-card.completado  { border-left-color: var(--text);  }
+        .guard-card.incompleto  { border-left-color: #f1c40f; background: #fffdf2; }
+        .guard-card.sin-registro { border-left-color: #3498db; background: #f4f9ff; }
+        .guard-card.sin-salida  { border-left-color: #f1c40f; background: #fffdf2; }
+        .guard-card.por-iniciar { border-left-color: #3498db; background: #f4f9ff; }
         .guard-card.sin-objetivos { border-left-color: var(--text-muted); opacity:.7; }
 
         .gc-name { font-size: 1rem; font-weight: 700; color: var(--text); }
@@ -97,9 +99,11 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         }
         .badge-presente    { background: #eafaf1; color: #1e8449; }
         .badge-ausente     { background: #fdecea; color: #c0392b; }
-        .badge-completado  { background: #ebf5fb; color: #1a5276; }
-        .badge-sin-salida  { background: #fef3e2; color: #e67e22; }
-        .badge-por-iniciar { background: #f0f2f5; color: var(--text-muted); }
+        .badge-completado  { background: #f2f3f4; color: #111827; }
+        .badge-incompleto  { background: #fff8d7; color: #9a7d0a; }
+        .badge-sin-registro { background: #eaf4ff; color: #1f618d; }
+        .badge-sin-salida  { background: #fff8d7; color: #9a7d0a; }
+        .badge-por-iniciar { background: #eaf4ff; color: #1f618d; }
         .badge-sin-objetivos { background: #f0f2f5; color: var(--text-muted); }
 
         .gc-times {
@@ -193,8 +197,8 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
             <div class="lbl">Turno completo</div>
         </div>
         <div class="summary-card" id="cardSinSalida" style="display:none;">
-            <div class="num" style="color:#e67e22;" id="cntSinSalida">0</div>
-            <div class="lbl">Sin registrar salida</div>
+            <div class="num" style="color:#9a7d0a;" id="cntSinSalida">0</div>
+            <div class="lbl">Registro incompleto</div>
         </div>
         <div class="summary-card">
             <div class="num num-total"     id="cntTotal">0</div>
@@ -284,16 +288,20 @@ function renderCards(guards) {
 
     const labels = {
         'presente'    : 'En turno',
-        'ausente'     : 'No registró asistencia',
+        'ausente'     : 'Ausente',
         'completado'  : 'Turno completado',
-        'sin-salida'  : 'Sin registrar salida',
-        'por-iniciar' : 'Por iniciar',
+        'incompleto'  : 'Registro incompleto',
+        'sin-registro': 'No registró asistencia',
+        'sin-salida'  : 'Registro incompleto',
+        'por-iniciar' : 'No registró asistencia',
         'sin-objetivos': 'Sin objetivos',
     };
     const badges = {
         'presente'    : 'badge-presente',
         'ausente'     : 'badge-ausente',
         'completado'  : 'badge-completado',
+        'incompleto'  : 'badge-incompleto',
+        'sin-registro': 'badge-sin-registro',
         'sin-salida'  : 'badge-sin-salida',
         'por-iniciar' : 'badge-por-iniciar',
         'sin-objetivos': 'badge-sin-objetivos',
@@ -304,18 +312,18 @@ function renderCards(guards) {
         if (g.estado === 'presente')   presente++;
         if (g.estado === 'ausente')    ausente++;
         if (g.estado === 'completado') completado++;
-        if (g.estado === 'sin-salida') sinSalida++;
+        if (g.estado === 'sin-salida' || g.estado === 'incompleto') sinSalida++;
 
         const turnoTxt = (g.turno_entrada && g.turno_salida)
             ? `<span style="font-size:.72rem;color:var(--text-muted);">Turno: ${esc(g.turno_entrada)} - ${esc(g.turno_salida)} hs</span>`
             : '';
 
-        const alertaSinSalida = g.estado === 'sin-salida'
-            ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.4rem;font-weight:600;">
-                 ! Hora de salida superada sin registrar egreso
+        const alertaSinSalida = g.estado === 'sin-salida' || g.estado === 'incompleto'
+            ? `<div style="font-size:.75rem;color:#9a7d0a;margin-top:.4rem;font-weight:600;">
+                 Registro incompleto de asistencia
                </div>`
             : '';
-        const bloqueAsistencia = g.estado === 'ausente'
+        const bloqueAsistencia = g.estado === 'ausente' || g.estado === 'sin-registro' || g.estado === 'por-iniciar'
             ? `<div style="font-size:.8rem;color:var(--text-muted);margin-top:.75rem;">
                    No registró asistencia hoy.
                </div>`

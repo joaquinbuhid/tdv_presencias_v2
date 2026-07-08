@@ -52,10 +52,10 @@ try {
 
         if ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
             $r['estado'] = 'completado';
-        } elseif ($r['hora_entrada_hoy']) {
-            $r['estado'] = ($ts && $ahora > $ts) ? 'sin-salida' : 'presente';
+        } elseif ($r['hora_entrada_hoy'] || $r['hora_salida_hoy']) {
+            $r['estado'] = 'incompleto';
         } else {
-            $r['estado'] = ($ts && $ahora > $ts) ? 'ausente' : 'por-iniciar';
+            $r['estado'] = ($ts && $ahora > $ts) ? 'ausente' : 'sin-registro';
         }
 
         foreach (['hora_entrada_hoy','hora_salida_hoy','turno_entrada','turno_salida'] as $c) {
