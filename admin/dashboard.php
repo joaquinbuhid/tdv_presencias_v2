@@ -284,7 +284,7 @@ function renderCards(guards) {
 
     const labels = {
         'presente'    : 'En turno',
-        'ausente'     : 'Ausente',
+        'ausente'     : 'No registró asistencia',
         'completado'  : 'Turno completado',
         'sin-salida'  : 'Sin registrar salida',
         'por-iniciar' : 'Por iniciar',
@@ -315,6 +315,20 @@ function renderCards(guards) {
                  ! Hora de salida superada sin registrar egreso
                </div>`
             : '';
+        const bloqueAsistencia = g.estado === 'ausente'
+            ? `<div style="font-size:.8rem;color:var(--text-muted);margin-top:.75rem;">
+                   No registró asistencia hoy.
+               </div>`
+            : `<div class="gc-times" style="margin-top:.5rem;">
+                <div class="gc-time-item">
+                    <span class="tl">Entrada</span>
+                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : '-'}</span>
+                </div>
+                <div class="gc-time-item">
+                    <span class="tl">Salida</span>
+                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : '-'}</span>
+                </div>
+            </div>`;
 
         return `
         <div class="guard-card ${esc(g.estado)}">
@@ -324,16 +338,7 @@ function renderCards(guards) {
             <div class="gc-badge ${badges[g.estado] || 'badge-sin-objetivos'}" style="margin-top:.5rem;">
                 ${labels[g.estado] || g.estado}
             </div>
-            <div class="gc-times" style="margin-top:.5rem;">
-                <div class="gc-time-item">
-                    <span class="tl">Entrada</span>
-                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : '-'}</span>
-                </div>
-                <div class="gc-time-item">
-                    <span class="tl">Salida</span>
-                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : '-'}</span>
-                </div>
-            </div>
+            ${bloqueAsistencia}
             ${alertaSinSalida}
         </div>`;
     }).join('');

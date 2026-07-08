@@ -326,7 +326,7 @@ async function refrescar() {
 
 const LABELS = {
     'presente'    : 'En turno',
-    'ausente'     : 'Ausente',
+    'ausente'     : 'No registró asistencia',
     'completado'  : 'Turno completado',
     'sin-salida'  : 'Sin registrar salida',
     'por-iniciar' : 'Por iniciar',
@@ -366,6 +366,20 @@ function renderCards(guards) {
         const alertaSinSalida = g.estado === 'sin-salida'
             ? `<div style="font-size:.75rem;color:#e67e22;margin-top:.4rem;font-weight:600;">! Hora de salida superada sin registrar egreso</div>`
             : '';
+        const bloqueAsistencia = g.estado === 'ausente'
+            ? `<div style="font-size:.8rem;color:var(--text-muted);margin-top:.75rem;">
+                   No registró asistencia hoy.
+               </div>`
+            : `<div class="gc-times" style="margin-top:.5rem;">
+                <div class="gc-time-item">
+                    <span class="tl">Entrada hoy</span>
+                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : '-'}</span>
+                </div>
+                <div class="gc-time-item">
+                    <span class="tl">Salida hoy</span>
+                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : '-'}</span>
+                </div>
+            </div>`;
 
         const objLine = document.getElementById('selectObjetivo').value === '0'
             ? `<div class="gc-obj">&#x1F4CD; ${esc(g.objetivo_nombre)}</div>`
@@ -383,16 +397,7 @@ function renderCards(guards) {
             <div class="gc-badge ${BADGES[g.estado] || ''}" style="margin-top:.5rem;">
                 ${LABELS[g.estado] || g.estado}
             </div>
-            <div class="gc-times" style="margin-top:.5rem;">
-                <div class="gc-time-item">
-                    <span class="tl">Entrada hoy</span>
-                    <span class="tv">${g.hora_entrada_hoy ? g.hora_entrada_hoy + ' hs' : '-'}</span>
-                </div>
-                <div class="gc-time-item">
-                    <span class="tl">Salida hoy</span>
-                    <span class="tv">${g.hora_salida_hoy ? g.hora_salida_hoy + ' hs' : '-'}</span>
-                </div>
-            </div>
+            ${bloqueAsistencia}
             ${alertaSinSalida}
         </div>`;
     }).join('');
