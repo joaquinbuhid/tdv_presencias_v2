@@ -57,7 +57,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
         .guard-card.incompleto  { border-left-color: #f1c40f; background: #fffdf2; }
         .guard-card.sin-registro { border-left-color: #3498db; background: #f4f9ff; }
         .guard-card.sin-salida  { border-left-color: #f1c40f; background: #fffdf2; }
-        .guard-card.por-iniciar { border-left-color: #3498db; background: #f4f9ff; }
+        .guard-card.por-iniciar { border-left-color: var(--border); }
 
         .gc-name  { font-size: 1rem; font-weight: 700; color: var(--text); }
         .gc-obj   { font-size: .78rem; color: var(--text-muted); margin: .15rem 0 .5rem; }
@@ -71,7 +71,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
         .badge-incompleto  { background: #fff8d7; color: #9a7d0a; }
         .badge-sin-registro { background: #eaf4ff; color: #1f618d; }
         .badge-sin-salida  { background: #fff8d7; color: #9a7d0a; }
-        .badge-por-iniciar { background: #eaf4ff; color: #1f618d; }
+        .badge-por-iniciar { background: #f0f2f5; color: var(--text-muted); }
 
         .gc-times {
             display: grid; grid-template-columns: 1fr 1fr;
@@ -335,7 +335,7 @@ const LABELS = {
     'incompleto'  : 'Registro incompleto',
     'sin-registro': 'No registró asistencia',
     'sin-salida'  : 'Registro incompleto',
-    'por-iniciar' : 'No registró asistencia',
+    'por-iniciar' : 'Por iniciar',
 };
 const BADGES = {
     'presente'    : 'badge-presente',
@@ -376,7 +376,7 @@ function renderCards(guards) {
             : '';
         const bloqueAsistencia = g.estado === 'ausente' || g.estado === 'sin-registro' || g.estado === 'por-iniciar'
             ? `<div style="font-size:.8rem;color:var(--text-muted);margin-top:.75rem;">
-                   No registró asistencia hoy.
+                   ${g.estado === 'por-iniciar' ? 'Aún no inició el turno.' : (g.estado === 'sin-registro' ? 'No registró asistencia y no tiene horario asignado.' : 'No registró asistencia hoy.')}
                </div>`
             : `<div class="gc-times" style="margin-top:.5rem;">
                 <div class="gc-time-item">

@@ -48,14 +48,16 @@ try {
     $ahora = date('H:i');
 
     foreach ($rows as &$r) {
+        $te = $r['turno_entrada'] ? substr($r['turno_entrada'], 0, 5) : null;
         $ts = $r['turno_salida'] ? substr($r['turno_salida'], 0, 5) : null;
+        $sinHorario = !$te && !$ts;
 
         if ($r['hora_entrada_hoy'] && $r['hora_salida_hoy']) {
             $r['estado'] = 'completado';
         } elseif ($r['hora_entrada_hoy'] || $r['hora_salida_hoy']) {
             $r['estado'] = 'incompleto';
         } else {
-            $r['estado'] = ($ts && $ahora > $ts) ? 'ausente' : 'sin-registro';
+            $r['estado'] = $sinHorario ? 'sin-registro' : (($ts && $ahora > $ts) ? 'ausente' : 'por-iniciar');
         }
 
         foreach (['hora_entrada_hoy','hora_salida_hoy','turno_entrada','turno_salida'] as $c) {
