@@ -285,14 +285,14 @@ async function cargarVigiladores() {
                 ? `<span class="turno-pill">${v.hora_entrada.substr(0,5)} - ${v.hora_salida.substr(0,5)}</span>`
                 : '<span style="color:var(--text-muted)">-</span>';
             const bg = v.pendiente == 1 ? 'background:#fffde7;' : '';
-            return `<tr style="${bg}">
+            return `<tr style="${bg}" data-empleado-id="${v.id_empleado}">
                 <td><strong>${esc(v.nombre)}</strong><br>
                     <small style="color:var(--text-muted);">@${esc(v.usuario)}</small></td>
                 <td>${esc(v.dni)}</td>
                 <td>${esc(v.objetivo_nombre || '-')}</td>
                 <td>${turno}</td>
-                <td>${estadoPill}</td>
-                <td><div class="actions">${acciones}</div></td>
+                <td class="estado-cell">${estadoPill}</td>
+                <td><div class="actions acciones-cell">${acciones}</div></td>
             </tr>`;
         }).join('');
 
@@ -410,9 +410,34 @@ async function toggleEstado(id, accion) {
     try {
         const resp = await apiFetch('api/toggle_estado.php', 'POST', { id, accion });
         mostrarExito(resp.mensaje);
-        cargarVigiladores();
+        actualizarFilaEstado(id, accion === 'desactivar' ? 0 : 1);
     } catch (err) {
         mostrarError(err.message);
+    }
+}
+
+function actualizarFilaEstado(id, activo) {
+    const row = document.querySelector(`tr[data-empleado-id="${id}"]`);
+    if (!row) {
+        cargarVigiladores();
+        return;
+    }
+
+    const estadoCell = row.querySelector('.estado-cell');
+    const accionesCell = row.querySelector('.acciones-cell');
+
+    if (estadoCell) {
+        estadoCell.innerHTML = activo
+            ? '<span class="pill pill-activo">Activo</span>'
+            : '<span class="pill pill-inactivo">Inactivo</span>';
+    }
+
+    if (accionesCell) {
+        accionesCell.innerHTML = activo
+            ? `<button class="btn btn-outline btn-sm" onclick="abrirModal(${id})">&#9998; Editar</button>
+               <button class="btn btn-danger btn-sm" onclick="toggleEstado(${id},'desactivar')">&#x23F8; Desactivar</button>`
+            : `<button class="btn btn-outline btn-sm" onclick="abrirModal(${id})">&#9998; Editar</button>
+               <button class="btn btn-success btn-sm" onclick="toggleEstado(${id},'activar')">&#9654; Activar</button>`;
     }
 }
 
