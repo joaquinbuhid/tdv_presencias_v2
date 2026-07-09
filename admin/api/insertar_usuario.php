@@ -36,6 +36,9 @@ $pendiente = !empty($data['pendiente']) ? 1 : 0;
 $email = trim($data['email'] ?? '');
 $contrasena = $data['contrasena'] ?? '';
 $tipo = isset($data['tipo']) && $data['tipo'] !== '' ? (int)$data['tipo'] : 1;
+if ($tipo !== 1) {
+    $objetivoId = null;
+}
 $urlLeg = trim($data['url_leg'] ?? '') ?: null;
 $nacionalidad = trim($data['nacionalidad'] ?? '') ?: null;
 

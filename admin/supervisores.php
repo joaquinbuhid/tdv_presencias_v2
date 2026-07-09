@@ -127,15 +127,9 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         <form id="formSupervisor" novalidate>
             <input type="hidden" id="fId" value="0">
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="fNombre">Nombre <span style="color:var(--danger)">*</span></label>
-                    <input type="text" id="fNombre" required>
-                </div>
-                <div class="form-group">
-                    <label for="fApellido">Apellido <span style="color:var(--danger)">*</span></label>
-                    <input type="text" id="fApellido" required>
-                </div>
+            <div class="form-group">
+                <label for="fNombre">Nombre completo <span style="color:var(--danger)">*</span></label>
+                <input type="text" id="fNombre" required>
             </div>
 
             <div class="form-row">
@@ -204,7 +198,7 @@ async function cargarSupervisores() {
                    <button class="btn btn-success btn-sm" onclick="toggleEstado(${s.id_supervisor},'activar')">&#9654; Activar</button>`;
             const objCount = parseInt(s.objetivos_asignados);
             return `<tr>
-                <td><strong>${esc(s.apellido)}, ${esc(s.nombre)}</strong></td>
+                <td><strong>${esc(s.nombre)}</strong></td>
                 <td>${esc(s.dni)}</td>
                 <td>${s.telefono ? esc(s.telefono) : '<span style="color:var(--text-muted)">-</span>'}</td>
                 <td>${s.email    ? esc(s.email)    : '<span style="color:var(--text-muted)">-</span>'}</td>
@@ -260,7 +254,6 @@ function abrirModal(id) {
             const s = list.find(x => x.id_supervisor == id);
             if (!s) return;
             document.getElementById('fNombre').value   = s.nombre;
-            document.getElementById('fApellido').value = s.apellido;
             document.getElementById('fDni').value      = s.dni;
             document.getElementById('fTelefono').value = s.telefono || '';
             document.getElementById('fEmail').value    = s.email    || '';
@@ -302,7 +295,6 @@ async function onGuardar(e) {
 
     const id         = parseInt(document.getElementById('fId').value);
     const nombre     = document.getElementById('fNombre').value.trim();
-    const apellido   = document.getElementById('fApellido').value.trim();
     const dni        = document.getElementById('fDni').value.trim();
     const telefono   = document.getElementById('fTelefono').value.trim();
     const email      = document.getElementById('fEmail').value.trim();
@@ -312,8 +304,8 @@ async function onGuardar(e) {
         ? document.getElementById('fContrasena').value
         : '';
 
-    if (!nombre || !apellido || !dni || !telefono || !email) {
-        document.getElementById('modalErrorMsg').textContent = 'Complete nombre, apellido, DNI, telefono y email.';
+    if (!nombre || !dni || !telefono || !email) {
+        document.getElementById('modalErrorMsg').textContent = 'Complete nombre completo, DNI, telefono y email.';
         errDiv.classList.add('show'); return;
     }
     if (id === 0 && !contrasena) {
@@ -326,7 +318,7 @@ async function onGuardar(e) {
     btn.textContent = 'Guardando...';
 
     try {
-        await apiFetch('api/guardar_supervisor.php', 'POST', { id, nombre, apellido, dni, telefono, email, usuario, contrasena });
+        await apiFetch('api/guardar_supervisor.php', 'POST', { id, nombre, dni, telefono, email, usuario, contrasena });
         cerrarModal();
         mostrarExito(id ? 'Supervisor actualizado.' : 'Supervisor creado.');
         cargarSupervisores();

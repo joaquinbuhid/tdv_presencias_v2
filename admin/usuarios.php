@@ -172,7 +172,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="grupoObjetivo">
                 <label for="objetivo_id">Objetivo</label>
                 <select id="objetivo_id">
                     <option value="">Sin objetivo</option>
@@ -218,6 +218,19 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 const form = document.getElementById('formUsuario');
 const err = document.getElementById('msgError');
 const ok = document.getElementById('msgOk');
+const tipoSelect = document.getElementById('tipo');
+const grupoObjetivo = document.getElementById('grupoObjetivo');
+const objetivoSelect = document.getElementById('objetivo_id');
+
+function actualizarCamposPorTipo() {
+    const esEmpleado = tipoSelect.value === '1';
+    grupoObjetivo.style.display = esEmpleado ? '' : 'none';
+    objetivoSelect.disabled = !esEmpleado;
+    if (!esEmpleado) objetivoSelect.value = '';
+}
+
+tipoSelect.addEventListener('change', actualizarCamposPorTipo);
+actualizarCamposPorTipo();
 
 function field(id) {
     return document.getElementById(id).value.trim();
@@ -255,7 +268,7 @@ form.addEventListener('submit', async (e) => {
         nro_credencial: field('nro_credencial'),
         fecha_venc_cred: field('fecha_venc_cred'),
         activo: document.getElementById('activo').checked,
-        objetivo_id: field('objetivo_id'),
+        objetivo_id: tipoSelect.value === '1' ? field('objetivo_id') : '',
         hora_entrada: field('hora_entrada'),
         hora_salida: field('hora_salida'),
         pendiente: document.getElementById('pendiente').checked,
@@ -287,6 +300,7 @@ form.addEventListener('submit', async (e) => {
         }
         form.reset();
         document.getElementById('activo').checked = true;
+        actualizarCamposPorTipo();
         showOk(`${data.mensaje}. ID: ${data.id}`);
     } catch (error) {
         showError(error.message);

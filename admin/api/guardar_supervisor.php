@@ -18,16 +18,15 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $data = json_decode(file_get_contents('php://input'), true);
 $id = isset($data['id']) ? (int)$data['id'] : 0;
 $nombre = trim($data['nombre'] ?? '');
-$apellido = trim($data['apellido'] ?? '');
 $dni = trim($data['dni'] ?? '');
 $cuil = trim($data['cuil'] ?? $dni);
 $telefono = trim($data['telefono'] ?? '');
 $email = trim($data['email'] ?? $data['usuario'] ?? '');
 $contrasena = $data['contrasena'] ?? '';
 
-if (!$nombre || !$apellido || !$dni || !$telefono || !$email) {
+if (!$nombre || !$dni || !$telefono || !$email) {
     http_response_code(400);
-    echo json_encode(['error' => 'Nombre, apellido, CUIL/DNI, telefono y email son requeridos']);
+    echo json_encode(['error' => 'Nombre completo, DNI, telefono y email son requeridos']);
     exit;
 }
 
@@ -60,7 +59,7 @@ if ($stmt->fetch()) {
     exit;
 }
 
-$nombreCompleto = trim($nombre . ' ' . $apellido);
+$nombreCompleto = $nombre;
 
 if ($id === 0) {
     $hash = password_hash($contrasena, PASSWORD_BCRYPT);
