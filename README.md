@@ -21,9 +21,10 @@ Tambien se pueden usar variables de entorno:
 
 El sistema usa `empleados.tipo` para diferenciar roles:
 
-- `1`: empleado operativo
+- `1`: vigilador
 - `2`: supervisor
-- `9`: administrador
+- `3`: oficinista
+- `4`: administrador
 
 ## Base
 

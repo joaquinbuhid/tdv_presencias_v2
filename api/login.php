@@ -4,7 +4,8 @@ header('Content-Type: application/json');
 require_once '../config/db.php';
 
 const TIPO_SUPERVISOR = 2;
-const TIPO_ADMIN = 9;
+const TIPO_OFICINISTA = 3;
+const TIPO_ADMIN = 4;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -58,10 +59,18 @@ if ((int)$row['activo'] !== 1) {
 }
 
 $tipo = (int)($row['tipo'] ?? 1);
-$esAdmin = $tipo === TIPO_ADMIN;
-$esSupervisor = $tipo === TIPO_SUPERVISOR;
+if (!in_array($tipo, [1, 2, 3, 4], true)) {
+    http_response_code(403);
+    echo json_encode(['error' => 'Tipo de usuario invalido. Contacta al administrador.']);
+    exit;
+}
 
-if (!$esAdmin && !$esSupervisor && !$row['id_objetivo']) {
+$esAdmin = $tipo === TIPO_ADMIN;
+$esOficinista = $tipo === TIPO_OFICINISTA;
+$esSupervisor = $tipo === TIPO_SUPERVISOR;
+$esBackoffice = $esAdmin || $esOficinista;
+
+if (!$esBackoffice && !$esSupervisor && !$row['id_objetivo']) {
     http_response_code(403);
     echo json_encode(['error' => 'No tiene un objetivo asignado. Contacta al administrador.']);
     exit;
@@ -69,19 +78,26 @@ if (!$esAdmin && !$esSupervisor && !$row['id_objetivo']) {
 
 $_SESSION['empleado_id'] = (int)$row['id_empleado'];
 $_SESSION['nombre_completo'] = $row['nombre'];
-$_SESSION['es_admin'] = $esAdmin;
+$_SESSION['tipo_usuario'] = $tipo;
+$_SESSION['es_admin'] = $esBackoffice;
+$_SESSION['es_admin_real'] = $esAdmin;
+$_SESSION['es_oficinista'] = $esOficinista;
+$_SESSION['es_supervisor'] = $esSupervisor;
 $_SESSION['objetivo_nombre'] = $row['objetivo_nombre'];
 
 if ($esSupervisor) {
     $_SESSION['supervisor_id'] = (int)$row['id_empleado'];
-    $_SESSION['es_supervisor'] = true;
+} else {
+    unset($_SESSION['supervisor_id']);
 }
 
 session_write_close();
 
 echo json_encode([
     'success' => true,
-    'es_admin' => $esAdmin,
+    'es_admin' => $esBackoffice,
+    'es_admin_real' => $esAdmin,
+    'es_oficinista' => $esOficinista,
     'es_supervisor' => $esSupervisor,
     'nombre' => $_SESSION['nombre_completo'],
     'objetivo' => $row['objetivo_nombre'],

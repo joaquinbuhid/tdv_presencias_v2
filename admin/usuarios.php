@@ -144,9 +144,10 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
             <div class="form-group">
                 <label for="tipo">Tipo de usuario</label>
                 <select id="tipo">
-                    <option value="1">Empleado operativo</option>
+                    <option value="1">Vigilador</option>
                     <option value="2">Supervisor</option>
-                    <option value="9">Administrador</option>
+                    <option value="3">Oficinista</option>
+                    <option value="4">Administrador</option>
                 </select>
             </div>
             <div class="form-group">

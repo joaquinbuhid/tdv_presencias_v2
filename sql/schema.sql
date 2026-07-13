@@ -108,12 +108,12 @@ SELECT 'Incidente', 'Reporte de incidente o irregularidad'
 WHERE NOT EXISTS (SELECT 1 FROM tipo_novedad WHERE nombre = 'Incidente');
 
 -- Roles usados por el sistema en empleados.tipo:
--- 1 = empleado operativo, 2 = supervisor, 9 = administrador.
+-- 1 = vigilador, 2 = supervisor, 3 = oficinista, 4 = administrador.
 -- Admin inicial de desarrollo. Usuario: admin@tdv.local / clave: password
 -- Cambiar o eliminar antes de produccion.
 INSERT INTO empleados
   (nombre, fecha_nac, est_civil, domicilio, CUIL, telefono, email, contrasena, activo, pendiente, tipo)
 SELECT
   'Administrador Sistema', '1900-01-01', 'No informado', 'No informado', '00000000000', '0000000000',
-  'admin@tdv.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 9
+  'admin@tdv.local', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 1, 0, 4
 WHERE NOT EXISTS (SELECT 1 FROM empleados WHERE email = 'admin@tdv.local');

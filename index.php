@@ -2,7 +2,13 @@
 session_start();
 // Si ya tiene sesión, ir al dashboard
 if (isset($_SESSION['empleado_id'])) {
-    header('Location: dashboard.php');
+    if (!empty($_SESSION['es_admin'])) {
+        header('Location: admin/dashboard.php');
+    } elseif (!empty($_SESSION['es_supervisor'])) {
+        header('Location: supervisor/dashboard.php');
+    } else {
+        header('Location: dashboard.php');
+    }
     exit;
 }
 ?>

@@ -222,7 +222,7 @@ try {
         foreach (rows($old, "SELECT * FROM vigiladores ORDER BY id_vigilador") as $r) {
             $oldObj = isset($r['objetivo_id']) ? (int)$r['objetivo_id'] : 0;
             $newObj = $oldObj && isset($objetivoMap[$oldObj]) ? $objetivoMap[$oldObj] : null;
-            $tipo = !empty($r['es_admin']) ? 9 : 1;
+            $tipo = !empty($r['es_admin']) ? 4 : 1;
             findOrCreateEmpleado($new, $empleadoMap, $r, $tipo, 'empleado', $newObj);
             $done['vigiladores']++;
         }

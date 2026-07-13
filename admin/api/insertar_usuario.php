@@ -36,6 +36,11 @@ $pendiente = !empty($data['pendiente']) ? 1 : 0;
 $email = trim($data['email'] ?? '');
 $contrasena = $data['contrasena'] ?? '';
 $tipo = isset($data['tipo']) && $data['tipo'] !== '' ? (int)$data['tipo'] : 1;
+if (!in_array($tipo, [1, 2, 3, 4], true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Tipo de usuario invalido']);
+    exit;
+}
 if ($tipo !== 1) {
     $objetivoId = null;
 }
