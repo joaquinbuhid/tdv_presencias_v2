@@ -1,10 +1,8 @@
 <?php
-session_start();
-if (empty($_SESSION['es_admin'])) {
-    header('Location: ../index.php');
-    exit;
-}
+require_once __DIR__ . '/auth.php';
+requireBackofficePage();
 $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
+$esAdminReal = esAdminReal();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -80,15 +78,21 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <nav class="admin-nav">
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-links">
+        <?php if ($esAdminReal): ?>
         <a href="dashboard.php">&#x1F7E2; En vivo</a>
         <a href="usuarios.php">&#x2795; Usuarios</a>
+        <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php">&#x1F464; Empleados</a>
         <a href="supervisores.php" class="active">&#x1F4BC; Supervisores</a>
+        <?php if ($esAdminReal): ?>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
         <a href="reportes.php">&#x26A0; Reportes</a>
+        <?php endif; ?>
         <a href="informe_horas.php">Horas</a>
+        <?php if ($esAdminReal): ?>
         <a href="migracion.php">Migracion</a>
+        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -104,7 +108,9 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
     <div class="card" style="overflow-x:auto;">
         <div class="section-header">
             <span class="section-title">&#x1F4BC; Supervisores</span>
+            <?php if ($esAdminReal): ?>
             <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo supervisor</button>
+            <?php endif; ?>
         </div>
         <div id="tablaWrap">
             <div style="padding:2rem;text-align:center;color:var(--text-muted);">
@@ -180,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarSupervisores();
     document.getElementById('formSupervisor').addEventListener('submit', onGuardar);
 });
+const ES_ADMIN_REAL = <?= $esAdminReal ? 'true' : 'false' ?>;
 
 async function cargarSupervisores() {
     const wrap = document.getElementById('tablaWrap');
@@ -194,10 +201,10 @@ async function cargarSupervisores() {
                 ? '<span class="pill pill-activo">Activo</span>'
                 : '<span class="pill pill-inactivo">Inactivo</span>';
             const acciones = s.estado == 1
-                ? `<button class="btn btn-outline btn-sm" onclick="abrirModal(${s.id_supervisor})">&#9998; Editar</button>
-                   <button class="btn btn-danger btn-sm" onclick="toggleEstado(${s.id_supervisor},'desactivar')">&#x23F8; Desactivar</button>`
-                : `<button class="btn btn-outline btn-sm" onclick="abrirModal(${s.id_supervisor})">&#9998; Editar</button>
-                   <button class="btn btn-success btn-sm" onclick="toggleEstado(${s.id_supervisor},'activar')">&#9654; Activar</button>`;
+                ? `<button class="btn btn-outline btn-sm" onclick="abrirModal(${s.id_supervisor})">${ES_ADMIN_REAL ? '&#9998; Editar' : 'Ver'}</button>
+                   ${ES_ADMIN_REAL ? `<button class="btn btn-danger btn-sm" onclick="toggleEstado(${s.id_supervisor},'desactivar')">&#x23F8; Desactivar</button>` : ''}`
+                : `<button class="btn btn-outline btn-sm" onclick="abrirModal(${s.id_supervisor})">${ES_ADMIN_REAL ? '&#9998; Editar' : 'Ver'}</button>
+                   ${ES_ADMIN_REAL ? `<button class="btn btn-success btn-sm" onclick="toggleEstado(${s.id_supervisor},'activar')">&#9654; Activar</button>` : ''}`;
             const objCount = parseInt(s.objetivos_asignados);
             return `<tr>
                 <td><strong>${esc(s.nombre)}</strong></td>
@@ -233,10 +240,15 @@ async function cargarSupervisores() {
 }
 
 function abrirModal(id) {
+    if (!ES_ADMIN_REAL && !id) return;
     document.getElementById('modalError').classList.remove('show');
     document.getElementById('formSupervisor').reset();
     document.getElementById('fId').value = id;
     document.getElementById('modalTitle').textContent = id ? 'Editar supervisor' : 'Nuevo supervisor';
+    document.querySelectorAll('#formSupervisor input').forEach(el => {
+        if (el.type !== 'hidden') el.disabled = !ES_ADMIN_REAL;
+    });
+    document.getElementById('btnGuardar').style.display = ES_ADMIN_REAL ? '' : 'none';
 
     // Contraseña: requerida en creación, opcional en edición
     const wrapCambiar  = document.getElementById('wrapCambiarClave');
@@ -292,6 +304,7 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 
 async function onGuardar(e) {
     e.preventDefault();
+    if (!ES_ADMIN_REAL) return;
     const errDiv  = document.getElementById('modalError');
     errDiv.classList.remove('show');
 
@@ -334,6 +347,7 @@ async function onGuardar(e) {
 }
 
 async function toggleEstado(id, accion) {
+    if (!ES_ADMIN_REAL) return;
     if (accion === 'desactivar' && !confirm('¿Desactivar este supervisor?')) return;
     try {
         const resp = await apiFetch('api/toggle_supervisor.php', 'POST', { id, accion });

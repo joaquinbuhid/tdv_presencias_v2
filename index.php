@@ -2,7 +2,9 @@
 session_start();
 // Si ya tiene sesión, ir al dashboard
 if (isset($_SESSION['empleado_id'])) {
-    if (!empty($_SESSION['es_admin'])) {
+    if (!empty($_SESSION['es_oficinista'])) {
+        header('Location: admin/postulantes.php');
+    } elseif (!empty($_SESSION['es_admin'])) {
         header('Location: admin/dashboard.php');
     } elseif (!empty($_SESSION['es_supervisor'])) {
         header('Location: supervisor/dashboard.php');
@@ -109,9 +111,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         if (res.ok && data.success) {
             btn.textContent = 'Accediendo...';
-            window.location.href = data.es_admin
-                ? 'admin/dashboard.php'
-                : (data.es_supervisor ? 'supervisor/dashboard.php' : 'dashboard.php');
+            window.location.href = data.es_oficinista
+                ? 'admin/postulantes.php'
+                : (data.es_admin ? 'admin/dashboard.php' : (data.es_supervisor ? 'supervisor/dashboard.php' : 'dashboard.php'));
         } else {
             errMsg.textContent = data.error || 'Error al iniciar sesión.';
             errDiv.classList.add('show');

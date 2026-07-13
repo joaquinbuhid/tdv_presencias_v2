@@ -1,7 +1,7 @@
 <?php
 ob_start();
-session_start();
 header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../auth.php';
 require_once '../../config/db.php';
 
 function jsonResponse(array $payload, int $status = 200): void {
@@ -13,7 +13,7 @@ function jsonResponse(array $payload, int $status = 200): void {
     exit;
 }
 
-if (empty($_SESSION['es_admin'])) {
+if (empty($_SESSION['es_admin']) || !esAdminReal()) {
     jsonResponse(['error' => 'No autorizado'], 401);
 }
 

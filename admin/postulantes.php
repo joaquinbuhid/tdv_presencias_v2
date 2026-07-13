@@ -1,10 +1,8 @@
 <?php
-session_start();
-if (empty($_SESSION['es_admin'])) {
-    header('Location: ../index.php');
-    exit;
-}
+require_once __DIR__ . '/auth.php';
+requireBackofficePage();
 $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
+$esAdminReal = esAdminReal();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -113,15 +111,21 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <nav class="admin-nav">
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-links">
+        <?php if ($esAdminReal): ?>
         <a href="dashboard.php">En vivo</a>
         <a href="usuarios.php">Usuarios</a>
+        <?php endif; ?>
         <a href="postulantes.php" class="active">Postulantes</a>
         <a href="vigiladores.php">Empleados</a>
         <a href="supervisores.php">Supervisores</a>
+        <?php if ($esAdminReal): ?>
         <a href="objetivos.php">Objetivos</a>
         <a href="reportes.php">Reportes</a>
+        <?php endif; ?>
         <a href="informe_horas.php">Horas</a>
+        <?php if ($esAdminReal): ?>
         <a href="migracion.php">Migracion</a>
+        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>

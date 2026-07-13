@@ -1,12 +1,7 @@
 <?php
-session_start();
 header('Content-Type: application/json; charset=utf-8');
-
-if (empty($_SESSION['es_admin'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'No autorizado']);
-    exit;
-}
+require_once __DIR__ . '/../auth.php';
+requireBackofficeApi();
 
 require_once '../../config/db.php';
 

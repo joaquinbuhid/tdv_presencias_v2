@@ -1,7 +1,7 @@
 <?php
 ob_start();
-session_start();
 header('Content-Type: application/json; charset=utf-8');
+require_once __DIR__ . '/../auth.php';
 require_once '../../config/db.php';
 
 function jsonResponse(array $payload, int $status = 200): void {
@@ -131,7 +131,7 @@ function findOrCreateEmpleado(PDO $db, array &$map, array $old, int $tipo, strin
     return (int)$id;
 }
 
-if (empty($_SESSION['es_admin'])) {
+if (empty($_SESSION['es_admin']) || !esAdminReal()) {
     jsonResponse(['error' => 'No autorizado'], 401);
 }
 

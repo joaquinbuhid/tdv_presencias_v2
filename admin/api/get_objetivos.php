@@ -1,17 +1,17 @@
 <?php
-session_start();
 header('Content-Type: application/json');
+require_once __DIR__ . '/../auth.php';
 require_once '../../config/db.php';
-
-if (empty($_SESSION['es_admin'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'No autorizado']);
-    exit;
-}
+requireBackofficeApi();
 
 try {
     $db = getDB();
     $full = isset($_GET['full']) && $_GET['full'] == '1';
+    if ($full && !esAdminReal()) {
+        http_response_code(403);
+        echo json_encode(['error' => 'No autorizado para este rol']);
+        exit;
+    }
 
     if ($full) {
         $stmt = $db->query(

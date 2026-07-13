@@ -1,9 +1,6 @@
 <?php
-session_start();
-if (empty($_SESSION['es_admin'])) {
-    header('Location: ../index.php');
-    exit;
-}
+require_once __DIR__ . '/auth.php';
+requireAdminRealPage();
 
 require_once '../config/db.php';
 
