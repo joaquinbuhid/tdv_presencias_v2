@@ -31,3 +31,7 @@ El sistema usa `empleados.tipo` para diferenciar roles:
 El archivo `sql/schema.sql` contiene el esquema esperado y datos semilla minimos para `tipo_novedad` y un administrador inicial de desarrollo.
 
 Cambiar o eliminar el administrador inicial antes de produccion.
+
+## Postulantes
+
+La tabla `postulantes` es compartida con el formulario publico de postulacion. Los usuarios de backoffice, incluyendo `tipo=3` oficinista, pueden consultar y filtrar esos registros desde `admin/postulantes.php`.

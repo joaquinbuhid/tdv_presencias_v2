@@ -35,6 +35,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
     <div class="nav-links">
         <a href="dashboard.php">En vivo</a>
         <a href="usuarios.php">Usuarios</a>
+        <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php">Empleados</a>
         <a href="supervisores.php">Supervisores</a>
         <a href="objetivos.php">Objetivos</a>

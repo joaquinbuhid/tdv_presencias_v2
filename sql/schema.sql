@@ -91,6 +91,28 @@ CREATE TABLE IF NOT EXISTS novedades (
   KEY idx_novedades_tipo (tipo_novedad)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS postulantes (
+  id int(11) NOT NULL AUTO_INCREMENT,
+  nombre_completo varchar(255) NOT NULL,
+  dni varchar(20) NOT NULL,
+  fecha_nacimiento date NOT NULL,
+  telefono varchar(50) NOT NULL,
+  email varchar(255) NOT NULL,
+  localidad_residencia varchar(255) NOT NULL,
+  experiencia_seguridad enum('si','no') NOT NULL,
+  curso_habilitante enum('si','no') NOT NULL,
+  credencial_vigente enum('si','no') NOT NULL,
+  disponibilidad_horaria enum('Full Time','Turno Diurno','Turno Nocturno','Rotativos') NOT NULL,
+  puesto_postula varchar(255) NOT NULL,
+  parte_track_seguridad enum('si','no') NOT NULL,
+  archivo_adjunto varchar(255) DEFAULT NULL,
+  fecha_registro timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id),
+  KEY idx_postulantes_fecha (fecha_registro),
+  KEY idx_postulantes_dni (dni),
+  KEY idx_postulantes_puesto (puesto_postula)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO tipo_novedad (nombre, descripcion)
 SELECT 'Entrada', 'Registro de inicio de turno'
 WHERE NOT EXISTS (SELECT 1 FROM tipo_novedad WHERE nombre = 'Entrada');
