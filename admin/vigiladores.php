@@ -3,6 +3,7 @@ require_once __DIR__ . '/auth.php';
 requireBackofficePage();
 $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 $esAdminReal = esAdminReal();
+$puedeCrearEmpleado = $esAdminReal || esOficinista();
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -149,10 +150,10 @@ $esAdminReal = esAdminReal();
         <div class="section-header">
             <span class="section-title">&#x1F464; empleados</span>
             <?php if ($esAdminReal): ?>
-            <div class="actions">
-                <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo vigilador</button>
-                <a class="btn btn-primary btn-sm" href="usuarios.php?tipo=3&amp;origen=empleados" title="Nuevo empleado tipo 3" aria-label="Nuevo empleado tipo 3">+</a>
-            </div>
+            <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo vigilador</button>
+            <?php endif; ?>
+            <?php if ($puedeCrearEmpleado): ?>
+            <a class="btn btn-primary btn-sm" href="usuarios.php?origen=empleados" title="Agregar empleado" aria-label="Agregar empleado">+</a>
             <?php endif; ?>
         </div>
         <div id="tablaWrap">

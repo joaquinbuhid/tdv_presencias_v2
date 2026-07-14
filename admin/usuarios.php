@@ -1,6 +1,11 @@
 <?php
 require_once __DIR__ . '/auth.php';
-requireAdminRealPage();
+$altaEmpleado = ($_GET['origen'] ?? '') === 'empleados';
+if ($altaEmpleado) {
+    requireBackofficePage();
+} else {
+    requireAdminRealPage();
+}
 
 require_once '../config/db.php';
 
@@ -8,11 +13,10 @@ $db = getDB();
 $empresas = $db->query("SELECT id_empresa, nombre FROM empresas ORDER BY nombre")->fetchAll();
 $objetivos = $db->query("SELECT id_objetivo, nombre FROM objetivos ORDER BY nombre")->fetchAll();
 $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
-$tipoInicial = isset($_GET['tipo']) ? (int)$_GET['tipo'] : 1;
+$tipoInicial = $altaEmpleado ? 1 : (isset($_GET['tipo']) ? (int)$_GET['tipo'] : 1);
 if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
     $tipoInicial = 1;
 }
-$altaEmpleado = $tipoInicial === 3 && ($_GET['origen'] ?? '') === 'empleados';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -159,7 +163,7 @@ $altaEmpleado = $tipoInicial === 3 && ($_GET['origen'] ?? '') === 'empleados';
                 <select id="tipo" <?= $altaEmpleado ? 'disabled' : '' ?>>
                     <option value="1">Vigilador</option>
                     <option value="2">Supervisor</option>
-                    <option value="3">Empleado (oficinista)</option>
+                    <option value="3">Oficinista</option>
                     <option value="4">Administrador</option>
                 </select>
             </div>
@@ -315,6 +319,7 @@ form.addEventListener('submit', async (e) => {
     ok.classList.remove('show');
 
     const payload = {
+        alta_empleado: ALTA_EMPLEADO,
         nombre: field('nombre'),
         fecha_nac: field('fecha_nac'),
         fecha_alta: field('fecha_alta'),

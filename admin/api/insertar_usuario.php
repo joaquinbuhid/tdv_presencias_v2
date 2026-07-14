@@ -2,7 +2,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/../auth.php';
 require_once '../../config/db.php';
-requireAdminRealApi();
+requireBackofficeApi();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -11,6 +11,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $data = json_decode(file_get_contents('php://input'), true);
+$altaEmpleado = !empty($data['alta_empleado']);
+
+if (!$altaEmpleado && !esAdminReal()) {
+    http_response_code(403);
+    echo json_encode(['error' => 'No autorizado para crear este tipo de usuario']);
+    exit;
+}
 
 $nombre = trim($data['nombre'] ?? '');
 $fechaNac = trim($data['fecha_nac'] ?? '');
@@ -31,7 +38,7 @@ $horaSalida = trim($data['hora_salida'] ?? '') ?: null;
 $pendiente = !empty($data['pendiente']) ? 1 : 0;
 $email = trim($data['email'] ?? '');
 $contrasena = $data['contrasena'] ?? '';
-$tipo = isset($data['tipo']) && $data['tipo'] !== '' ? (int)$data['tipo'] : 1;
+$tipo = $altaEmpleado ? 1 : (isset($data['tipo']) && $data['tipo'] !== '' ? (int)$data['tipo'] : 1);
 if (!in_array($tipo, [1, 2, 3, 4], true)) {
     http_response_code(400);
     echo json_encode(['error' => 'Tipo de usuario invalido']);
