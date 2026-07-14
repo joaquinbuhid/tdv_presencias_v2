@@ -14,6 +14,7 @@ $data = json_decode(file_get_contents('php://input'), true);
 
 $nombre = trim($data['nombre'] ?? '');
 $fechaNac = trim($data['fecha_nac'] ?? '');
+$fechaAlta = trim($data['fecha_alta'] ?? '') ?: date('Y-m-d');
 $estCivil = trim($data['est_civil'] ?? '');
 $empresaId = isset($data['empresa_id']) && $data['empresa_id'] !== '' ? (int)$data['empresa_id'] : null;
 $domicilio = trim($data['domicilio'] ?? '');
@@ -72,6 +73,14 @@ if ($horaSalida && !preg_match('/^\d{2}:\d{2}$/', $horaSalida)) {
     exit;
 }
 
+foreach (['fecha de nacimiento' => $fechaNac, 'fecha de alta' => $fechaAlta, 'vencimiento de credencial' => $fechaVencCred] as $campo => $fecha) {
+    if ($fecha && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+        http_response_code(400);
+        echo json_encode(['error' => "La $campo no es valida"]);
+        exit;
+    }
+}
+
 $db = getDB();
 
 $stmt = $db->prepare('SELECT id_empleado FROM empleados WHERE email = ?');
@@ -103,10 +112,10 @@ $hash = password_hash($contrasena, PASSWORD_DEFAULT);
 $stmt = $db->prepare(
     "INSERT INTO empleados
         (nombre, fecha_nac, est_civil, empresa_id, domicilio, CUIL, DNI, telefono,
-         nro_legajo, nro_credencial, fecha_venc_cred, activo, objetivo_id,
+         nro_legajo, nro_credencial, fecha_venc_cred, activo, objetivo_id, fecha_alta,
          hora_entrada, hora_salida, pendiente, email, contrasena, tipo, url_leg, nacionalidad)
      VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 );
 $stmt->execute([
     $nombre,
@@ -122,6 +131,7 @@ $stmt->execute([
     $fechaVencCred,
     $activo,
     $objetivoId,
+    $fechaAlta,
     $horaEntrada,
     $horaSalida,
     $pendiente,

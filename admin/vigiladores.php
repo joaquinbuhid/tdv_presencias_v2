@@ -149,7 +149,10 @@ $esAdminReal = esAdminReal();
         <div class="section-header">
             <span class="section-title">&#x1F464; empleados</span>
             <?php if ($esAdminReal): ?>
-            <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo vigilador</button>
+            <div class="actions">
+                <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo vigilador</button>
+                <a class="btn btn-primary btn-sm" href="usuarios.php?tipo=3&amp;origen=empleados" title="Nuevo empleado tipo 3" aria-label="Nuevo empleado tipo 3">+</a>
+            </div>
             <?php endif; ?>
         </div>
         <div id="tablaWrap">
