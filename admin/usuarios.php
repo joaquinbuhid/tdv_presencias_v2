@@ -13,6 +13,7 @@ $db = getDB();
 $empresas = $db->query("SELECT id_empresa, nombre FROM empresas ORDER BY nombre")->fetchAll();
 $objetivos = $db->query("SELECT id_objetivo, nombre FROM objetivos ORDER BY nombre")->fetchAll();
 $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
+$esAdminReal = esAdminReal();
 $tipoInicial = $altaEmpleado ? 1 : (isset($_GET['tipo']) ? (int)$_GET['tipo'] : 1);
 if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
     $tipoInicial = 1;
@@ -77,15 +78,21 @@ if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
 <nav class="admin-nav">
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-links">
+        <?php if ($esAdminReal): ?>
         <a href="dashboard.php">En vivo</a>
-        <a href="usuarios.php" class="active">Usuarios</a>
+        <a href="usuarios.php" class="<?= $altaEmpleado ? '' : 'active' ?>">Usuarios</a>
+        <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
-        <a href="vigiladores.php">Vigiladores</a>
+        <a href="vigiladores.php" class="<?= $altaEmpleado ? 'active' : '' ?>">Empleados</a>
         <a href="supervisores.php">Supervisores</a>
+        <?php if ($esAdminReal): ?>
         <a href="objetivos.php">Objetivos</a>
         <a href="reportes.php">Reportes</a>
+        <?php endif; ?>
         <a href="informe_horas.php">Horas</a>
+        <?php if ($esAdminReal): ?>
         <a href="migracion.php">Migracion</a>
+        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
