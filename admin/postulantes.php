@@ -201,6 +201,7 @@ $esAdminReal = esAdminReal();
             </div>
             <div class="filter-actions">
                 <button type="button" class="btn btn-outline btn-sm" id="btnLimpiar">Limpiar</button>
+                <button type="button" class="btn btn-outline btn-sm" id="btnExcel">Excel</button>
                 <button type="submit" class="btn btn-primary btn-sm" id="btnBuscar">Filtrar</button>
             </div>
         </form>
@@ -233,6 +234,7 @@ $esAdminReal = esAdminReal();
 const form = document.getElementById('formFiltros');
 const tbody = document.getElementById('tbody');
 const counter = document.getElementById('counter');
+const POSTULANTES_UPLOAD_URL = 'https://postulaciones.tdvsrl.com/uploads/';
 
 document.addEventListener('DOMContentLoaded', () => cargar());
 form.addEventListener('submit', (e) => {
@@ -243,6 +245,10 @@ document.getElementById('btnLimpiar').addEventListener('click', () => {
     form.reset();
     cargar();
 });
+document.getElementById('btnExcel').addEventListener('click', () => {
+    const query = paramsFiltros().toString();
+    window.location.href = 'api/export_postulantes_excel.php' + (query ? '?' + query : '');
+});
 
 function valor(id) {
     return document.getElementById(id).value.trim();
@@ -252,11 +258,7 @@ async function cargar() {
     tbody.innerHTML = '<tr><td colspan="10" class="empty">Cargando postulantes...</td></tr>';
     counter.textContent = 'Cargando...';
 
-    const params = new URLSearchParams();
-    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'desde', 'hasta'].forEach(id => {
-        const v = valor(id);
-        if (v) params.set(id, v);
-    });
+    const params = paramsFiltros();
 
     try {
         const res = await fetch('api/get_postulantes.php?' + params.toString());
@@ -267,6 +269,15 @@ async function cargar() {
         tbody.innerHTML = `<tr><td colspan="10" class="empty" style="color:var(--danger);">${esc(e.message)}</td></tr>`;
         counter.textContent = 'Error';
     }
+}
+
+function paramsFiltros() {
+    const params = new URLSearchParams();
+    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'desde', 'hasta'].forEach(id => {
+        const v = valor(id);
+        if (v) params.set(id, v);
+    });
+    return params;
 }
 
 function render(items) {
@@ -335,11 +346,18 @@ function pillSiNo(v) {
 
 function renderAdjunto(path) {
     if (!path) return '<span class="muted">Sin archivo</span>';
-    const texto = esc(path.split('/').pop());
-    if (/^https?:\/\//i.test(path)) {
-        return `<a href="${escAttr(path)}" target="_blank" rel="noopener">${texto}</a>`;
-    }
-    return `<span title="${escAttr(path)}">${texto}</span>`;
+    const url = archivoUrl(path);
+    const texto = esc(nombreArchivo(path));
+    return `<a href="${escAttr(url)}" target="_blank" rel="noopener">${texto}</a>`;
+}
+
+function archivoUrl(path) {
+    if (/^https?:\/\//i.test(path)) return path;
+    return POSTULANTES_UPLOAD_URL + encodeURIComponent(nombreArchivo(path));
+}
+
+function nombreArchivo(path) {
+    return String(path).replace(/\\/g, '/').split('/').pop();
 }
 
 function fmtFecha(fecha) {
