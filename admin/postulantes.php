@@ -50,6 +50,7 @@ $esAdminReal = esAdminReal();
         .filters input,
         .filters select { font-size:.95rem; padding:.7rem .8rem; border-radius:8px; }
         .filter-actions { display:flex; gap:.5rem; justify-content:flex-end; align-items:end; }
+        .row-actions { display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
 
         .table-wrap { overflow-x:auto; background:var(--card); border-radius:10px; box-shadow:var(--shadow); }
         table { width:100%; border-collapse:collapse; min-width:980px; }
@@ -306,7 +307,12 @@ function render(items) {
                 <td>${pillSiNo(p.curso_habilitante)}</td>
                 <td>${pillSiNo(p.credencial_vigente)}</td>
                 <td>${esc(p.fecha_registro_fmt || '')}</td>
-                <td><button class="btn btn-outline btn-sm" onclick="toggleDetalle(${Number(p.id)})">Ver</button></td>
+                <td>
+                    <div class="row-actions">
+                        <button class="btn btn-outline btn-sm" onclick="toggleDetalle(${Number(p.id)})">Ver</button>
+                        <button class="btn btn-danger btn-sm" onclick="eliminarPostulante(${Number(p.id)})">Eliminar</button>
+                    </div>
+                </td>
             </tr>
             <tr class="detail-row" id="detalle-${Number(p.id)}">
                 <td colspan="10">
@@ -337,6 +343,25 @@ function render(items) {
 function toggleDetalle(id) {
     const row = document.getElementById('detalle-' + id);
     if (row) row.classList.toggle('open');
+}
+
+async function eliminarPostulante(id) {
+    if (!confirm('Eliminar este postulante?')) return;
+
+    try {
+        const res = await fetch('api/eliminar_postulante.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'No se pudo eliminar el postulante.');
+        }
+        cargar();
+    } catch (e) {
+        alert(e.message);
+    }
 }
 
 function pillSiNo(v) {
