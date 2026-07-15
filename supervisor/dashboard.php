@@ -20,6 +20,14 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
             padding: .7rem 1.5rem; flex-wrap: wrap; gap: .5rem;
         }
         .sup-nav .brand { color:#fff; font-weight:700; font-size:1.1rem; display:flex; align-items:center; gap:.5rem; }
+        .sup-nav .nav-links { display:flex; gap:.3rem; flex-wrap:wrap; }
+        .sup-nav .nav-links a {
+            color:rgba(255,255,255,.75); text-decoration:none;
+            padding:.4rem .9rem; border-radius:6px; font-size:.88rem; transition:background .2s;
+            position:relative;
+        }
+        .sup-nav .nav-links a.active,
+        .sup-nav .nav-links a:hover { background:rgba(255,255,255,.15); color:#fff; }
         .sup-nav .nav-user { color:rgba(255,255,255,.7); font-size:.82rem; text-align:right; }
         .sup-nav .nav-user strong { display:block; color:#fff; }
 
@@ -141,6 +149,10 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
 
 <nav class="sup-nav">
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
+    <div class="nav-links">
+        <a href="dashboard.php" class="active">🟢 En vivo</a>
+        <a href="informe.php">📊 Informe</a>
+    </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($supNombre) ?></strong>
         <a href="../api/logout.php" style="color:rgba(255,255,255,.6);font-size:.78rem;text-decoration:none;">Cerrar sesion</a>
