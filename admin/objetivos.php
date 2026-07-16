@@ -114,6 +114,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         <a href="objetivos.php" class="active">&#x1F3AF; Objetivos</a>
         <a href="reportes.php">&#x26A0; Reportes</a>
         <a href="liquidacion.php">Horas</a>
+        <a href="enviar_mails.php">Mails</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>

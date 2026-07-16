@@ -90,6 +90,7 @@ if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
         <a href="reportes.php">Reportes</a>
         <?php endif; ?>
         <a href="liquidacion.php">Horas</a>
+        <a href="enviar_mails.php">Mails</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>

@@ -124,6 +124,7 @@ $esAdminReal = esAdminReal();
         <a href="reportes.php">Reportes</a>
         <?php endif; ?>
         <a href="liquidacion.php">Horas</a>
+        <a href="enviar_mails.php">Mails</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -225,6 +226,7 @@ $esAdminReal = esAdminReal();
     <div class="panel" id="bulkActionsBar" style="display:none; justify-content:space-between; align-items:center; background:#ebf5fb; border:1px solid #aed6f1; padding:.8rem 1.2rem; margin-bottom:1rem; border-radius:10px;">
         <span style="font-weight:600; color:#1a5276;" id="bulkCountText">0 seleccionados</span>
         <div style="display:flex; gap:.5rem;">
+            <button type="button" class="btn btn-primary btn-sm" id="btnBulkEmail" style="background:#3498db; border-color:#3498db;">✉️ Enviar Email</button>
             <button type="button" class="btn btn-primary btn-sm" id="btnBulkExcel" style="background:#27ae60; border-color:#27ae60;">🟢 Exportar Excel</button>
             <button type="button" class="btn btn-danger btn-sm" id="btnBulkDelete">🔴 Eliminar seleccionados</button>
         </div>
@@ -464,6 +466,15 @@ document.getElementById('btnBulkExcel').addEventListener('click', () => {
     const ids = Array.from(checkboxes).map(cb => cb.value).join(',');
     if (ids) {
         window.location.href = 'api/export_postulantes_excel.php?ids=' + ids;
+    }
+});
+
+// Bulk Email
+document.getElementById('btnBulkEmail').addEventListener('click', () => {
+    const checkboxes = document.querySelectorAll('.postulante-select:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value).join(',');
+    if (ids) {
+        window.location.href = 'enviar_mails.php?type=postulantes&ids=' + ids;
     }
 });
 

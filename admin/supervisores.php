@@ -90,6 +90,7 @@ $esAdminReal = esAdminReal();
         <a href="reportes.php">&#x26A0; Reportes</a>
         <?php endif; ?>
         <a href="liquidacion.php">Horas</a>
+        <a href="enviar_mails.php">Mails</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>

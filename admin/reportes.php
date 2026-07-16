@@ -124,6 +124,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
             <span class="nav-badge" id="navBadge" style="display:none;">0</span>
         </a>
         <a href="liquidacion.php">Horas</a>
+        <a href="enviar_mails.php">Mails</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
