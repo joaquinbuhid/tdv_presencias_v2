@@ -216,10 +216,19 @@ $esAdminReal = esAdminReal();
         </form>
     </section>
 
+    <div class="panel" id="bulkActionsBar" style="display:none; justify-content:space-between; align-items:center; background:#ebf5fb; border:1px solid #aed6f1; padding:.8rem 1.2rem; margin-bottom:1rem; border-radius:10px;">
+        <span style="font-weight:600; color:#1a5276;" id="bulkCountText">0 seleccionados</span>
+        <div style="display:flex; gap:.5rem;">
+            <button type="button" class="btn btn-primary btn-sm" id="btnBulkExcel" style="background:#27ae60; border-color:#27ae60;">🟢 Exportar Excel</button>
+            <button type="button" class="btn btn-danger btn-sm" id="btnBulkDelete">🔴 Eliminar seleccionados</button>
+        </div>
+    </div>
+
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
+                    <th style="width: 40px; text-align: center;"><input type="checkbox" id="selectAll"></th>
                     <th>Postulante</th>
                     <th>Contacto</th>
                     <th>Localidad</th>
@@ -233,7 +242,7 @@ $esAdminReal = esAdminReal();
                 </tr>
             </thead>
             <tbody id="tbody">
-                <tr><td colspan="10" class="empty">Cargando postulantes...</td></tr>
+                <tr><td colspan="11" class="empty">Cargando postulantes...</td></tr>
             </tbody>
         </table>
     </div>
@@ -264,8 +273,10 @@ function valor(id) {
 }
 
 async function cargar() {
-    tbody.innerHTML = '<tr><td colspan="10" class="empty">Cargando postulantes...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="empty">Cargando postulantes...</td></tr>';
     counter.textContent = 'Cargando...';
+    document.getElementById('selectAll').checked = false;
+    actualizarSeleccion();
 
     const params = paramsFiltros();
 
@@ -275,7 +286,7 @@ async function cargar() {
         if (!res.ok) throw new Error(data.error || 'Error al cargar postulantes');
         render(data);
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="10" class="empty" style="color:var(--danger);">${esc(e.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="empty" style="color:var(--danger);">${esc(e.message)}</td></tr>`;
         counter.textContent = 'Error';
     }
 }
@@ -292,7 +303,7 @@ function paramsFiltros() {
 function render(items) {
     counter.textContent = `${items.length} postulante${items.length === 1 ? '' : 's'}`;
     if (!items.length) {
-        tbody.innerHTML = '<tr><td colspan="10" class="empty">No hay postulantes para esos filtros.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="empty">No hay postulantes para esos filtros.</td></tr>';
         return;
     }
 
@@ -300,6 +311,9 @@ function render(items) {
         const adjunto = renderAdjunto(p.archivo_adjunto);
         return `
             <tr>
+                <td style="text-align: center; vertical-align: middle;">
+                    <input type="checkbox" class="postulante-select" value="${Number(p.id)}" onclick="actualizarSeleccion()">
+                </td>
                 <td>
                     <div class="name">${esc(p.nombre_completo)}</div>
                     <div class="muted">DNI ${esc(p.dni)} - Nac. ${fmtFecha(p.fecha_nacimiento)}${p.edad ? ` (${esc(p.edad)} años)` : ''}</div>
@@ -323,7 +337,7 @@ function render(items) {
                 </td>
             </tr>
             <tr class="detail-row" id="detalle-${Number(p.id)}">
-                <td colspan="10">
+                <td colspan="11">
                     <div class="detail-box">
                         <div class="detail-item">
                             <div class="detail-label">Fue parte de Track</div>
@@ -407,6 +421,69 @@ function esc(s) {
 function escAttr(s) {
     return esc(s).replace(/'/g, '&#039;');
 }
+
+// Toggle select all
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.postulante-select');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    actualizarSeleccion();
+});
+
+function actualizarSeleccion() {
+    const checkboxes = document.querySelectorAll('.postulante-select');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const selectAll = document.getElementById('selectAll');
+    
+    if (checkboxes.length === 0) {
+        selectAll.checked = false;
+    } else {
+        selectAll.checked = checked.length === checkboxes.length;
+    }
+
+    const bar = document.getElementById('bulkActionsBar');
+    const countText = document.getElementById('bulkCountText');
+    
+    if (checked.length > 0) {
+        bar.style.display = 'flex';
+        countText.textContent = `${checked.length} seleccionado${checked.length === 1 ? '' : 's'}`;
+    } else {
+        bar.style.display = 'none';
+    }
+}
+
+// Bulk Excel Export
+document.getElementById('btnBulkExcel').addEventListener('click', () => {
+    const checkboxes = document.querySelectorAll('.postulante-select:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value).join(',');
+    if (ids) {
+        window.location.href = 'api/export_postulantes_excel.php?ids=' + ids;
+    }
+});
+
+// Bulk Delete
+document.getElementById('btnBulkDelete').addEventListener('click', async () => {
+    const checkboxes = document.querySelectorAll('.postulante-select:checked');
+    const ids = Array.from(checkboxes).map(cb => cb.value);
+    if (ids.length === 0) return;
+    
+    if (!confirm(`¿Eliminar en lote los ${ids.length} postulantes seleccionados?`)) return;
+
+    try {
+        const res = await fetch('api/eliminar_postulantes_lote.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'No se pudieron eliminar los postulantes.');
+        }
+        document.getElementById('selectAll').checked = false;
+        cargar();
+    } catch (e) {
+        alert(e.message);
+    }
+});
 </script>
 </body>
 </html>

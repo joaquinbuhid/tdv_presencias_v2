@@ -44,6 +44,7 @@ $desde = validarFecha(param('desde'));
 $hasta = validarFecha(param('hasta'));
 $edad_desde = param('edad_desde');
 $edad_hasta = param('edad_hasta');
+$ids_param = param('ids');
 
 if ($desde && $hasta && $desde > $hasta) {
     http_response_code(400);
@@ -115,6 +116,17 @@ if ($edad_desde !== '') {
 if ($edad_hasta !== '') {
     $where[] = "TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) <= ?";
     $params[] = (int)$edad_hasta;
+}
+
+if ($ids_param !== '') {
+    $ids_array = array_filter(array_map('intval', explode(',', $ids_param)));
+    if (!empty($ids_array)) {
+        $placeholders = implode(',', array_fill(0, count($ids_array), '?'));
+        $where[] = "id IN ($placeholders)";
+        foreach ($ids_array as $id_val) {
+            $params[] = $id_val;
+        }
+    }
 }
 
 try {
