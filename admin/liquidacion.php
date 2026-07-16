@@ -15,115 +15,67 @@ $mostrar_resultados = false;
 $error = '';
 $result_data = [];
 $title = '';
+$objetivos = [];
+$selected_objetivo_id = 0;
+
+try {
+    $db = getDB();
+    // Load all objectives in the database
+    $stmtObj = $db->query("SELECT id_objetivo, nombre FROM objetivos ORDER BY nombre");
+    $objetivos = $stmtObj->fetchAll();
+} catch (Exception $e) {
+    $error = 'Error al cargar los objetivos: ' . $e->getMessage();
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    
-    if ($action === 'csv') {
-        if (isset($_FILES['csv_file']) && $_FILES['csv_file']['error'] === UPLOAD_ERR_OK) {
-            $tmp_name = $_FILES['csv_file']['tmp_name'];
-            $file_name = $_FILES['csv_file']['name'];
+    $selected_objetivo_id = isset($_POST['objetivo_id']) ? (int)$_POST['objetivo_id'] : 0;
+    $fecha_inicio = $_POST['fecha_inicio'] ?? '';
+    $fecha_fin = $_POST['fecha_fin'] ?? '';
+
+    if (empty($fecha_inicio) || empty($fecha_fin)) {
+        $error = 'Por favor, complete ambas fechas.';
+    } elseif ($fecha_inicio > $fecha_fin) {
+        $error = 'La fecha de inicio debe ser menor o igual que la fecha de fin.';
+    } else {
+        try {
+            $where_obj = '';
+            $params = [$fecha_inicio, $fecha_fin];
+            $objNombre = 'Todos los objetivos';
             
-            $rows = [];
-            if (($handle = fopen($tmp_name, "r")) !== FALSE) {
-                $headers = fgetcsv($handle, 1000, ",");
-                if (count($headers) <= 1 && strpos($headers[0] ?? '', ';') !== false) {
-                    rewind($handle);
-                    $headers = fgetcsv($handle, 1000, ";");
-                    $delimiter = ";";
-                } else {
-                    $delimiter = ",";
-                }
+            if ($selected_objetivo_id > 0) {
+                $where_obj = "AND o.id_objetivo = ?";
+                $params[] = $selected_objetivo_id;
                 
-                foreach ($headers as $k => $v) {
-                    $v = str_replace("\xEF\xBB\xBF", '', $v);
-                    $headers[$k] = trim(strtolower(str_replace('"', '', $v)));
-                }
-                
-                while (($data_row = fgetcsv($handle, 1000, $delimiter)) !== FALSE) {
-                    if (count($data_row) < 3) continue;
-                    $row_assoc = [];
-                    foreach ($headers as $idx => $col_name) {
-                        if (isset($data_row[$idx])) {
-                            $row_assoc[$col_name] = trim(str_replace('"', '', $data_row[$idx]));
-                        }
+                foreach ($objetivos as $obj) {
+                    if ((int)$obj['id_objetivo'] === $selected_objetivo_id) {
+                        $objNombre = $obj['nombre'];
+                        break;
                     }
-                    
-                    $rows[] = [
-                        'fecha' => $row_assoc['fecha'] ?? '',
-                        'hora' => $row_assoc['hora'] ?? '',
-                        'tipo' => $row_assoc['tipo'] ?? '',
-                        'vigilador_id' => $row_assoc['vigilador_id'] ?? '',
-                        'nombre' => $row_assoc['nombre'] ?? '',
-                        'apellido' => $row_assoc['apellido'] ?? '',
-                        'observaciones' => $row_assoc['observaciones'] ?? '',
-                    ];
                 }
-                fclose($handle);
             }
-            
+
+            $stmt = $db->prepare("
+                SELECT n.fecha, n.hora, n.tipo_novedad AS tipo, n.observaciones, n.empleado_id AS vigilador_id, e.nombre AS nombre, '' AS apellido
+                FROM novedades n
+                JOIN empleados e ON n.empleado_id = e.id_empleado
+                JOIN objetivos o ON e.objetivo_id = o.id_objetivo
+                WHERE n.fecha BETWEEN ? AND ? $where_obj
+                ORDER BY n.fecha ASC, n.hora ASC
+            ");
+            $stmt->execute($params);
+            $rows = $stmt->fetchAll();
+
             if (empty($rows)) {
-                $error = 'El archivo CSV esta vacio o tiene un formato incorrecto.';
+                $error = 'No se encontraron novedades registradas en el rango de fechas.';
             } else {
-                try {
-                    $db = getDB();
-                    $stmt = $db->query("SELECT id_empleado, nombre, '' AS apellido FROM empleados");
-                    $db_vigiladores = [];
-                    while ($r = $stmt->fetch()) {
-                        $db_vigiladores[(string)$r['id_empleado']] = $r;
-                    }
-                    
-                    foreach ($rows as $k => $row) {
-                        $vid = (string)$row['vigilador_id'];
-                        if (empty($row['nombre']) && isset($db_vigiladores[$vid])) {
-                            $rows[$k]['nombre'] = $db_vigiladores[$vid]['nombre'];
-                            $rows[$k]['apellido'] = $db_vigiladores[$vid]['apellido'];
-                        }
-                    }
-                    
-                    $result_data = calcularLiquidacion($rows);
-                    $_SESSION['last_liquidacion'] = $result_data;
-                    $_SESSION['liquidacion_title'] = "Archivo CSV: " . $file_name;
-                    $title = $_SESSION['liquidacion_title'];
-                    $mostrar_resultados = true;
-                } catch (Exception $e) {
-                    $error = 'Error de base de datos al mapear empleados: ' . $e->getMessage();
-                }
+                $result_data = calcularLiquidacion($rows);
+                $_SESSION['last_liquidacion'] = $result_data;
+                $_SESSION['liquidacion_title'] = "Objetivo: " . $objNombre . " (" . date('d/m/Y', strtotime($fecha_inicio)) . " al " . date('d/m/Y', strtotime($fecha_fin)) . ")";
+                $title = $_SESSION['liquidacion_title'];
+                $mostrar_resultados = true;
             }
-        } else {
-            $error = 'Por favor, seleccione un archivo CSV valido.';
-        }
-    } else if ($action === 'db') {
-        $fecha_inicio = $_POST['fecha_inicio'] ?? '';
-        $fecha_fin = $_POST['fecha_fin'] ?? '';
-        
-        if (empty($fecha_inicio) || empty($fecha_fin)) {
-            $error = 'Por favor, complete ambas fechas.';
-        } else {
-            try {
-                $db = getDB();
-                $stmt = $db->prepare("
-                    SELECT n.fecha, n.hora, n.tipo_novedad AS tipo, n.observaciones, n.empleado_id AS vigilador_id, e.nombre, '' AS apellido
-                    FROM novedades n
-                    JOIN empleados e ON n.empleado_id = e.id_empleado
-                    WHERE n.fecha BETWEEN ? AND ?
-                    ORDER BY n.fecha ASC, n.hora ASC
-                ");
-                $stmt->execute([$fecha_inicio, $fecha_fin]);
-                $rows = $stmt->fetchAll();
-                
-                if (empty($rows)) {
-                    $error = 'No se encontraron novedades registradas en el rango de fechas seleccionado.';
-                } else {
-                    $result_data = calcularLiquidacion($rows);
-                    $_SESSION['last_liquidacion'] = $result_data;
-                    $_SESSION['liquidacion_title'] = "Base de Datos (" . date('d/m/Y', strtotime($fecha_inicio)) . " al " . date('d/m/Y', strtotime($fecha_fin)) . ")";
-                    $title = $_SESSION['liquidacion_title'];
-                    $mostrar_resultados = true;
-                }
-            } catch (Exception $e) {
-                $error = 'Error al consultar la base de datos: ' . $e->getMessage();
-            }
+        } catch (Exception $e) {
+            $error = 'Error al consultar la base de datos: ' . $e->getMessage();
         }
     }
 }
@@ -133,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV — Computo de Horas</title>
+    <title>TDV — Computo de Horas por Objetivo</title>
     <link rel="stylesheet" href="../css/style.css">
     <style>
         .admin-nav {
@@ -157,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         .liq-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 1.2rem;
             margin-bottom: 1.5rem;
         }
@@ -169,8 +121,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 1.5rem;
             border-top: 4px solid var(--primary);
         }
-        .liq-card.csv-card { border-top-color: var(--accent); }
-        .liq-card.db-card { border-top-color: var(--primary); }
         
         .card-header-title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text); }
         
@@ -292,7 +242,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         @media(max-width:768px) {
-            .liq-grid { grid-template-columns: 1fr; }
             .summary-stats { grid-template-columns: 1fr 1fr; }
         }
     </style>
@@ -323,32 +272,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div style="max-width:1000px;margin:0 auto;padding:1.5rem 1rem 3rem;">
 
-    <div class="section-title">📊 Computo y Liquidacion de Horas</div>
+    <div class="section-title">📊 Informe y Cómputo de Horas por Objetivo</div>
     
     <?php if (!empty($error)): ?>
         <div class="alert-error"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <div class="liq-grid">
-        <div class="liq-card csv-card">
-            <div class="card-header-title">📂 Opcion A: Cargar Planilla CSV</div>
-            <form action="liquidacion.php" method="POST" enctype="multipart/form-data">
-                <input type="hidden" name="action" value="csv">
-                <div class="form-group">
-                    <label for="csv_file">Seleccione archivo CSV</label>
-                    <input type="file" id="csv_file" name="csv_file" accept=".csv" required style="width:100%">
-                    <small style="color:var(--text-muted);display:block;margin-top:0.3rem">
-                        Debe contener las columnas: <code>fecha</code>, <code>hora</code>, <code>tipo</code>, <code>vigilador_id</code>.
-                    </small>
-                </div>
-                <button type="submit" class="btn btn-accent" style="margin-top:1rem;width:100%">Procesar Archivo CSV</button>
-            </form>
-        </div>
-
-        <div class="liq-card db-card">
-            <div class="card-header-title">🗄️ Opcion B: Procesar desde la Base de Datos</div>
+        <div class="liq-card">
+            <div class="card-header-title">🔍 Consulta de Asistencias</div>
             <form action="liquidacion.php" method="POST">
-                <input type="hidden" name="action" value="db">
+                <div class="form-group" style="margin-bottom: 1rem;">
+                    <label for="objetivo_id">Seleccione el Objetivo</label>
+                    <select id="objetivo_id" name="objetivo_id" required style="width: 100%;">
+                        <option value="0">— Todos los objetivos —</option>
+                        <?php foreach ($objetivos as $obj): ?>
+                            <option value="<?= $obj['id_objetivo'] ?>" <?= $selected_objetivo_id === (int)$obj['id_objetivo'] ? 'selected' : '' ?>>
+                                <?= htmlspecialchars($obj['nombre']) ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                     <div class="form-group">
                         <label for="fecha_inicio">Fecha Inicio</label>
@@ -359,7 +303,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <input type="date" id="fecha_fin" name="fecha_fin" required value="<?= $_POST['fecha_fin'] ?? date('Y-m-t') ?>">
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="margin-top:1rem;width:100%">Calcular desde Base de Datos</button>
+                <button type="submit" class="btn btn-primary" style="margin-top:1.2rem;width:100%">Generar Informe</button>
             </form>
         </div>
     </div>
@@ -379,7 +323,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ?>
         
         <div class="preview-container">
-            <div class="card-header-title">🖥️ Vista Previa del Calculo: <i><?= htmlspecialchars($title) ?></i></div>
+            <div class="card-header-title">🖥️ Vista Previa: <i><?= htmlspecialchars($title) ?></i></div>
             
             <div class="summary-stats">
                 <div class="stat-box">
@@ -388,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="stat-box">
                     <div class="num"><?= $total_shifts ?></div>
-                    <div class="lbl">Turnos Liquidados</div>
+                    <div class="lbl">Turnos Cerrados</div>
                 </div>
                 <div class="stat-box">
                     <div class="num"><?= formatDecimalHours($total_hours) ?> hs</div>
@@ -396,7 +340,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
                 <div class="stat-box anomaly-box">
                     <div class="num"><?= $total_anomalies ?></div>
-                    <div class="lbl">Anomalias Detectadas</div>
+                    <div class="lbl">Anomalías Detectadas</div>
                 </div>
             </div>
             
@@ -421,7 +365,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?= htmlspecialchars($v['name']) ?>
                                 <span>(ID: <?= $v['vid'] ?>)</span>
                                 <?php if ($v_anomalies > 0): ?>
-                                    <span style="color:var(--danger);font-weight:700">⚠️ <?= $v_anomalies ?> anomalia<?= $v_anomalies > 1 ? 's' : '' ?></span>
+                                    <span style="color:var(--danger);font-weight:700">⚠️ <?= $v_anomalies ?> anomalía<?= $v_anomalies > 1 ? 's' : '' ?></span>
                                 <?php endif; ?>
                             </div>
                             <div class="accordion-hours">
@@ -431,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="accordion-content" id="content-<?= $v['vid'] ?>">
                             <div class="card-header-title" style="font-size:0.85rem;margin-bottom:0.4rem">Detalle de Turnos</div>
                             <?php if (empty($v['shifts'])): ?>
-                                <p style="font-size:0.8rem;color:var(--text-muted);margin:0.5rem 0">No se registraron turnos validos.</p>
+                                <p style="font-size:0.8rem;color:var(--text-muted);margin:0.5rem 0">No se registraron turnos válidos.</p>
                             <?php else: ?>
                                 <table class="table-liq">
                                     <thead>
@@ -454,7 +398,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                 <td>
                                                     <?= $x_dt->format('d/m/Y H:i:s') ?>
                                                     <?php if ($next_day): ?>
-                                                        <span class="badge-nextday">+1 dia</span>
+                                                        <span class="badge-nextday">+1 día</span>
                                                     <?php endif; ?>
                                                 </td>
                                                 <td><strong><?= formatDecimalHours($s['hours']) ?></strong> (<?= number_format($s['hours'], 2, ',', '') ?> hs)</td>
@@ -467,7 +411,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             
                             <?php if (!empty($v['anomalies'])): ?>
                                 <div class="anomalias-list">
-                                    <h4>Inconsistencias Detectadas (Marcas Huerfanas)</h4>
+                                    <h4>Inconsistencias Detectadas (Marcas Huérfanas)</h4>
                                     <ul>
                                         <?php foreach ($v['anomalies'] as $a): ?>
                                             <li>
