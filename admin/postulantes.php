@@ -35,7 +35,7 @@ $esAdminReal = esAdminReal();
         .admin-nav .nav-user { color: rgba(255,255,255,.7); font-size: .82rem; text-align:right; }
         .admin-nav .nav-user strong { display:block; color:#fff; }
 
-        .page-shell { max-width: 1220px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }
+        .page-shell { max-width: 1400px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }
         .page-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
         .page-title { font-size:1.25rem; color:var(--primary); margin:0; }
         .panel { background:var(--card); border-radius:10px; box-shadow:var(--shadow); padding:1rem; margin-bottom:1rem; }
@@ -50,10 +50,10 @@ $esAdminReal = esAdminReal();
         .filters input,
         .filters select { font-size:.95rem; padding:.7rem .8rem; border-radius:8px; }
         .filter-actions { display:flex; gap:.5rem; justify-content:flex-end; align-items:end; }
-        .row-actions { display:flex; gap:.45rem; align-items:center; flex-wrap:wrap; }
+        .row-actions { display:flex; gap:.45rem; align-items:center; flex-wrap:nowrap; }
 
         .table-wrap { overflow-x:auto; background:var(--card); border-radius:10px; box-shadow:var(--shadow); }
-        table { width:100%; border-collapse:collapse; min-width:980px; }
+        table { width:100%; border-collapse:collapse; min-width:1200px; }
         th {
             background:var(--primary);
             color:#fff;
