@@ -89,10 +89,7 @@ if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
         <a href="objetivos.php">Objetivos</a>
         <a href="reportes.php">Reportes</a>
         <?php endif; ?>
-        <a href="informe_horas.php">Horas</a>
-        <?php if ($esAdminReal): ?>
-        <a href="migracion.php">Migracion</a>
-        <?php endif; ?>
+        <a href="liquidacion.php">Horas</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
