@@ -78,7 +78,7 @@ try {
     // Standard HTML Email Headers
     $headers = "MIME-Version: 1.0" . "\r\n";
     $headers .= "Content-Type: text/html; charset=UTF-8" . "\r\n";
-    $headers .= "From: TDV Seguridad <noresponder@tdvsrl.com>" . "\r\n";
+    $headers .= "From: TDV SRL - TRACK SEGURIDAD <noresponder@tdvsrl.com>" . "\r\n";
     $headers .= "Reply-To: noresponder@tdvsrl.com" . "\r\n";
     $headers .= "X-Mailer: PHP/" . phpversion();
 
