@@ -193,6 +193,14 @@ $esAdminReal = esAdminReal();
                 <input type="text" id="puesto_postula" placeholder="Ej: Vigilador">
             </div>
             <div class="form-group">
+                <label for="edad_desde">Edad desde</label>
+                <input type="number" id="edad_desde" min="0" placeholder="Min">
+            </div>
+            <div class="form-group">
+                <label for="edad_hasta">Edad hasta</label>
+                <input type="number" id="edad_hasta" min="0" placeholder="Max">
+            </div>
+            <div class="form-group">
                 <label for="desde">Desde</label>
                 <input type="date" id="desde">
             </div>
@@ -274,7 +282,7 @@ async function cargar() {
 
 function paramsFiltros() {
     const params = new URLSearchParams();
-    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'desde', 'hasta'].forEach(id => {
+    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'edad_desde', 'edad_hasta', 'desde', 'hasta'].forEach(id => {
         const v = valor(id);
         if (v) params.set(id, v);
     });
@@ -294,7 +302,7 @@ function render(items) {
             <tr>
                 <td>
                     <div class="name">${esc(p.nombre_completo)}</div>
-                    <div class="muted">DNI ${esc(p.dni)} - Nac. ${fmtFecha(p.fecha_nacimiento)}</div>
+                    <div class="muted">DNI ${esc(p.dni)} - Nac. ${fmtFecha(p.fecha_nacimiento)}${p.edad ? ` (${esc(p.edad)} años)` : ''}</div>
                 </td>
                 <td>
                     <div>${esc(p.telefono)}</div>

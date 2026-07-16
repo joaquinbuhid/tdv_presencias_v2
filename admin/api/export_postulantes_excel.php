@@ -42,10 +42,27 @@ $parteEmpresa = param('parte_track_seguridad');
 $puesto = param('puesto_postula');
 $desde = validarFecha(param('desde'));
 $hasta = validarFecha(param('hasta'));
+$edad_desde = param('edad_desde');
+$edad_hasta = param('edad_hasta');
 
 if ($desde && $hasta && $desde > $hasta) {
     http_response_code(400);
     echo 'La fecha desde no puede ser mayor que la fecha hasta';
+    exit;
+}
+if ($edad_desde !== '' && (!ctype_digit($edad_desde) || (int)$edad_desde < 0)) {
+    http_response_code(400);
+    echo 'La edad desde debe ser un número entero válido y mayor o igual a 0';
+    exit;
+}
+if ($edad_hasta !== '' && (!ctype_digit($edad_hasta) || (int)$edad_hasta < 0)) {
+    http_response_code(400);
+    echo 'La edad hasta debe ser un número entero válido y mayor o igual a 0';
+    exit;
+}
+if ($edad_desde !== '' && $edad_hasta !== '' && (int)$edad_desde > (int)$edad_hasta) {
+    http_response_code(400);
+    echo 'La edad desde no puede ser mayor que la edad hasta';
     exit;
 }
 
@@ -90,9 +107,21 @@ if ($hasta) {
     $params[] = $hasta;
 }
 
+if ($edad_desde !== '') {
+    $where[] = "TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) >= ?";
+    $params[] = (int)$edad_desde;
+}
+
+if ($edad_hasta !== '') {
+    $where[] = "TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) <= ?";
+    $params[] = (int)$edad_hasta;
+}
+
 try {
     $db = getDB();
-    $sql = "SELECT id, nombre_completo, dni, fecha_nacimiento, telefono, email,
+    $sql = "SELECT id, nombre_completo, dni, fecha_nacimiento,
+                   TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad,
+                   telefono, email,
                    localidad_residencia, experiencia_seguridad, curso_habilitante,
                    credencial_vigente, disponibilidad_horaria, puesto_postula,
                    parte_track_seguridad, archivo_adjunto,
@@ -140,6 +169,7 @@ echo "\xEF\xBB\xBF";
             <th>Nombre completo</th>
             <th>DNI</th>
             <th>Fecha nacimiento</th>
+            <th>Edad</th>
             <th>Telefono</th>
             <th>Email</th>
             <th>Localidad</th>
@@ -161,6 +191,7 @@ echo "\xEF\xBB\xBF";
             <td><?= excelCell($row['nombre_completo'] ?? '') ?></td>
             <td><?= excelCell($row['dni'] ?? '') ?></td>
             <td><?= excelCell($row['fecha_nacimiento'] ?? '') ?></td>
+            <td><?= excelCell($row['edad'] ?? '') ?></td>
             <td><?= excelCell($row['telefono'] ?? '') ?></td>
             <td><?= excelCell($row['email'] ?? '') ?></td>
             <td><?= excelCell($row['localidad_residencia'] ?? '') ?></td>
