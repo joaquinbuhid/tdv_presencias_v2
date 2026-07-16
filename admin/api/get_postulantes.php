@@ -28,6 +28,7 @@ $desde = validarFecha(param('desde'));
 $hasta = validarFecha(param('hasta'));
 $edad_desde = param('edad_desde');
 $edad_hasta = param('edad_hasta');
+$genero = param('genero');
 
 if ($edad_desde !== '' && (!ctype_digit($edad_desde) || (int)$edad_desde < 0)) {
     http_response_code(400);
@@ -99,6 +100,15 @@ if ($edad_hasta !== '') {
     $params[] = (int)$edad_hasta;
 }
 
+if ($genero !== '') {
+    if ($genero === 'vacio') {
+        $where[] = "(genero IS NULL OR genero NOT IN ('1', '2'))";
+    } else {
+        $where[] = "genero = ?";
+        $params[] = $genero;
+    }
+}
+
 if ($desde && $hasta && $desde > $hasta) {
     http_response_code(400);
     echo json_encode(['error' => 'La fecha desde no puede ser mayor que la fecha hasta']);
@@ -111,6 +121,11 @@ try {
                    localidad_residencia, experiencia_seguridad, curso_habilitante,
                    credencial_vigente, disponibilidad_horaria, puesto_postula,
                    parte_track_seguridad, archivo_adjunto,
+                   CASE 
+                       WHEN genero = '1' THEN 'Masculino'
+                       WHEN genero = '2' THEN 'Femenino'
+                       ELSE 'No especificado'
+                   END AS genero,
                    TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad,
                    DATE_FORMAT(fecha_registro, '%d/%m/%Y %H:%i') AS fecha_registro_fmt,
                    fecha_registro

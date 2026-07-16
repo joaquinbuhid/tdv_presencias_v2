@@ -45,6 +45,7 @@ $hasta = validarFecha(param('hasta'));
 $edad_desde = param('edad_desde');
 $edad_hasta = param('edad_hasta');
 $ids_param = param('ids');
+$genero = param('genero');
 
 if ($desde && $hasta && $desde > $hasta) {
     http_response_code(400);
@@ -118,6 +119,15 @@ if ($edad_hasta !== '') {
     $params[] = (int)$edad_hasta;
 }
 
+if ($genero !== '') {
+    if ($genero === 'vacio') {
+        $where[] = "(genero IS NULL OR genero NOT IN ('1', '2'))";
+    } else {
+        $where[] = "genero = ?";
+        $params[] = $genero;
+    }
+}
+
 if ($ids_param !== '') {
     $ids_array = array_filter(array_map('intval', explode(',', $ids_param)));
     if (!empty($ids_array)) {
@@ -133,6 +143,11 @@ try {
     $db = getDB();
     $sql = "SELECT id, nombre_completo, dni, fecha_nacimiento,
                    TIMESTAMPDIFF(YEAR, fecha_nacimiento, CURDATE()) AS edad,
+                   CASE 
+                       WHEN genero = '1' THEN 'Masculino'
+                       WHEN genero = '2' THEN 'Femenino'
+                       ELSE 'No especificado'
+                   END AS genero,
                    telefono, email,
                    localidad_residencia, experiencia_seguridad, curso_habilitante,
                    credencial_vigente, disponibilidad_horaria, puesto_postula,
@@ -182,6 +197,7 @@ echo "\xEF\xBB\xBF";
             <th>DNI</th>
             <th>Fecha nacimiento</th>
             <th>Edad</th>
+            <th>Género</th>
             <th>Telefono</th>
             <th>Email</th>
             <th>Localidad</th>
@@ -204,6 +220,7 @@ echo "\xEF\xBB\xBF";
             <td><?= excelCell($row['dni'] ?? '') ?></td>
             <td><?= excelCell($row['fecha_nacimiento'] ?? '') ?></td>
             <td><?= excelCell($row['edad'] ?? '') ?></td>
+            <td><?= excelCell($row['genero'] ?? '') ?></td>
             <td><?= excelCell($row['telefono'] ?? '') ?></td>
             <td><?= excelCell($row['email'] ?? '') ?></td>
             <td><?= excelCell($row['localidad_residencia'] ?? '') ?></td>

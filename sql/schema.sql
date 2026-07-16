@@ -106,6 +106,7 @@ CREATE TABLE IF NOT EXISTS postulantes (
   puesto_postula varchar(255) NOT NULL,
   parte_track_seguridad enum('si','no') NOT NULL,
   archivo_adjunto varchar(255) DEFAULT NULL,
+  genero varchar(50) DEFAULT NULL,
   fecha_registro timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),
   KEY idx_postulantes_fecha (fecha_registro),

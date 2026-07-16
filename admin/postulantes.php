@@ -178,6 +178,15 @@ $esAdminReal = esAdminReal();
                 </select>
             </div>
             <div class="form-group">
+                <label for="genero">Género</label>
+                <select id="genero">
+                    <option value="">Todos</option>
+                    <option value="1">Masculino</option>
+                    <option value="2">Femenino</option>
+                    <option value="vacio">No especificado</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="parte_track_seguridad">Fue parte</label>
                 <select id="parte_track_seguridad">
                     <option value="">Todos</option>
@@ -290,7 +299,7 @@ async function cargar() {
 
 function paramsFiltros() {
     const params = new URLSearchParams();
-    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'edad_desde', 'edad_hasta', 'desde', 'hasta'].forEach(id => {
+    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'edad_desde', 'edad_hasta', 'genero', 'desde', 'hasta'].forEach(id => {
         const v = valor(id);
         if (v) params.set(id, v);
     });
@@ -306,6 +315,7 @@ function render(items) {
 
     tbody.innerHTML = items.map((p) => {
         const adjunto = renderAdjunto(p.archivo_adjunto);
+        const genLabel = p.genero && p.genero !== 'No especificado' ? ` - ${esc(p.genero)}` : '';
         return `
             <tr>
                 <td style="text-align: center; vertical-align: middle;">
@@ -313,7 +323,7 @@ function render(items) {
                 </td>
                 <td>
                     <div class="name">${esc(p.nombre_completo)}</div>
-                    <div class="muted">DNI ${esc(p.dni)} - Nac. ${fmtFecha(p.fecha_nacimiento)}${p.edad ? ` (${esc(p.edad)} años)` : ''}</div>
+                    <div class="muted">DNI ${esc(p.dni)} - Nac. ${fmtFecha(p.fecha_nacimiento)}${p.edad ? ` (${esc(p.edad)} años)` : ''}${genLabel}</div>
                 </td>
                 <td>
                     <div>${esc(p.telefono)}</div>
