@@ -84,6 +84,7 @@ $esAdminReal = esAdminReal();
         <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php">&#x1F464; Empleados</a>
+        <a href="legajos.php">Legajos</a>
         <a href="supervisores.php" class="active">&#x1F4BC; Supervisores</a>
         <?php if ($esAdminReal): ?>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>

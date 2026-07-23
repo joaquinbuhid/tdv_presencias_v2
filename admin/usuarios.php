@@ -84,6 +84,7 @@ if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
         <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php" class="<?= $altaEmpleado ? 'active' : '' ?>">Empleados</a>
+        <a href="legajos.php">Legajos</a>
         <a href="supervisores.php">Supervisores</a>
         <?php if ($esAdminReal): ?>
         <a href="objetivos.php">Objetivos</a>

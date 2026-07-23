@@ -249,6 +249,7 @@ $pre_ids = $_GET['ids'] ?? '';
         <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php">Empleados</a>
+        <a href="legajos.php">Legajos</a>
         <a href="supervisores.php">Supervisores</a>
         <?php if ($esAdminReal): ?>
         <a href="objetivos.php">Objetivos</a>

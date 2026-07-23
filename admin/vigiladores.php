@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/auth.php';
 requireBackofficePage();
+require_once '../config/db.php';
+$db = getDB();
+$empresas = $db->query("SELECT id_empresa, nombre FROM empresas ORDER BY nombre")->fetchAll();
 $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 $esAdminReal = esAdminReal();
 $puedeCrearEmpleado = $esAdminReal || esOficinista();
@@ -84,7 +87,7 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
         .modal {
             background:#fff;border-radius:var(--radius);
             box-shadow:0 8px 40px rgba(0,0,0,.25);
-            width:100%;max-width:560px;max-height:90vh;overflow-y:auto;
+            width:100%;max-width:760px;max-height:90vh;overflow-y:auto;
             padding:1.8rem;
         }
         .modal-header {
@@ -118,6 +121,7 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
         <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php" class="active">&#x1F464; Empleados</a>
+        <a href="legajos.php">&#x1F4C1; Legajos</a>
         <a href="supervisores.php">&#x1F4BC; Supervisores</a>
         <?php if ($esAdminReal): ?>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
@@ -177,44 +181,144 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
         <form id="formVigilador" novalidate>
             <input type="hidden" id="fId" value="0">
 
-            <div class="form-group">
-                <label for="fNombre">Nombre completo <span style="color:var(--danger)">*</span></label>
-                <input type="text" id="fNombre" required>
+            <!-- DATOS PERSONALES -->
+            <div style="font-weight:700; font-size:.9rem; border-bottom:1px solid var(--border); padding-bottom:.2rem; margin:0 0 .8rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px;">Datos Personales</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fNombre">Nombre completo <span style="color:var(--danger)">*</span></label>
+                    <input type="text" id="fNombre" required>
+                </div>
+                <div class="form-group">
+                    <label for="fCuil">CUIL</label>
+                    <input type="text" id="fCuil" placeholder="20-30111222-3">
+                </div>
             </div>
-
             <div class="form-row">
                 <div class="form-group">
                     <label for="fDni">DNI <span style="color:var(--danger)">*</span></label>
                     <input type="text" id="fDni" required maxlength="15">
                 </div>
                 <div class="form-group">
-                    <label for="fTelefono">Teléfono</label>
-                    <input type="text" id="fTelefono">
+                    <label for="fFechaNac">Fecha de nacimiento</label>
+                    <input type="date" id="fFechaNac">
                 </div>
             </div>
-
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fEstCivil">Estado civil</label>
+                    <select id="fEstCivil">
+                        <option value="No informado">No informado</option>
+                        <option value="Soltero/a">Soltero/a</option>
+                        <option value="Casado/a">Casado/a</option>
+                        <option value="Divorciado/a">Divorciado/a</option>
+                        <option value="Viudo/a">Viudo/a</option>
+                        <option value="Union convivencial">Unión convivencial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="fTelefono">Teléfono <span style="color:var(--danger)">*</span></label>
+                    <input type="text" id="fTelefono" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fNacionalidad">Nacionalidad</label>
+                    <input type="text" id="fNacionalidad" placeholder="Argentina">
+                </div>
+                <div class="form-group">
+                    <!-- Espacio vacío -->
+                </div>
+            </div>
             <div class="form-group">
-                <label for="fEmail">Email <span style="color:var(--danger)">*</span></label>
-                <input type="email" id="fEmail" required>
-                <input type="hidden" id="fUsuario">
+                <label for="fDomicilio">Domicilio</label>
+                <textarea id="fDomicilio" rows="2" placeholder="Calle, número, localidad"></textarea>
             </div>
 
+            <!-- ACCESO Y SEGURIDAD -->
+            <div style="font-weight:700; font-size:.9rem; border-bottom:1px solid var(--border); padding-bottom:.2rem; margin:1.2rem 0 .8rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px;">Acceso y Seguridad</div>
             <div class="form-row">
+                <div class="form-group">
+                    <label for="fEmail">Email <span style="color:var(--danger)">*</span></label>
+                    <input type="email" id="fEmail" required>
+                    <input type="hidden" id="fUsuario">
+                </div>
                 <div class="form-group">
                     <label for="fPass">Contraseña <span id="passRequired" style="color:var(--danger)">*</span></label>
                     <input type="password" id="fPass" autocomplete="new-password" placeholder="••••••••">
-                    <small id="passHint" style="display:none;color:var(--text-muted);font-size:.75rem;">
-                        Dejar vacío para mantener la actual.
-                    </small>
+                    <small id="passHint" style="display:none;color:var(--text-muted);font-size:.75rem;">Dejar vacío para mantener la actual.</small>
                 </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fTipo">Rol / Tipo de usuario</label>
+                    <select id="fTipo">
+                        <option value="1">Vigilador</option>
+                        <option value="2">Supervisor</option>
+                        <option value="3">Oficinista</option>
+                        <option value="4">Administrador</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <div style="display:flex; gap:1.5rem; align-items:center; min-height:45px;">
+                        <label style="display:flex; align-items:center; gap:.4rem; cursor:pointer;">
+                            <input type="checkbox" id="fActivo" checked> Activo
+                        </label>
+                        <label style="display:flex; align-items:center; gap:.4rem; cursor:pointer;">
+                            <input type="checkbox" id="fPendiente"> Pendiente
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ASIGNACIÓN LABORAL -->
+            <div style="font-weight:700; font-size:.9rem; border-bottom:1px solid var(--border); padding-bottom:.2rem; margin:1.2rem 0 .8rem; color:var(--primary); text-transform:uppercase; letter-spacing:0.5px;">Asignación Laboral</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fFechaAlta">Fecha de alta</label>
+                    <input type="date" id="fFechaAlta">
+                </div>
+                <div class="form-group">
+                    <label for="fEmpresa">Empresa</label>
+                    <select id="fEmpresa">
+                        <option value="">- Sin empresa -</option>
+                        <?php foreach ($empresas as $emp): ?>
+                            <option value="<?= $emp['id_empresa'] ?>"><?= htmlspecialchars($emp['nombre']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
                 <div class="form-group">
                     <label for="fObjetivo">Objetivo asignado</label>
                     <select id="fObjetivo">
                         <option value="">- Sin objetivo -</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label for="fNroLegajo">Nro. legajo</label>
+                    <input type="text" id="fNroLegajo" maxlength="20">
+                </div>
             </div>
-
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fNroCredencial">Nro. credencial</label>
+                    <input type="text" id="fNroCredencial" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="fFechaVencCred">Vencimiento credencial</label>
+                    <input type="date" id="fFechaVencCred">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="fUrlLeg">URL legajo</label>
+                    <input type="url" id="fUrlLeg" placeholder="tdvsrl.com/legajos/...">
+                </div>
+                <div class="form-group">
+                    <!-- Espacio vacío -->
+                </div>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="fHoraEntrada">Hora de entrada</label>
@@ -226,7 +330,7 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
                 </div>
             </div>
 
-            <div style="display:flex;gap:.8rem;justify-content:flex-end;margin-top:1rem;">
+            <div style="display:flex;gap:.8rem;justify-content:flex-end;margin-top:1.5rem;">
                 <button type="button" class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
                 <button type="submit" class="btn btn-primary" id="btnGuardar" style="width:auto;min-width:120px;">
                     Guardar
@@ -343,14 +447,28 @@ function abrirModal(id) {
         apiFetch('api/get_vigiladores.php').then(list => {
             const v = list.find(x => x.id_empleado == id);
             if (!v) return;
-            document.getElementById('fNombre').value      = v.nombre;
-            document.getElementById('fDni').value         = v.dni;
-            document.getElementById('fTelefono').value   = v.telefono || '';
-            document.getElementById('fEmail').value       = v.email    || '';
-            document.getElementById('fUsuario').value     = v.usuario;
-            document.getElementById('fObjetivo').value   = v.objetivo_id || '';
-            document.getElementById('fHoraEntrada').value = v.hora_entrada ? v.hora_entrada.substr(0,5) : '';
-            document.getElementById('fHoraSalida').value  = v.hora_salida  ? v.hora_salida.substr(0,5)  : '';
+            document.getElementById('fNombre').value        = v.nombre || '';
+            document.getElementById('fDni').value           = v.dni_real || v.dni || '';
+            document.getElementById('fCuil').value          = v.cuil || '';
+            document.getElementById('fFechaNac').value      = v.fecha_nac || '';
+            document.getElementById('fEstCivil').value      = v.est_civil || 'No informado';
+            document.getElementById('fTelefono').value      = v.telefono || '';
+            document.getElementById('fNacionalidad').value  = v.nacionalidad || '';
+            document.getElementById('fDomicilio').value     = v.domicilio || '';
+            document.getElementById('fEmail').value         = v.email || '';
+            document.getElementById('fUsuario').value       = v.usuario || '';
+            document.getElementById('fTipo').value          = v.tipo || '1';
+            document.getElementById('fActivo').checked      = parseInt(v.activo) === 1;
+            document.getElementById('fPendiente').checked   = parseInt(v.pendiente) === 1;
+            document.getElementById('fFechaAlta').value     = v.fecha_alta || '';
+            document.getElementById('fEmpresa').value       = v.empresa_id || '';
+            document.getElementById('fObjetivo').value      = v.objetivo_id || '';
+            document.getElementById('fNroLegajo').value     = v.nro_legajo || '';
+            document.getElementById('fNroCredencial').value = v.nro_credencial || '';
+            document.getElementById('fFechaVencCred').value = v.fecha_venc_cred || '';
+            document.getElementById('fUrlLeg').value        = v.url_leg || '';
+            document.getElementById('fHoraEntrada').value   = v.hora_entrada ? v.hora_entrada.substr(0,5) : '';
+            document.getElementById('fHoraSalida').value    = v.hora_salida ? v.hora_salida.substr(0,5) : '';
         });
     }
 
@@ -372,16 +490,30 @@ async function onGuardar(e) {
     const errDiv = document.getElementById('modalError');
     errDiv.classList.remove('show');
 
-    const id          = parseInt(document.getElementById('fId').value);
-    const nombre      = document.getElementById('fNombre').value.trim();
-    const dni         = document.getElementById('fDni').value.trim();
-    const telefono    = document.getElementById('fTelefono').value.trim();
-    const email       = document.getElementById('fEmail').value.trim();
-    const usuario     = email;
-    const pass        = document.getElementById('fPass').value;
-    const obj_id      = document.getElementById('fObjetivo').value;
-    const horaEntrada = document.getElementById('fHoraEntrada').value;
-    const horaSalida  = document.getElementById('fHoraSalida').value;
+    const id            = parseInt(document.getElementById('fId').value);
+    const nombre        = document.getElementById('fNombre').value.trim();
+    const cuil          = document.getElementById('fCuil').value.trim();
+    const dni           = document.getElementById('fDni').value.trim();
+    const fechaNac      = document.getElementById('fFechaNac').value;
+    const estCivil      = document.getElementById('fEstCivil').value;
+    const telefono      = document.getElementById('fTelefono').value.trim();
+    const nacionalidad  = document.getElementById('fNacionalidad').value.trim();
+    const domicilio     = document.getElementById('fDomicilio').value.trim();
+    const email         = document.getElementById('fEmail').value.trim();
+    const usuario       = email;
+    const pass          = document.getElementById('fPass').value;
+    const tipo          = document.getElementById('fTipo').value;
+    const activo        = document.getElementById('fActivo').checked ? 1 : 0;
+    const pendiente     = document.getElementById('fPendiente').checked ? 1 : 0;
+    const fechaAlta     = document.getElementById('fFechaAlta').value;
+    const empresaId     = document.getElementById('fEmpresa').value;
+    const obj_id        = document.getElementById('fObjetivo').value;
+    const nroLegajo     = document.getElementById('fNroLegajo').value.trim();
+    const nroCredencial = document.getElementById('fNroCredencial').value.trim();
+    const fechaVencCred = document.getElementById('fFechaVencCred').value;
+    const urlLeg        = document.getElementById('fUrlLeg').value.trim();
+    const horaEntrada   = document.getElementById('fHoraEntrada').value;
+    const horaSalida    = document.getElementById('fHoraSalida').value;
 
     if (!nombre || !dni || !telefono || !email) {
         document.getElementById('modalErrorMsg').textContent = 'Complete todos los campos obligatorios.';
@@ -398,9 +530,14 @@ async function onGuardar(e) {
 
     try {
         await apiFetch('api/guardar_vigilador.php', 'POST', {
-            id, nombre, dni, telefono, email, usuario,
-            contrasena:   pass,
+            id, nombre, cuil, dni, fecha_nac: fechaNac, est_civil: estCivil,
+            telefono, nacionalidad, domicilio, email, usuario, contrasena: pass,
+            tipo, activo, pendiente, fecha_alta: fechaAlta, empresa_id: empresaId,
             objetivo_id:  obj_id     !== '' ? obj_id     : null,
+            nro_legajo:   nroLegajo,
+            nro_credencial: nroCredencial,
+            fecha_venc_cred: fechaVencCred,
+            url_leg:      urlLeg,
             hora_entrada: horaEntrada !== '' ? horaEntrada : null,
             hora_salida:  horaSalida  !== '' ? horaSalida  : null,
         });
