@@ -66,7 +66,7 @@ if ($oldLegajo !== '' && $oldLegajo !== $newLegajo) {
 }
 
 // Calculate the new URL Legajo
-$url_leg = 'tdvsrl.com/legajos/' . $newLegajo . '+' . str_replace(' ', '+', $emp['nombre']);
+$url_leg = 'tdvsrl.com/legajos/' . $newLegajo . '_' . str_replace(' ', '_', $emp['nombre']);
 
 // Update the database
 $updateStmt = $db->prepare("UPDATE empleados SET nro_legajo = ?, url_leg = ? WHERE id_empleado = ?");
