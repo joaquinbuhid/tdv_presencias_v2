@@ -23,6 +23,7 @@ if (isset($_SESSION['empleado_id'])) {
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>TDV — Ingresar</title>
     <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
 

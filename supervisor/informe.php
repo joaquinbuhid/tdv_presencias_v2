@@ -88,6 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV — Informe de Objetivos</title>
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
         .sup-nav {
             background: var(--primary-dk);

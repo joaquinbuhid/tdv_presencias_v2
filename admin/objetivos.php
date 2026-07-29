@@ -10,6 +10,7 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV - Objetivos</title>
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
         .admin-nav {
             background: var(--primary-dk);

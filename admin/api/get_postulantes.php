@@ -29,6 +29,8 @@ $hasta = validarFecha(param('hasta'));
 $edad_desde = param('edad_desde');
 $edad_hasta = param('edad_hasta');
 $genero = param('genero');
+$monotributista = param('monotributista');
+$tieneBaja = param('tiene_baja');
 
 if ($edad_desde !== '' && (!ctype_digit($edad_desde) || (int)$edad_desde < 0)) {
     http_response_code(400);
@@ -60,6 +62,7 @@ $enumSiNo = [
     'curso_habilitante' => $curso,
     'credencial_vigente' => $credencial,
     'parte_track_seguridad' => $parteEmpresa,
+    'monotributista' => $monotributista,
 ];
 
 foreach ($enumSiNo as $campo => $valor) {
@@ -109,6 +112,14 @@ if ($genero !== '') {
     }
 }
 
+if ($tieneBaja !== '') {
+    if ($tieneBaja === 'si') {
+        $where[] = "(baja_adjunta IS NOT NULL AND baja_adjunta != '')";
+    } else if ($tieneBaja === 'no') {
+        $where[] = "(baja_adjunta IS NULL OR baja_adjunta = '')";
+    }
+}
+
 if ($desde && $hasta && $desde > $hasta) {
     http_response_code(400);
     echo json_encode(['error' => 'La fecha desde no puede ser mayor que la fecha hasta']);
@@ -121,6 +132,7 @@ try {
                    localidad_residencia, experiencia_seguridad, curso_habilitante,
                    credencial_vigente, disponibilidad_horaria, puesto_postula,
                    parte_track_seguridad, archivo_adjunto,
+                   monotributista, baja_adjunta,
                    CASE 
                        WHEN genero = '1' THEN 'Masculino'
                        WHEN genero = '2' THEN 'Femenino'

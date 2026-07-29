@@ -11,6 +11,7 @@ $esAdminReal = esAdminReal();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV - Postulantes</title>
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
         .admin-nav {
             background: var(--primary-dk);
@@ -197,6 +198,22 @@ $esAdminReal = esAdminReal();
                 </select>
             </div>
             <div class="form-group">
+                <label for="monotributista">Monotributista</label>
+                <select id="monotributista">
+                    <option value="">Todos</option>
+                    <option value="si">Sí</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="tiene_baja">Documento baja</label>
+                <select id="tiene_baja">
+                    <option value="">Todos</option>
+                    <option value="si">Con baja</option>
+                    <option value="no">Sin baja</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="puesto_postula">Puesto</label>
                 <input type="text" id="puesto_postula" placeholder="Ej: Vigilador">
             </div>
@@ -302,7 +319,7 @@ async function cargar() {
 
 function paramsFiltros() {
     const params = new URLSearchParams();
-    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'edad_desde', 'edad_hasta', 'genero', 'desde', 'hasta'].forEach(id => {
+    ['q', 'experiencia_seguridad', 'curso_habilitante', 'credencial_vigente', 'disponibilidad_horaria', 'parte_track_seguridad', 'puesto_postula', 'edad_desde', 'edad_hasta', 'genero', 'desde', 'hasta', 'monotributista', 'tiene_baja'].forEach(id => {
         const v = valor(id);
         if (v) params.set(id, v);
     });
@@ -354,8 +371,16 @@ function render(items) {
                             <div class="detail-value">${pillSiNo(p.parte_track_seguridad)}</div>
                         </div>
                         <div class="detail-item">
+                            <div class="detail-label">Monotributista</div>
+                            <div class="detail-value">${pillSiNo(p.monotributista)}</div>
+                        </div>
+                        <div class="detail-item">
                             <div class="detail-label">Archivo adjunto</div>
                             <div class="detail-value">${adjunto}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Documento baja</div>
+                            <div class="detail-value">${renderAdjunto(p.baja_adjunta)}</div>
                         </div>
                         <div class="detail-item">
                             <div class="detail-label">Email</div>

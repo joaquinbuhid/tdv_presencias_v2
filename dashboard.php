@@ -32,6 +32,7 @@ $vigi = $stmt->fetch();
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>TDV — Panel</title>
     <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
 

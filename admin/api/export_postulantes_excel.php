@@ -46,6 +46,8 @@ $edad_desde = param('edad_desde');
 $edad_hasta = param('edad_hasta');
 $ids_param = param('ids');
 $genero = param('genero');
+$monotributista = param('monotributista');
+$tieneBaja = param('tiene_baja');
 
 if ($desde && $hasta && $desde > $hasta) {
     http_response_code(400);
@@ -82,6 +84,7 @@ foreach ([
     'curso_habilitante' => $curso,
     'credencial_vigente' => $credencial,
     'parte_track_seguridad' => $parteEmpresa,
+    'monotributista' => $monotributista,
 ] as $campo => $valor) {
     if ($valor === 'si' || $valor === 'no') {
         $where[] = "{$campo} = ?";
@@ -128,6 +131,14 @@ if ($genero !== '') {
     }
 }
 
+if ($tieneBaja !== '') {
+    if ($tieneBaja === 'si') {
+        $where[] = "(baja_adjunta IS NOT NULL AND baja_adjunta != '')";
+    } else if ($tieneBaja === 'no') {
+        $where[] = "(baja_adjunta IS NULL OR baja_adjunta = '')";
+    }
+}
+
 if ($ids_param !== '') {
     $ids_array = array_filter(array_map('intval', explode(',', $ids_param)));
     if (!empty($ids_array)) {
@@ -152,6 +163,7 @@ try {
                    localidad_residencia, experiencia_seguridad, curso_habilitante,
                    credencial_vigente, disponibilidad_horaria, puesto_postula,
                    parte_track_seguridad, archivo_adjunto,
+                   monotributista, baja_adjunta,
                    DATE_FORMAT(fecha_registro, '%d/%m/%Y %H:%i') AS fecha_registro_fmt
             FROM postulantes";
 
@@ -207,7 +219,9 @@ echo "\xEF\xBB\xBF";
             <th>Disponibilidad</th>
             <th>Puesto</th>
             <th>Fue parte de Track</th>
+            <th>Monotributista</th>
             <th>Archivo adjunto</th>
+            <th>Documento baja</th>
             <th>Fecha registro</th>
         </tr>
     </thead>
@@ -230,7 +244,14 @@ echo "\xEF\xBB\xBF";
             <td><?= excelCell($row['disponibilidad_horaria'] ?? '') ?></td>
             <td><?= excelCell($row['puesto_postula'] ?? '') ?></td>
             <td><?= excelCell($row['parte_track_seguridad'] ?? '') ?></td>
+            <td><?= excelCell(strtoupper($row['monotributista'] ?? 'no')) ?></td>
             <td><?php if ($url): ?><a href="<?= excelCell($url) ?>"><?= excelCell($url) ?></a><?php endif; ?></td>
+            <td>
+                <?php 
+                $urlBaja = archivoUrl($row['baja_adjunta'] ?? '');
+                if ($urlBaja): 
+                ?><a href="<?= excelCell($urlBaja) ?>"><?= excelCell($urlBaja) ?></a><?php endif; ?>
+            </td>
             <td><?= excelCell($row['fecha_registro_fmt'] ?? '') ?></td>
         </tr>
         <?php endforeach; ?>
