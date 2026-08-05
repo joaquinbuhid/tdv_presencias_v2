@@ -27,7 +27,7 @@ try {
              SELECT 1 FROM novedades n2
              JOIN tipo_novedad tn2 ON n2.tipo_novedad = tn2.id_tipo
              WHERE n2.empleado_id = e.id_empleado
-               AND n2.fecha = :hoy
+               AND n2.fecha = :hoy_sub
                AND tn2.nombre = 'Entrada'
            )
            AND (
@@ -40,7 +40,7 @@ try {
                  SELECT 1 FROM novedades n3
                  JOIN tipo_novedad tn3 ON n3.tipo_novedad = tn3.id_tipo
                  WHERE n3.empleado_id = e.id_empleado
-                   AND n3.fecha = :ayer
+                   AND n3.fecha = :ayer_sub
                    AND tn3.nombre = 'Salida'
                )
              )
@@ -55,6 +55,8 @@ try {
     $stmt->execute([
         'hoy'         => date('Y-m-d'),
         'ayer'        => date('Y-m-d', strtotime('-1 day')),
+        'hoy_sub'     => date('Y-m-d'),
+        'ayer_sub'    => date('Y-m-d', strtotime('-1 day')),
         'hora_actual' => date('H:i:s'),
     ]);
 
@@ -91,5 +93,5 @@ try {
     echo json_encode($rows);
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error consultando presencias: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Error consultando presencias']);
 }
