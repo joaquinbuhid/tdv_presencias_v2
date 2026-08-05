@@ -40,9 +40,28 @@ $sql = "SELECT
             n.fecha = :hoy
             OR (
               n.fecha = :ayer
-              AND e.hora_entrada > e.hora_salida
-              AND n.hora >= ADDTIME(e.hora_entrada, '-03:00:00')
-              AND :hora_actual < ADDTIME(e.hora_entrada, '-03:00:00')
+              AND NOT EXISTS (
+                SELECT 1 FROM novedades n2
+                JOIN tipo_novedad tn2 ON n2.tipo_novedad = tn2.id_tipo
+                WHERE n2.empleado_id = e.id_empleado
+                  AND n2.fecha = :hoy
+                  AND tn2.nombre = 'Entrada'
+              )
+              AND (
+                (e.hora_entrada > e.hora_salida AND n.hora >= ADDTIME(e.hora_entrada, '-03:00:00') AND :hora_actual < ADDTIME(e.hora_entrada, '-03:00:00'))
+                OR
+                (
+                  (e.hora_entrada IS NULL OR e.hora_entrada = '00:00:00' OR e.hora_entrada <= e.hora_salida)
+                  AND n.hora >= '12:00:00'
+                  AND NOT EXISTS (
+                    SELECT 1 FROM novedades n3
+                    JOIN tipo_novedad tn3 ON n3.tipo_novedad = tn3.id_tipo
+                    WHERE n3.empleado_id = e.id_empleado
+                      AND n3.fecha = :ayer
+                      AND tn3.nombre = 'Salida'
+                  )
+                )
+              )
             )
           )
         LEFT JOIN tipo_novedad tn ON n.tipo_novedad = tn.id_tipo
