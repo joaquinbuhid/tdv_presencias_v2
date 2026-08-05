@@ -35,7 +35,16 @@ $sql = "SELECT
             MAX(CASE WHEN tn.nombre = 'Salida' THEN n.hora END) AS hora_salida_hoy
         FROM empleados e
         LEFT JOIN objetivos o ON e.objetivo_id = o.id_objetivo
-        LEFT JOIN novedades n ON e.id_empleado = n.empleado_id AND n.fecha = CURDATE()
+        LEFT JOIN novedades n ON e.id_empleado = n.empleado_id
+          AND (
+            n.fecha = :hoy
+            OR (
+              n.fecha = :ayer
+              AND e.hora_entrada > e.hora_salida
+              AND n.hora >= ADDTIME(e.hora_entrada, '-03:00:00')
+              AND :hora_actual < ADDTIME(e.hora_entrada, '-03:00:00')
+            )
+          )
         LEFT JOIN tipo_novedad tn ON n.tipo_novedad = tn.id_tipo
         WHERE e.activo = 1 AND e.pendiente = 0 AND COALESCE(e.tipo, 1) = 1
         $where
@@ -43,7 +52,12 @@ $sql = "SELECT
         ORDER BY o.nombre, e.nombre";
 
 try {
-    $stmt = $db->query($sql);
+    $stmt = $db->prepare($sql);
+    $stmt->execute([
+        'hoy'         => date('Y-m-d'),
+        'ayer'        => date('Y-m-d', strtotime('-1 day')),
+        'hora_actual' => date('H:i:s'),
+    ]);
     $rows = $stmt->fetchAll();
     $ahora = date('H:i');
 

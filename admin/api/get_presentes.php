@@ -6,7 +6,7 @@ requireAdminRealApi();
 
 try {
     $db = getDB();
-    $stmt = $db->query(
+    $stmt = $db->prepare(
     "SELECT
         e.id_empleado, e.nombre, '' AS apellido,
         o.id_objetivo, o.nombre AS objetivo_nombre,
@@ -18,12 +18,26 @@ try {
         COUNT(n.id_novedad) AS total_novedades
      FROM empleados e
      LEFT JOIN objetivos o ON e.objetivo_id = o.id_objetivo
-     LEFT JOIN novedades n ON e.id_empleado = n.empleado_id AND n.fecha = CURDATE()
+     LEFT JOIN novedades n ON e.id_empleado = n.empleado_id
+       AND (
+         n.fecha = :hoy
+         OR (
+           n.fecha = :ayer
+           AND e.hora_entrada > e.hora_salida
+           AND n.hora >= ADDTIME(e.hora_entrada, '-03:00:00')
+           AND :hora_actual < ADDTIME(e.hora_entrada, '-03:00:00')
+         )
+       )
      LEFT JOIN tipo_novedad tn ON n.tipo_novedad = tn.id_tipo
      WHERE e.activo = 1 AND e.pendiente = 0 AND COALESCE(e.tipo, 1) = 1
      GROUP BY e.id_empleado, e.nombre, o.id_objetivo, o.nombre, e.hora_entrada, e.hora_salida
      ORDER BY o.nombre, e.nombre"
     );
+    $stmt->execute([
+        'hoy'         => date('Y-m-d'),
+        'ayer'        => date('Y-m-d', strtotime('-1 day')),
+        'hora_actual' => date('H:i:s'),
+    ]);
 
     $rows = $stmt->fetchAll();
     $ahora = date('H:i');
