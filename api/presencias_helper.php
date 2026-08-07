@@ -55,6 +55,105 @@ function buildTurnoWindow(array $empleado, DateTime $now): array {
     ];
 }
 
+function buildTurnoWindows(array $empleado, DateTime $now): array {
+    $entrada = timeOrNull($empleado['turno_entrada'] ?? null);
+    $salida = timeOrNull($empleado['turno_salida'] ?? null);
+    $today = $now->format('Y-m-d');
+    $yesterday = (clone $now)->modify('-1 day')->format('Y-m-d');
+    $tomorrow = (clone $now)->modify('+1 day')->format('Y-m-d');
+
+    if (!$entrada || !$salida) {
+        return ['current' => buildTurnoWindow($empleado, $now)];
+    }
+
+    if ($entrada <= $salida) {
+        return ['current' => buildTurnoWindow($empleado, $now)];
+    }
+
+    $previousStart = dtFor($yesterday, $entrada);
+    $previousEnd = dtFor($today, $salida);
+    $currentStart = dtFor($today, $entrada);
+    $currentEnd = dtFor($tomorrow, $salida);
+
+    return [
+        'previous' => [
+            'sin_horario' => false,
+            'start' => $previousStart,
+            'end' => $previousEnd,
+            'lookup_start' => (clone $previousStart)->modify('-3 hours'),
+            'lookup_end' => (clone $previousEnd)->modify('+3 hours'),
+        ],
+        'current' => [
+            'sin_horario' => false,
+            'start' => $currentStart,
+            'end' => $currentEnd,
+            'lookup_start' => (clone $currentStart)->modify('-3 hours'),
+            'lookup_end' => (clone $currentEnd)->modify('+3 hours'),
+        ],
+    ];
+}
+
+function resumirNovedadesTurno(array $novedades, array $window): array {
+    $entrada = null;
+    $salida = null;
+    $ultimaActividad = null;
+
+    foreach ($novedades as $nov) {
+        $fechaHora = new DateTime($nov['fecha'] . ' ' . $nov['hora']);
+        if ($fechaHora < $window['lookup_start'] || $fechaHora > $window['lookup_end']) {
+            continue;
+        }
+
+        $hora = substr($nov['hora'], 0, 5);
+        $ultimaActividad = $hora;
+        if ($nov['tipo_nombre'] === 'Entrada') {
+            $entrada = $hora;
+        } elseif ($nov['tipo_nombre'] === 'Salida') {
+            $salida = $hora;
+        }
+    }
+
+    return [
+        'entrada' => $entrada,
+        'salida' => $salida,
+        'ultima_actividad' => $ultimaActividad,
+        'tiene_registro' => (bool)($entrada || $salida),
+    ];
+}
+
+function elegirTurnoPresencias(array $empleado, array $novedadesEmpleado, DateTime $now): array {
+    $windows = buildTurnoWindows($empleado, $now);
+
+    if (!isset($windows['previous'])) {
+        return [
+            'window' => $windows['current'],
+            'summary' => resumirNovedadesTurno($novedadesEmpleado, $windows['current']),
+        ];
+    }
+
+    $previousSummary = resumirNovedadesTurno($novedadesEmpleado, $windows['previous']);
+    $currentSummary = resumirNovedadesTurno($novedadesEmpleado, $windows['current']);
+
+    if ($currentSummary['entrada']) {
+        return [
+            'window' => $windows['current'],
+            'summary' => $currentSummary,
+        ];
+    }
+
+    if ($previousSummary['tiene_registro']) {
+        return [
+            'window' => $windows['previous'],
+            'summary' => $previousSummary,
+        ];
+    }
+
+    return [
+        'window' => $windows['previous'],
+        'summary' => $previousSummary,
+    ];
+}
+
 function novedadesPorEmpleado(PDO $db, array $empleados, DateTime $now): array {
     if (!$empleados) {
         return [];
@@ -88,25 +187,12 @@ function aplicarEstadoPresencias(PDO $db, array $empleados): array {
     $novedades = novedadesPorEmpleado($db, $empleados, $now);
 
     foreach ($empleados as &$empleado) {
-        $window = buildTurnoWindow($empleado, $now);
-        $entradaHoy = null;
-        $salidaHoy = null;
-        $ultimaActividad = null;
-
-        foreach ($novedades[(int)$empleado['id_empleado']] ?? [] as $nov) {
-            $fechaHora = new DateTime($nov['fecha'] . ' ' . $nov['hora']);
-            if ($fechaHora < $window['lookup_start'] || $fechaHora > $window['lookup_end']) {
-                continue;
-            }
-
-            $hora = substr($nov['hora'], 0, 5);
-            $ultimaActividad = $hora;
-            if ($nov['tipo_nombre'] === 'Entrada') {
-                $entradaHoy = $hora;
-            } elseif ($nov['tipo_nombre'] === 'Salida') {
-                $salidaHoy = $hora;
-            }
-        }
+        $novedadesEmpleado = $novedades[(int)$empleado['id_empleado']] ?? [];
+        $turno = elegirTurnoPresencias($empleado, $novedadesEmpleado, $now);
+        $window = $turno['window'];
+        $entradaHoy = $turno['summary']['entrada'];
+        $salidaHoy = $turno['summary']['salida'];
+        $ultimaActividad = $turno['summary']['ultima_actividad'];
 
         $empleado['hora_entrada_hoy'] = $entradaHoy;
         $empleado['hora_salida_hoy'] = $salidaHoy;
