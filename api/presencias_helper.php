@@ -188,6 +188,27 @@ function aplicarEstadoPresencias(PDO $db, array $empleados): array {
 
     foreach ($empleados as &$empleado) {
         $novedadesEmpleado = $novedades[(int)$empleado['id_empleado']] ?? [];
+
+        // Si no tiene horario predefinido y entró ayer por la tarde/noche sin salida ayer,
+        // le asignamos un turno dinámico para que la lógica de ventana de medianoche aplique.
+        $entrada = timeOrNull($empleado['turno_entrada'] ?? null);
+        $salida = timeOrNull($empleado['turno_salida'] ?? null);
+        if (!$entrada || !$salida) {
+            $entradaAyer = null;
+            $ayerStr = (clone $now)->modify('-1 day')->format('Y-m-d');
+            foreach ($novedadesEmpleado as $nov) {
+                if ($nov['fecha'] === $ayerStr && $nov['tipo_nombre'] === 'Entrada' && $nov['hora'] >= '12:00:00') {
+                    $entradaAyer = $nov['hora'];
+                }
+            }
+            if ($entradaAyer) {
+                $empleado['turno_entrada'] = substr($entradaAyer, 0, 5);
+                $dtEntrada = new DateTime($ayerStr . ' ' . $entradaAyer);
+                $dtSalida = (clone $dtEntrada)->modify('+12 hours');
+                $empleado['turno_salida'] = $dtSalida->format('H:i');
+            }
+        }
+
         $turno = elegirTurnoPresencias($empleado, $novedadesEmpleado, $now);
         $window = $turno['window'];
         $entradaHoy = $turno['summary']['entrada'];
