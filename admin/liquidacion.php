@@ -253,7 +253,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-links">
         <?php if ($esAdminReal): ?>
-        <a href="dashboard.php" class="active">&#x1F7E2; En vivo</a>
+        <a href="dashboard.php">&#x1F7E2; En vivo</a>
         <a href="usuarios.php">&#x2795; Usuarios</a>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php">&#x1F464; Empleados</a>
@@ -261,8 +261,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="supervisores.php">&#x1F4BC; Supervisores</a>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
         <a href="reportes.php" style="position:relative;">&#x26A0; Reportes<span id="navBadgeRep" class="nav-badge" style="display:none;">!</span></a>
-        <a href="liquidacion.php">Horas</a>
-        <a href="enviar_mails.php">Mails</a>        <?php endif; ?>
+        <a href="liquidacion.php" class="active">Horas</a>
+        <a href="enviar_mails.php">Mails</a>
+        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -346,7 +347,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="export-actions">
                 <a href="api/export_liquidacion.php?format=excel" class="btn-export btn-excel" target="_blank">
-                    <span>🟢 Descargar EXCEL (CSV)</span>
+                    <span>🟢 Descargar EXCEL</span>
                 </a>
                 <a href="api/export_liquidacion.php?format=pdf" class="btn-export btn-pdf" target="_blank">
                     <span>🔴 Descargar PDF</span>

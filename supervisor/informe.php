@@ -344,7 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Export Actions -->
             <div class="export-actions">
                 <a href="api/export_informe.php?format=excel" class="btn-export btn-excel" target="_blank">
-                    <span>🟢 Descargar EXCEL (CSV)</span>
+                    <span>🟢 Descargar EXCEL</span>
                 </a>
                 <a href="api/export_informe.php?format=pdf" class="btn-export btn-pdf" target="_blank">
                     <span>🔴 Descargar PDF</span>

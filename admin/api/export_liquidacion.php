@@ -20,7 +20,95 @@ if (!$data) {
 
 $format = $_GET['format'] ?? '';
 
-if ($format === 'excel') {
+function excelCell($value): string {
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function cleanObs($obs): string {
+    $obs = trim((string)$obs);
+    if ($obs === 'Entrada:  | Salida:' || $obs === 'Entrada: | Salida:' || $obs === 'Entrada: | Salida' || $obs === 'Entrada:  | Salida') {
+        return '';
+    }
+    return $obs;
+}
+
+if ($format === 'excel' || $format === 'xls') {
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    
+    $filename = 'liquidacion_' . date('Ymd_His') . '.xls';
+    header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Pragma: no-cache');
+    
+    echo "\xEF\xBB\xBF";
+    ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 12px; }
+        th, td { border: 1px solid #b0bec5; padding: 6px 10px; }
+        th { background-color: #1a5276; color: #ffffff; font-weight: bold; text-align: left; }
+        td { mso-number-format: "\@"; }
+    </style>
+</head>
+<body>
+<table>
+    <thead>
+        <tr>
+            <th>Nombre del empleado</th>
+            <th>Fecha y hora entrada</th>
+            <th>Fecha y hora salida</th>
+            <th>Observaciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        <?php foreach ($data as $v): ?>
+            <?php foreach ($v['shifts'] as $s): ?>
+                <?php
+                $e_dt = new DateTime($s['entry']);
+                $x_dt = new DateTime($s['exit']);
+                $obs = cleanObs($s['obs'] ?? '');
+                ?>
+                <tr>
+                    <td><?= excelCell($v['name']) ?></td>
+                    <td><?= excelCell($e_dt->format('d/m/Y H:i:s')) ?></td>
+                    <td><?= excelCell($x_dt->format('d/m/Y H:i:s')) ?></td>
+                    <td><?= excelCell($obs) ?></td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (!empty($v['anomalies'])): ?>
+                <?php foreach ($v['anomalies'] as $a): ?>
+                    <?php
+                    $a_dt = !empty($a['dt']) ? (new DateTime($a['dt']))->format('d/m/Y H:i:s') : '';
+                    $is_entry = stripos($a['type'], 'entrada') !== false;
+                    $is_exit = stripos($a['type'], 'salida') !== false;
+                    $e_val = $is_entry ? $a_dt : '-';
+                    $x_val = (!$is_entry && $is_exit) ? $a_dt : '-';
+                    $obs_extra = !empty(trim($a['obs'] ?? '')) ? ' (' . trim($a['obs']) . ')' : '';
+                    $obs_text = 'Anomalía: ' . $a['type'] . $obs_extra;
+                    ?>
+                    <tr>
+                        <td><?= excelCell($v['name']) ?></td>
+                        <td><?= excelCell($e_val) ?></td>
+                        <td><?= excelCell($x_val) ?></td>
+                        <td><?= excelCell($obs_text) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        <?php endforeach; ?>
+    </tbody>
+</table>
+</body>
+</html>
+    <?php
+    exit;
+
+} else if ($format === 'csv') {
     if (ob_get_length()) {
         ob_clean();
     }
@@ -32,77 +120,39 @@ if ($format === 'excel') {
     
     $output = fopen('php://output', 'w');
     
-    fputcsv($output, ["TDV Seguridad - Reporte de Liquidacion de Horas"], ';');
-    fputcsv($output, ["Origen: " . $title], ';');
-    fputcsv($output, ["Generado: " . date('d-m-Y H:i:s')], ';');
-    fputcsv($output, [], ';');
-    
-    fputcsv($output, ["DETALLE DE TURNOS"], ';');
-    fputcsv($output, ["Empleado", "ID", "Fecha Entrada", "Hora Entrada", "Fecha Salida", "Hora Salida", "Cant. Horas", "Horas (HH:MM)", "Observaciones"], ';');
+    fputcsv($output, ["Nombre del empleado", "Fecha y hora entrada", "Fecha y hora salida", "Observaciones"], ';');
     
     foreach ($data as $v) {
         foreach ($v['shifts'] as $s) {
             $e_dt = new DateTime($s['entry']);
             $x_dt = new DateTime($s['exit']);
+            $obs = cleanObs($s['obs'] ?? '');
             
-            $next_day = '';
-            if ($x_dt->format('Y-m-d') !== $e_dt->format('Y-m-d')) {
-                $days = (strtotime($x_dt->format('Y-m-d')) - strtotime($e_dt->format('Y-m-d'))) / 86400;
-                $next_day = " (+{$days}d)";
+            fputcsv($output, [
+                $v['name'],
+                $e_dt->format('d/m/Y H:i:s'),
+                $x_dt->format('d/m/Y H:i:s'),
+                $obs
+            ], ';');
+        }
+        if (!empty($v['anomalies'])) {
+            foreach ($v['anomalies'] as $a) {
+                $a_dt = !empty($a['dt']) ? (new DateTime($a['dt']))->format('d/m/Y H:i:s') : '';
+                $is_entry = stripos($a['type'], 'entrada') !== false;
+                $is_exit = stripos($a['type'], 'salida') !== false;
+                $e_val = $is_entry ? $a_dt : '-';
+                $x_val = (!$is_entry && $is_exit) ? $a_dt : '-';
+                $obs_extra = !empty(trim($a['obs'] ?? '')) ? ' (' . trim($a['obs']) . ')' : '';
+                $obs_text = 'Anomalía: ' . $a['type'] . $obs_extra;
+                
+                fputcsv($output, [
+                    $v['name'],
+                    $e_val,
+                    $x_val,
+                    $obs_text
+                ], ';');
             }
-            
-            fputcsv($output, [
-                $v['name'],
-                $v['vid'],
-                $e_dt->format('Y-m-d'),
-                $e_dt->format('H:i:s'),
-                $x_dt->format('Y-m-d'),
-                $x_dt->format('H:i:s') . $next_day,
-                number_format($s['hours'], 2, ',', ''),
-                formatDecimalHours($s['hours']),
-                $s['obs']
-            ], ';');
         }
-    }
-    
-    fputcsv($output, [], ';');
-    
-    fputcsv($output, ["RESUMEN POR EMPLEADO"], ';');
-    fputcsv($output, ["Empleado", "ID", "Total Horas (Decimal)", "Total Horas (HH:MM)"], ';');
-    
-    $grand_total = 0.0;
-    foreach ($data as $v) {
-        $total_v = array_sum(array_column($v['shifts'], 'hours'));
-        $grand_total += $total_v;
-        fputcsv($output, [
-            $v['name'],
-            $v['vid'],
-            number_format($total_v, 2, ',', ''),
-            formatDecimalHours($total_v)
-        ], ';');
-    }
-    fputcsv($output, ["TOTAL GENERAL", "", number_format($grand_total, 2, ',', ''), formatDecimalHours($grand_total)], ';');
-    
-    fputcsv($output, [], ';');
-    
-    fputcsv($output, ["MARCAS HUERFANAS / ANOMALIAS"], ';');
-    fputcsv($output, ["Empleado", "ID", "Tipo Anomalia", "Fecha/Hora Marca", "Observaciones"], ';');
-    
-    $has_anomalies = false;
-    foreach ($data as $v) {
-        foreach ($v['anomalies'] as $a) {
-            $has_anomalies = true;
-            fputcsv($output, [
-                $v['name'],
-                $v['vid'],
-                $a['type'],
-                $a['dt'],
-                $a['obs']
-            ], ';');
-        }
-    }
-    if (!$has_anomalies) {
-        fputcsv($output, ["No se detectaron anomalias."], ';');
     }
     
     fclose($output);

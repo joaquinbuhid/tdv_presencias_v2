@@ -80,19 +80,17 @@ if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-links">
         <?php if ($esAdminReal): ?>
-        <a href="dashboard.php">En vivo</a>
-        <a href="usuarios.php" class="<?= $altaEmpleado ? '' : 'active' ?>">Usuarios</a>
+            <a href="dashboard.php">&#x1F7E2; En vivo</a>
+            <a href="usuarios.php" class="active">&#x2795; Usuarios</a>
+            <a href="postulantes.php">Postulantes</a>
+            <a href="vigiladores.php">&#x1F464; Empleados</a>
+            <a href="legajos.php">&#x1F4C1; Legajos</a>
+            <a href="supervisores.php">&#x1F4BC; Supervisores</a>
+            <a href="objetivos.php">&#x1F3AF; Objetivos</a>
+            <a href="reportes.php" style="position:relative;">&#x26A0; Reportes<span id="navBadgeRep" class="nav-badge" style="display:none;">!</span></a>
+            <a href="liquidacion.php">Horas</a>
+            <a href="enviar_mails.php">Mails</a>
         <?php endif; ?>
-        <a href="postulantes.php">Postulantes</a>
-        <a href="vigiladores.php" class="<?= $altaEmpleado ? 'active' : '' ?>">Empleados</a>
-        <a href="legajos.php">Legajos</a>
-        <a href="supervisores.php">Supervisores</a>
-        <?php if ($esAdminReal): ?>
-        <a href="objetivos.php">Objetivos</a>
-        <a href="reportes.php">Reportes</a>
-        <?php endif; ?>
-        <a href="liquidacion.php">Horas</a>
-        <a href="enviar_mails.php">Mails</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>

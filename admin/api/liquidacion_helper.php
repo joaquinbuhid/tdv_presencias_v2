@@ -91,11 +91,20 @@ function calcularLiquidacion(array $rows): array {
                         ];
                     } else {
                         // Valid pair
+                        $obs_parts = [];
+                        if (!empty(trim((string)($active_entry['obs'] ?? '')))) {
+                            $obs_parts[] = 'Entrada: ' . trim((string)$active_entry['obs']);
+                        }
+                        if (!empty(trim((string)($obs ?? '')))) {
+                            $obs_parts[] = 'Salida: ' . trim((string)$obs);
+                        }
+                        $shift_obs = implode(' | ', $obs_parts);
+
                         $vigilador_report['shifts'][] = [
                             'entry' => $active_entry['dt']->format('Y-m-d H:i:s'),
                             'exit' => $dt->format('Y-m-d H:i:s'),
                             'hours' => $diff_hours,
-                            'obs' => trim("Entrada: " . $active_entry['obs'] . " | Salida: " . $obs, " | ")
+                            'obs' => $shift_obs
                         ];
                     }
                     $active_entry = null;
