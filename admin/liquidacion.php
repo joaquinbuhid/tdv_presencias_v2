@@ -264,8 +264,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="objetivos.php">Objetivos</a>
         <a href="reportes.php">Reportes</a>
         <a href="enviar_mails.php">Mails</a>
-        <?php endif; ?>
         <a href="liquidacion.php" class="active">Horas</a>
+        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
