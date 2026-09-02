@@ -263,6 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if ($esAdminReal): ?>
         <a href="objetivos.php">Objetivos</a>
         <a href="reportes.php">Reportes</a>
+        <a href="enviar_mails.php">Mails</a>
         <?php endif; ?>
         <a href="liquidacion.php" class="active">Horas</a>
     </div>
