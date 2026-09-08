@@ -107,16 +107,18 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 <nav class="admin-nav">
     <div class="brand">&#x1F6E1; TDV Seguridad</div>
     <div class="nav-links">
+        <?php if ($esAdminReal): ?>
         <a href="dashboard.php">&#x1F7E2; En vivo</a>
         <a href="usuarios.php">&#x2795; Usuarios</a>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php">&#x1F464; Empleados</a>
-        <a href="legajos.php">Legajos</a>
+        <a href="legajos.php">&#x1F4C1; Legajos</a>
         <a href="supervisores.php">&#x1F4BC; Supervisores</a>
         <a href="objetivos.php" class="active">&#x1F3AF; Objetivos</a>
         <a href="reportes.php">&#x26A0; Reportes</a>
         <a href="liquidacion.php">Horas</a>
         <a href="enviar_mails.php">Mails</a>
+        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
