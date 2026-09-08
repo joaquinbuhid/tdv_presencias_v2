@@ -2,3 +2,5 @@ config/db.local.php
 .env
 .DS_Store
 Thumbs.db
+legajos/*
+!legajos/.gitkeep
