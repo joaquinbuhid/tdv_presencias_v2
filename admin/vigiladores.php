@@ -119,15 +119,17 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
         <?php if ($esAdminReal): ?>
         <a href="dashboard.php">&#x1F7E2; En vivo</a>
         <a href="usuarios.php">&#x2795; Usuarios</a>
+        <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php" class="active">&#x1F464; Empleados</a>
         <a href="legajos.php">&#x1F4C1; Legajos</a>
         <a href="supervisores.php">&#x1F4BC; Supervisores</a>
+        <?php if ($esAdminReal): ?>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
         <a href="reportes.php">&#x26A0; Reportes</a>
+        <?php endif; ?>
         <a href="liquidacion.php">Horas</a>
         <a href="enviar_mails.php">Mails</a>
-        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -238,19 +240,19 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
             <div class="form-row">
                 <div class="form-group">
                     <label for="fEmail">Email <span style="color:var(--danger)">*</span></label>
-                    <input type="email" id="fEmail" required>
+                    <input type="email" id="fEmail" required <?= $esAdminReal ? '' : 'disabled' ?>>
                     <input type="hidden" id="fUsuario">
                 </div>
                 <div class="form-group">
                     <label for="fPass">Contraseña <span id="passRequired" style="color:var(--danger)">*</span></label>
-                    <input type="password" id="fPass" autocomplete="new-password" placeholder="••••••••">
+                    <input type="password" id="fPass" autocomplete="new-password" placeholder="••••••••" <?= $esAdminReal ? '' : 'disabled' ?>>
                     <small id="passHint" style="display:none;color:var(--text-muted);font-size:.75rem;">Dejar vacío para mantener la actual.</small>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="fTipo">Rol / Tipo de usuario</label>
-                    <select id="fTipo">
+                    <select id="fTipo" <?= $esAdminReal ? '' : 'disabled' ?>>
                         <option value="1">Vigilador</option>
                         <option value="2">Supervisor</option>
                         <option value="3">Oficinista</option>
@@ -261,10 +263,10 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
                     <label>Estado</label>
                     <div style="display:flex; gap:1.5rem; align-items:center; min-height:45px;">
                         <label style="display:flex; align-items:center; gap:.4rem; cursor:pointer;">
-                            <input type="checkbox" id="fActivo" checked> Activo
+                            <input type="checkbox" id="fActivo" checked <?= $esAdminReal ? '' : 'disabled' ?>> Activo
                         </label>
                         <label style="display:flex; align-items:center; gap:.4rem; cursor:pointer;">
-                            <input type="checkbox" id="fPendiente"> Pendiente
+                            <input type="checkbox" id="fPendiente" <?= $esAdminReal ? '' : 'disabled' ?>> Pendiente
                         </label>
                     </div>
                 </div>

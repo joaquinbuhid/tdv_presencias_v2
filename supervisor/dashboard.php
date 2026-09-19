@@ -271,6 +271,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
 const REFRESH_SEC = 30;
 let countdownVal  = REFRESH_SEC;
 let timer;
+let vigiladores = [];
 
 document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-AR', {
     weekday:'long', year:'numeric', month:'long', day:'numeric'
@@ -311,6 +312,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         refrescar();
     });
     document.getElementById('formTurno').addEventListener('submit', onGuardarTurno);
+    document.getElementById('cardsGrid').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-edit-turno]');
+        if (!btn) return;
+        const guard = vigiladores.find(v => v.id_empleado == btn.dataset.editTurno);
+        if (guard) abrirModal(guard.id_empleado, `${guard.nombre} ${guard.apellido}`, guard.turno_entrada, guard.turno_salida);
+    });
 });
 
 async function refrescar() {
@@ -325,6 +332,7 @@ async function refrescar() {
 
     try {
         const data = await apiFetch(url);
+        vigiladores = data;
         renderCards(data);
         document.getElementById('ultimaActz').textContent =
             new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
@@ -408,8 +416,7 @@ function renderCards(guards) {
 
         return `
         <div class="guard-card ${esc(g.estado)}">
-            <button class="btn-edit-turno" title="Modificar turno"
-                onclick="abrirModal(${g.id_empleado},'${esc(g.nombre)} ${esc(g.apellido)}','${g.turno_entrada||''}','${g.turno_salida||''}')">
+            <button class="btn-edit-turno" title="Modificar turno" data-edit-turno="${Number(g.id_empleado)}">
                 &#9998; Turno
             </button>
             <div class="gc-name">${esc(g.apellido)}, ${esc(g.nombre)}</div>
@@ -511,7 +518,7 @@ async function apiFetch(url, method = 'GET', data = null) {
 }
 function esc(s) {
     if (!s) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 </script>
 </body>

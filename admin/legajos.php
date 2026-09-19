@@ -228,15 +228,17 @@ $esAdminReal = esAdminReal();
         <?php if ($esAdminReal): ?>
         <a href="dashboard.php">&#x1F7E2; En vivo</a>
         <a href="usuarios.php">&#x2795; Usuarios</a>
+        <?php endif; ?>
         <a href="postulantes.php">Postulantes</a>
         <a href="vigiladores.php">&#x1F464; Empleados</a>
         <a href="legajos.php" class="active">&#x1F4C1; Legajos</a>
         <a href="supervisores.php">&#x1F4BC; Supervisores</a>
+        <?php if ($esAdminReal): ?>
         <a href="objetivos.php">&#x1F3AF; Objetivos</a>
         <a href="reportes.php">&#x26A0; Reportes</a>
+        <?php endif; ?>
         <a href="liquidacion.php">Horas</a>
         <a href="enviar_mails.php">Mails</a>
-        <?php endif; ?>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($adminNombre) ?></strong>
@@ -349,6 +351,7 @@ $esAdminReal = esAdminReal();
 
 <script>
 let empleados = [];
+let currentFiles = [];
 let currentEmpleadoId = 0;
 let currentEmpleadoNombre = '';
 
@@ -374,6 +377,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.dataTransfer.files.length) {
             subirArchivos(e.dataTransfer.files);
         }
+    });
+
+    document.getElementById('tablaWrap').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-open-legajo]');
+        if (!btn) return;
+        const emp = empleados.find(x => x.id_empleado == btn.dataset.openLegajo);
+        if (emp) abrirLegajo(emp.id_empleado, emp.nombre, emp.nro_legajo, emp.url_leg);
+    });
+
+    document.getElementById('fileList').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-delete-file]');
+        if (!btn) return;
+        const file = currentFiles[Number(btn.dataset.deleteFile)];
+        if (file) eliminarArchivo(file.name);
     });
 });
 
@@ -417,7 +434,7 @@ function renderTabla(list) {
             estadoPill = '<span class="badge badge-inactivo">Inactivo</span>';
         }
 
-        return `<tr data-id="${e.id_empleado}">
+        return `<tr data-id="${Number(e.id_empleado)}">
             <td><strong>${esc(e.nombre)}</strong><br><small style="color:var(--text-muted);">${esc(e.rol)}</small></td>
             <td>${esc(e.dni)}</td>
             <td><strong>${nroLegajo}</strong></td>
@@ -425,7 +442,7 @@ function renderTabla(list) {
             <td>${estadoPill}</td>
             <td>
                 <div class="actions">
-                    <button class="btn btn-outline btn-sm" onclick="abrirLegajo(${e.id_empleado}, '${esc(e.nombre)}', '${esc(e.nro_legajo)}', '${esc(e.url_leg)}')">
+                    <button class="btn btn-outline btn-sm" data-open-legajo="${Number(e.id_empleado)}">
                         &#x1F4C2; Gestionar Archivos
                     </button>
                 </div>
@@ -558,6 +575,7 @@ async function cargarArchivos(idEmpleado) {
     
     try {
         const res = await apiFetch(`api/get_legajo_files.php?id_empleado=${idEmpleado}`);
+        currentFiles = res.files || [];
         
         // Actualizar URL de legajo en el badge
         if (res.url_leg) {
@@ -569,17 +587,17 @@ async function cargarArchivos(idEmpleado) {
             return;
         }
         
-        listWrap.innerHTML = res.files.map(f => {
+        listWrap.innerHTML = currentFiles.map((f, index) => {
             const sizeKB = (f.size / 1024).toFixed(1);
             return `<div class="file-item">
                 <div class="file-info">
-                    <a href="${f.url}" target="_blank" class="file-name" title="Ver/Descargar archivo">
+                    <a href="${esc(f.url)}" target="_blank" class="file-name" title="Ver/Descargar archivo">
                         &#x1F4C4; ${esc(f.name)}
                     </a>
-                    <span class="file-meta">${sizeKB} KB · Modificado: ${f.date}</span>
+                    <span class="file-meta">${sizeKB} KB · Modificado: ${esc(f.date)}</span>
                 </div>
                 <div class="file-actions">
-                    <button class="btn btn-danger btn-sm" onclick="eliminarArchivo('${esc(f.name)}')" style="padding: 0.3rem 0.6rem; font-size:0.75rem;">
+                    <button class="btn btn-danger btn-sm" data-delete-file="${index}" style="padding: 0.3rem 0.6rem; font-size:0.75rem;">
                         &#x1F5D1; Eliminar
                     </button>
                 </div>
@@ -639,7 +657,7 @@ function subirArchivos(files) {
                 if (resp.success) {
                     mostrarExito(`Se subieron ${resp.uploaded_count} archivos correctamente.`);
                     if (resp.errors && resp.errors.length > 0) {
-                        document.getElementById('modalErrorMsg').innerHTML = 'Archivos subidos con algunas advertencias:<br>' + resp.errors.join('<br>');
+                        document.getElementById('modalErrorMsg').innerHTML = 'Archivos subidos con algunas advertencias:<br>' + resp.errors.map(esc).join('<br>');
                         errDiv.classList.add('show');
                     }
                     
@@ -743,7 +761,7 @@ async function apiFetch(url, method = 'GET', data = null) {
 
 function esc(s) {
     if (!s) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 </script>
 </body>

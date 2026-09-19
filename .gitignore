@@ -4,3 +4,4 @@ config/db.local.php
 Thumbs.db
 legajos/*
 !legajos/.gitkeep
+!legajos/.htaccess

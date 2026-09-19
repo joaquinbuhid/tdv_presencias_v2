@@ -55,45 +55,85 @@ if (!is_dir($targetDir)) {
     }
 }
 
-// Handle file uploads
+const LEGAJO_MAX_BYTES = 10 * 1024 * 1024;
+
+$allowedExtensions = array_fill_keys(
+    ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'heic', 'heif', 'doc', 'docx', 'xls', 'xlsx'],
+    true
+);
+
+function nombreSeguroLegajo(string $name): string {
+    $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
+    $base = preg_replace('/[^A-Za-z0-9._-]+/', '_', pathinfo($name, PATHINFO_FILENAME));
+    $base = trim($base, '._-') ?: 'archivo';
+    return $base . '-' . bin2hex(random_bytes(4)) . ($ext ? '.' . $ext : '');
+}
+
+function procesarArchivoLegajo(string $originalName, string $tmpName, int $errorCode, int $size, string $targetDir, array $allowedExtensions, array &$errors): bool {
+    if ($errorCode !== UPLOAD_ERR_OK) {
+        $errors[] = "Error de subida ($errorCode) para: $originalName";
+        return false;
+    }
+    if ($size <= 0 || $size > LEGAJO_MAX_BYTES) {
+        $errors[] = "Archivo vacío o mayor a 10 MB: $originalName";
+        return false;
+    }
+
+    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    if (!isset($allowedExtensions[$ext])) {
+        $errors[] = "Tipo de archivo no permitido: $originalName";
+        return false;
+    }
+
+    $destPath = $targetDir . '/' . nombreSeguroLegajo($originalName);
+    if (!move_uploaded_file($tmpName, $destPath)) {
+        $errors[] = "Error al mover el archivo: $originalName";
+        return false;
+    }
+    return true;
+}
+
 $uploadedFiles = $_FILES['archivos'];
 $successCount = 0;
 $errors = [];
 
-// PHP $_FILES structure check (multi-upload support)
 if (is_array($uploadedFiles['name'])) {
     $fileCount = count($uploadedFiles['name']);
     for ($i = 0; $i < $fileCount; $i++) {
-        if ($uploadedFiles['error'][$i] === UPLOAD_ERR_OK) {
-            $fileName = basename($uploadedFiles['name'][$i]);
-            // Clean file name to prevent directory traversal or invalid characters
-            $fileName = preg_replace('/[\<\>\:\"\/\\\|\?\*]/', '', $fileName);
-            $destPath = $targetDir . '/' . $fileName;
-            
-            if (move_uploaded_file($uploadedFiles['tmp_name'][$i], $destPath)) {
-                $successCount++;
-            } else {
-                $errors[] = "Error al mover el archivo: " . $uploadedFiles['name'][$i];
-            }
-        } else {
-            $errors[] = "Error de subida (" . $uploadedFiles['error'][$i] . ") para: " . $uploadedFiles['name'][$i];
+        if (procesarArchivoLegajo(
+            (string)$uploadedFiles['name'][$i],
+            (string)$uploadedFiles['tmp_name'][$i],
+            (int)$uploadedFiles['error'][$i],
+            (int)$uploadedFiles['size'][$i],
+            $targetDir,
+            $allowedExtensions,
+            $errors
+        )) {
+            $successCount++;
         }
     }
 } else {
-    // Single file upload
-    if ($uploadedFiles['error'] === UPLOAD_ERR_OK) {
-        $fileName = basename($uploadedFiles['name']);
-        $fileName = preg_replace('/[\<\>\:\"\/\\\|\?\*]/', '', $fileName);
-        $destPath = $targetDir . '/' . $fileName;
-        
-        if (move_uploaded_file($uploadedFiles['tmp_name'], $destPath)) {
-            $successCount++;
-        } else {
-            $errors[] = "Error al mover el archivo: " . $uploadedFiles['name'];
-        }
-    } else {
-        $errors[] = "Error de subida (" . $uploadedFiles['error'] . ") para: " . $uploadedFiles['name'];
+    if (procesarArchivoLegajo(
+        (string)$uploadedFiles['name'],
+        (string)$uploadedFiles['tmp_name'],
+        (int)$uploadedFiles['error'],
+        (int)$uploadedFiles['size'],
+        $targetDir,
+        $allowedExtensions,
+        $errors
+    )) {
+        $successCount++;
     }
+}
+
+if ($successCount === 0) {
+    http_response_code(422);
+    echo json_encode([
+        'success' => false,
+        'error' => 'No se subio ningun archivo valido',
+        'errors' => $errors
+    ]);
+    exit;
 }
 
 // Generate the URL requested by the user
