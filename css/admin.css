@@ -1,0 +1,79 @@
+/* ============================================================
+   TDV - Encabezado de backoffice (admin)
+   ============================================================ */
+
+.admin-nav {
+    background: var(--primary-dk);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .7rem 1.5rem;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.admin-nav .brand {
+    color: #fff;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.admin-nav .nav-links {
+    display: flex;
+    gap: .3rem;
+    flex-wrap: wrap;
+}
+
+.admin-nav .nav-links a {
+    color: rgba(255, 255, 255, .75);
+    text-decoration: none;
+    padding: .4rem .9rem;
+    border-radius: 6px;
+    font-size: .88rem;
+    transition: background .2s;
+    position: relative;
+    white-space: nowrap;
+}
+
+.admin-nav .nav-links a.active,
+.admin-nav .nav-links a:hover {
+    background: rgba(255, 255, 255, .15);
+    color: #fff;
+}
+
+.admin-nav .nav-user {
+    color: rgba(255, 255, 255, .7);
+    font-size: .82rem;
+    text-align: right;
+}
+
+.admin-nav .nav-user strong {
+    display: block;
+    color: #fff;
+}
+
+.admin-nav .nav-user a {
+    color: rgba(255, 255, 255, .6);
+    font-size: .78rem;
+    text-decoration: none;
+}
+
+.nav-badge {
+    position: absolute;
+    top: -5px;
+    right: -4px;
+    background: var(--danger);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 700;
+    border-radius: 10px;
+    padding: .1rem .35rem;
+    line-height: 1.3;
+}
+
+@media (max-width: 600px) {
+    .admin-nav { padding: .6rem 1rem; }
+}

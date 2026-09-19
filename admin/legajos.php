@@ -11,29 +11,9 @@ $esAdminReal = esAdminReal();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV - Gestión de legajos</title>
     <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
-        /* Nav (igual que dashboard) */
-        .admin-nav {
-            background: var(--primary-dk);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: .7rem 1.5rem;
-            flex-wrap: wrap;
-            gap: .5rem;
-        }
-        .admin-nav .brand { color:#fff;font-weight:700;font-size:1.1rem;display:flex;align-items:center;gap:.5rem; }
-        .admin-nav .nav-links { display:flex;gap:.3rem; }
-        .admin-nav .nav-links a {
-            color:rgba(255,255,255,.75);text-decoration:none;
-            padding:.4rem .9rem;border-radius:6px;font-size:.88rem;transition:background .2s;
-        }
-        .admin-nav .nav-links a.active,
-        .admin-nav .nav-links a:hover { background:rgba(255,255,255,.15);color:#fff; }
-        .admin-nav .nav-user { color:rgba(255,255,255,.7);font-size:.82rem;text-align:right; }
-        .admin-nav .nav-user strong { display:block;color:#fff; }
-
         /* Table */
         .data-table { width:100%;border-collapse:collapse;font-size:.88rem; }
         .data-table th {
@@ -216,33 +196,12 @@ $esAdminReal = esAdminReal();
         @media (max-width:600px) {
             .data-table td:nth-child(3),
             .data-table th:nth-child(3) { display:none; }
-            .admin-nav { padding:.6rem 1rem; }
         }
     </style>
 </head>
 <body>
 
-<nav class="admin-nav">
-    <div class="brand">&#x1F6E1; TDV Seguridad</div>
-    <div class="nav-links">
-        <?php if ($esAdminReal): ?>
-        <a href="dashboard.php">&#x1F7E2; En vivo</a>
-        <a href="usuarios.php">&#x2795; Usuarios</a>
-        <a href="postulantes.php">Postulantes</a>
-        <a href="vigiladores.php">&#x1F464; Empleados</a>
-        <a href="legajos.php" class="active">&#x1F4C1; Legajos</a>
-        <a href="supervisores.php">&#x1F4BC; Supervisores</a>
-        <a href="objetivos.php">&#x1F3AF; Objetivos</a>
-        <a href="reportes.php">&#x26A0; Reportes</a>
-        <a href="liquidacion.php">Horas</a>
-        <a href="enviar_mails.php">Mails</a>
-        <?php endif; ?>
-    </div>
-    <div class="nav-user">
-        <strong><?= htmlspecialchars($adminNombre) ?></strong>
-        <a href="../api/logout.php" style="color:rgba(255,255,255,.6);font-size:.78rem;text-decoration:none;">Salir</a>
-    </div>
-</nav>
+<?php include __DIR__ . '/nav.php'; ?>
 
 <div style="max-width:1200px;margin:0 auto;padding:1.2rem 1rem 2rem;">
 
