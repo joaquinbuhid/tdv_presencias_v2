@@ -139,8 +139,19 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 
 <script>
 let filtroActivo = '';
+let reportes = [];
 
-document.addEventListener('DOMContentLoaded', () => cargar(''));
+document.addEventListener('DOMContentLoaded', () => {
+    cargar('');
+    document.getElementById('listaReportes').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-reporte-action]');
+        if (!btn) return;
+        const reporte = reportes.find(r => r.id_reporte == btn.dataset.id);
+        if (!reporte) return;
+        if (btn.dataset.reporteAction === 'estado') abrirModal(reporte.id_reporte, reporte.estado || 'pendiente', reporte.notas_admin || '');
+        if (btn.dataset.reporteAction === 'resolver') resolverRapido(reporte.id_reporte);
+    });
+});
 
 function filtrar(estado) {
     filtroActivo = estado;
@@ -157,6 +168,7 @@ async function cargar(estado) {
     try {
         const url  = 'api/get_reportes.php' + (estado ? `?estado=${estado}` : '');
         const data = await apiFetch(url);
+        reportes = data;
 
         // Badge de pendientes en nav
         const pendientes = data.filter(r => r.estado === 'pendiente').length;
@@ -170,7 +182,8 @@ async function cargar(estado) {
         }
 
         lista.innerHTML = data.map(r => {
-            const estadoPill = `<span class="estado-pill estado-${r.estado}">${estadoLabel(r.estado)}</span>`;
+            const estado = ['pendiente', 'revisado', 'resuelto'].includes(r.estado) ? r.estado : 'pendiente';
+            const estadoPill = `<span class="estado-pill estado-${estado}">${estadoLabel(r.estado)}</span>`;
             const agente = r.user_agent
                 ? `<div style="font-size:.72rem;color:var(--text-muted);margin-top:.3rem;word-break:break-all;">${esc(r.user_agent)}</div>`
                 : '';
@@ -185,7 +198,7 @@ async function cargar(estado) {
                 : '';
 
             return `
-            <div class="reporte-card ${esc(r.estado)}" id="rep-${r.id_reporte}">
+            <div class="reporte-card ${estado}" id="rep-${Number(r.id_reporte)}">
                 <div class="rep-header">
                     <div>
                         <div class="rep-quien">&#x1F464; ${esc(r.vigilador_nombre)}</div>
@@ -218,11 +231,11 @@ async function cargar(estado) {
                 ${agente}
 
                 <div class="rep-footer">
-                    <button class="btn btn-outline btn-sm" onclick="abrirModal(${r.id_reporte},'${esc(r.estado)}','${esc(r.notas_admin||'')}')">
+                    <button class="btn btn-outline btn-sm" data-reporte-action="estado" data-id="${Number(r.id_reporte)}">
                         &#9998; Actualizar estado
                     </button>
                     ${r.estado !== 'resuelto'
-                        ? `<button class="btn btn-success btn-sm" onclick="resolverRapido(${r.id_reporte})">&#9989; Marcar resuelto</button>`
+                        ? `<button class="btn btn-success btn-sm" data-reporte-action="resolver" data-id="${Number(r.id_reporte)}">&#9989; Marcar resuelto</button>`
                         : ''}
                 </div>
             </div>`;
@@ -233,7 +246,7 @@ async function cargar(estado) {
 }
 
 function estadoLabel(s) {
-    return { pendiente:'Pendiente', revisado:'Revisado', resuelto:'Resuelto' }[s] || s;
+    return { pendiente:'Pendiente', revisado:'Revisado', resuelto:'Resuelto' }[s] || 'Desconocido';
 }
 
 // ---- Modal ------------------------------------------------
@@ -295,7 +308,7 @@ async function apiFetch(url, method = 'GET', data = null) {
 
 function esc(s) {
     if (s == null) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 </script>
 </body>

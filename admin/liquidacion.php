@@ -261,11 +261,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem">
                     <div class="form-group">
                         <label for="fecha_inicio">Fecha Inicio</label>
-                        <input type="date" id="fecha_inicio" name="fecha_inicio" required value="<?= $_POST['fecha_inicio'] ?? date('Y-m-01') ?>">
+                        <input type="date" id="fecha_inicio" name="fecha_inicio" required value="<?= htmlspecialchars($_POST['fecha_inicio'] ?? date('Y-m-01'), ENT_QUOTES, 'UTF-8') ?>">
                     </div>
                     <div class="form-group">
                         <label for="fecha_fin">Fecha Fin</label>
-                        <input type="date" id="fecha_fin" name="fecha_fin" required value="<?= $_POST['fecha_fin'] ?? date('Y-m-t') ?>">
+                        <input type="date" id="fecha_fin" name="fecha_fin" required value="<?= htmlspecialchars($_POST['fecha_fin'] ?? date('Y-m-t'), ENT_QUOTES, 'UTF-8') ?>">
                     </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="margin-top:1.2rem;width:100%">Generar Informe</button>
@@ -325,10 +325,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $v_anomalies = count($v['anomalies']);
                     ?>
                     <div class="vigilador-accordion">
-                        <div class="accordion-header" onclick="toggleAccordion('content-<?= $v['vid'] ?>')">
+                        <div class="accordion-header" onclick="toggleAccordion('content-<?= (int)$v['vid'] ?>')">
                             <div class="accordion-title">
                                 <?= htmlspecialchars($v['name']) ?>
-                                <span>(ID: <?= $v['vid'] ?>)</span>
+                                <span>(ID: <?= (int)$v['vid'] ?>)</span>
                                 <?php if ($v_anomalies > 0): ?>
                                     <span style="color:var(--danger);font-weight:700">⚠️ <?= $v_anomalies ?> anomalía<?= $v_anomalies > 1 ? 's' : '' ?></span>
                                 <?php endif; ?>

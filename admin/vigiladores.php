@@ -197,19 +197,19 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
             <div class="form-row">
                 <div class="form-group">
                     <label for="fEmail">Email <span style="color:var(--danger)">*</span></label>
-                    <input type="email" id="fEmail" required>
+                    <input type="email" id="fEmail" required <?= $esAdminReal ? '' : 'disabled' ?>>
                     <input type="hidden" id="fUsuario">
                 </div>
                 <div class="form-group">
                     <label for="fPass">Contraseña <span id="passRequired" style="color:var(--danger)">*</span></label>
-                    <input type="password" id="fPass" autocomplete="new-password" placeholder="••••••••">
+                    <input type="password" id="fPass" autocomplete="new-password" placeholder="••••••••" <?= $esAdminReal ? '' : 'disabled' ?>>
                     <small id="passHint" style="display:none;color:var(--text-muted);font-size:.75rem;">Dejar vacío para mantener la actual.</small>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="fTipo">Rol / Tipo de usuario</label>
-                    <select id="fTipo">
+                    <select id="fTipo" <?= $esAdminReal ? '' : 'disabled' ?>>
                         <option value="1">Vigilador</option>
                         <option value="2">Supervisor</option>
                         <option value="3">Oficinista</option>
@@ -220,10 +220,10 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
                     <label>Estado</label>
                     <div style="display:flex; gap:1.5rem; align-items:center; min-height:45px;">
                         <label style="display:flex; align-items:center; gap:.4rem; cursor:pointer;">
-                            <input type="checkbox" id="fActivo" checked> Activo
+                            <input type="checkbox" id="fActivo" checked <?= $esAdminReal ? '' : 'disabled' ?>> Activo
                         </label>
                         <label style="display:flex; align-items:center; gap:.4rem; cursor:pointer;">
-                            <input type="checkbox" id="fPendiente"> Pendiente
+                            <input type="checkbox" id="fPendiente" <?= $esAdminReal ? '' : 'disabled' ?>> Pendiente
                         </label>
                     </div>
                 </div>

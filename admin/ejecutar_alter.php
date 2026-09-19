@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/auth.php';
+requireAdminRealPage();
 require_once __DIR__ . '/../config/db.php';
 $db = getDB();
 try {

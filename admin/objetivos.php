@@ -207,6 +207,13 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 document.addEventListener('DOMContentLoaded', () => {
     cargarObjetivos();
     document.getElementById('formObjetivo').addEventListener('submit', onGuardar);
+    document.getElementById('tablaWrap').addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-objetivo-action]');
+        if (!btn) return;
+        const id = Number(btn.dataset.id);
+        if (btn.dataset.objetivoAction === 'edit') abrirModal(id);
+        if (btn.dataset.objetivoAction === 'delete') eliminar(id, btn.dataset.nombre || '');
+    });
     cargarSupervisoresSelect();
 });
 
@@ -235,7 +242,7 @@ async function cargarObjetivos() {
         }
 
         const tbody = list.map(o => {
-            const mapsUrl = `https://www.google.com/maps?q=${o.coord_lat},${o.coord_long}`;
+            const mapsUrl = `https://www.google.com/maps?q=${parseFloat(o.coord_lat)},${parseFloat(o.coord_long)}`;
             const asig = parseInt(o.vigiladores_asignados);
             const supHtml = o.supervisor_nombre
                 ? `<span style="font-weight:600">${esc(o.supervisor_nombre)}</span>
@@ -260,8 +267,8 @@ async function cargarObjetivos() {
                 </td>
                 <td>
                     <div class="actions">
-                        <button class="btn btn-outline btn-sm" onclick="abrirModal(${o.id_objetivo})">&#9998; Editar</button>
-                        <button class="btn btn-danger btn-sm" onclick="eliminar(${o.id_objetivo},'${esc(o.nombre)}')"
+                        <button class="btn btn-outline btn-sm" data-objetivo-action="edit" data-id="${Number(o.id_objetivo)}">&#9998; Editar</button>
+                        <button class="btn btn-danger btn-sm" data-objetivo-action="delete" data-id="${Number(o.id_objetivo)}" data-nombre="${esc(o.nombre)}"
                             ${asig > 0 ? 'title="Tiene empleados asignados"' : ''}>
                             &#x1F5D1;
                         </button>
@@ -308,8 +315,6 @@ async function abrirModal(id) {
                 document.getElementById('fLng').value         = o.coord_long;
                 document.getElementById('fRadio').value       = o.rad_metros;
                 document.getElementById('fSupervisor').value  = o.supervisor_id || '';
-                document.getElementById('fEntrada').value     = o.hora_entrada.substr(0,5);
-                document.getElementById('fSalida').value      = o.hora_salida.substr(0,5);
             }
         } catch(e) {}
     }
@@ -414,7 +419,7 @@ async function apiFetch(url, method = 'GET', data = null) {
 
 function esc(s) {
     if (!s) return '';
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
 }
 
 // ---- GPS para coordenadas del objetivos -------------------

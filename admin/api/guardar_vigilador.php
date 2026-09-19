@@ -35,8 +35,15 @@ $fechaAlta = trim($data['fecha_alta'] ?? '') ?: date('Y-m-d');
 $tipo = isset($data['tipo']) && $data['tipo'] !== '' ? (int)$data['tipo'] : 1;
 $activo = isset($data['activo']) ? (int)$data['activo'] : 1;
 $pendiente = isset($data['pendiente']) ? (int)$data['pendiente'] : 0;
+$esAdminReal = esAdminReal();
 
-if ($id === 0 && !esAdminReal()) {
+if (!in_array($tipo, [1, 2, 3, 4], true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Tipo de usuario invalido']);
+    exit;
+}
+
+if ($id === 0 && !$esAdminReal) {
     http_response_code(403);
     echo json_encode(['error' => 'El oficinista solo puede editar empleados existentes']);
     exit;
@@ -67,6 +74,31 @@ if ($contrasena && strlen($contrasena) < 6) {
 }
 
 $db = getDB();
+
+if ($id !== 0) {
+    $stmt = $db->prepare("SELECT email, tipo, activo, pendiente FROM empleados WHERE id_empleado = ?");
+    $stmt->execute([$id]);
+    $empleadoActual = $stmt->fetch();
+    if (!$empleadoActual) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Empleado no encontrado']);
+        exit;
+    }
+
+    if (!$esAdminReal) {
+        if ((int)($empleadoActual['tipo'] ?? 1) !== 1) {
+            http_response_code(403);
+            echo json_encode(['error' => 'El oficinista solo puede editar vigiladores']);
+            exit;
+        }
+        $email = $empleadoActual['email'];
+        $tipo = 1;
+        $activo = (int)$empleadoActual['activo'];
+        $pendiente = (int)$empleadoActual['pendiente'];
+        $contrasena = '';
+    }
+}
+
 $stmt = $db->prepare("SELECT id_empleado FROM empleados WHERE email = ? AND id_empleado != ?");
 $stmt->execute([$email, $id]);
 if ($stmt->fetch()) {
@@ -108,7 +140,7 @@ if ($id === 0) {
              SET nombre=?, fecha_nac=?, est_civil=?, empresa_id=?, domicilio=?, CUIL=?, DNI=?, telefono=?,
                  nro_legajo=?, nro_credencial=?, fecha_venc_cred=?, activo=?, objetivo_id=?,
                  hora_entrada=?, hora_salida=?, pendiente=?, email=?, contrasena=?, fecha_alta=?, tipo=?, url_leg=?, nacionalidad=?
-             WHERE id_empleado=? AND COALESCE(tipo, 1) = 1"
+             WHERE id_empleado=?" . ($esAdminReal ? "" : " AND COALESCE(tipo, 1) = 1")
         );
         $stmt->execute([
             $nombreCompleto, $fechaNac, $estCivil, $empresaId, $domicilio, $cuil, $dni, $telefono,
@@ -121,7 +153,7 @@ if ($id === 0) {
              SET nombre=?, fecha_nac=?, est_civil=?, empresa_id=?, domicilio=?, CUIL=?, DNI=?, telefono=?,
                  nro_legajo=?, nro_credencial=?, fecha_venc_cred=?, activo=?, objetivo_id=?,
                  hora_entrada=?, hora_salida=?, pendiente=?, email=?, fecha_alta=?, tipo=?, url_leg=?, nacionalidad=?
-             WHERE id_empleado=? AND COALESCE(tipo, 1) = 1"
+             WHERE id_empleado=?" . ($esAdminReal ? "" : " AND COALESCE(tipo, 1) = 1")
         );
         $stmt->execute([
             $nombreCompleto, $fechaNac, $estCivil, $empresaId, $domicilio, $cuil, $dni, $telefono,

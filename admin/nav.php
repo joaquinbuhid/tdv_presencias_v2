@@ -14,8 +14,8 @@ $navItems = [
     ['archivo' => 'supervisores.php', 'texto' => "\u{1F4BC} Supervisores", 'soloAdmin' => false],
     ['archivo' => 'objetivos.php',    'texto' => "\u{1F3AF} Objetivos",    'soloAdmin' => true],
     ['archivo' => 'reportes.php',     'texto' => "\u{26A0} Reportes",      'soloAdmin' => true, 'badge' => true],
-    ['archivo' => 'liquidacion.php',  'texto' => 'Horas',                  'soloAdmin' => true],
-    ['archivo' => 'enviar_mails.php', 'texto' => 'Mails',                  'soloAdmin' => true],
+    ['archivo' => 'liquidacion.php',  'texto' => 'Horas',                  'soloAdmin' => false],
+    ['archivo' => 'enviar_mails.php', 'texto' => 'Mails',                  'soloAdmin' => false],
 ];
 ?>
 <nav class="admin-nav">
