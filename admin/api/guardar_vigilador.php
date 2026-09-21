@@ -76,7 +76,7 @@ if ($contrasena && strlen($contrasena) < 6) {
 $db = getDB();
 
 if ($id !== 0) {
-    $stmt = $db->prepare("SELECT email, tipo, activo, pendiente FROM empleados WHERE id_empleado = ?");
+    $stmt = $db->prepare("SELECT email, tipo, activo, pendiente, objetivo_id, empresa_id FROM empleados WHERE id_empleado = ?");
     $stmt->execute([$id]);
     $empleadoActual = $stmt->fetch();
     if (!$empleadoActual) {
@@ -117,49 +117,85 @@ if ($stmt->fetch()) {
 
 $nombreCompleto = $nombre;
 
-if ($id === 0) {
-    $hash = password_hash($contrasena, PASSWORD_DEFAULT);
-    $stmt = $db->prepare(
-        "INSERT INTO empleados
-            (nombre, fecha_nac, est_civil, empresa_id, domicilio, CUIL, DNI, telefono,
-             nro_legajo, nro_credencial, fecha_venc_cred, activo, objetivo_id,
-             hora_entrada, hora_salida, pendiente, email, contrasena, fecha_alta, tipo, url_leg, nacionalidad)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    );
-    $stmt->execute([
-        $nombreCompleto, $fechaNac, $estCivil, $empresaId, $domicilio, $cuil, $dni, $telefono,
-        $nroLegajo, $nroCredencial, $fechaVencCred, $activo, $objId,
-        $horaEntrada, $horaSalida, $pendiente, $email, $hash, $fechaAlta, $tipo, $urlLeg, $nacionalidad
-    ]);
-    echo json_encode(['success' => true, 'id' => $db->lastInsertId(), 'accion' => 'creado']);
-} else {
-    if ($contrasena) {
+$objAnt = null;
+$empAnt = null;
+if ($id !== 0) {
+    $objAnt = $empleadoActual['objetivo_id'] !== null ? (int)$empleadoActual['objetivo_id'] : null;
+    $empAnt = $empleadoActual['empresa_id'] !== null ? (int)$empleadoActual['empresa_id'] : null;
+}
+
+$db->beginTransaction();
+try {
+    if ($id === 0) {
         $hash = password_hash($contrasena, PASSWORD_DEFAULT);
         $stmt = $db->prepare(
-            "UPDATE empleados
-             SET nombre=?, fecha_nac=?, est_civil=?, empresa_id=?, domicilio=?, CUIL=?, DNI=?, telefono=?,
-                 nro_legajo=?, nro_credencial=?, fecha_venc_cred=?, activo=?, objetivo_id=?,
-                 hora_entrada=?, hora_salida=?, pendiente=?, email=?, contrasena=?, fecha_alta=?, tipo=?, url_leg=?, nacionalidad=?
-             WHERE id_empleado=?" . ($esAdminReal ? "" : " AND COALESCE(tipo, 1) = 1")
+            "INSERT INTO empleados
+                (nombre, fecha_nac, est_civil, empresa_id, domicilio, CUIL, DNI, telefono,
+                 nro_legajo, nro_credencial, fecha_venc_cred, activo, objetivo_id,
+                 hora_entrada, hora_salida, pendiente, email, contrasena, fecha_alta, tipo, url_leg, nacionalidad)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         );
         $stmt->execute([
             $nombreCompleto, $fechaNac, $estCivil, $empresaId, $domicilio, $cuil, $dni, $telefono,
             $nroLegajo, $nroCredencial, $fechaVencCred, $activo, $objId,
-            $horaEntrada, $horaSalida, $pendiente, $email, $hash, $fechaAlta, $tipo, $urlLeg, $nacionalidad, $id
+            $horaEntrada, $horaSalida, $pendiente, $email, $hash, $fechaAlta, $tipo, $urlLeg, $nacionalidad
         ]);
+        $id = (int)$db->lastInsertId();
+        $accion = 'creado';
     } else {
-        $stmt = $db->prepare(
-            "UPDATE empleados
-             SET nombre=?, fecha_nac=?, est_civil=?, empresa_id=?, domicilio=?, CUIL=?, DNI=?, telefono=?,
-                 nro_legajo=?, nro_credencial=?, fecha_venc_cred=?, activo=?, objetivo_id=?,
-                 hora_entrada=?, hora_salida=?, pendiente=?, email=?, fecha_alta=?, tipo=?, url_leg=?, nacionalidad=?
-             WHERE id_empleado=?" . ($esAdminReal ? "" : " AND COALESCE(tipo, 1) = 1")
-        );
-        $stmt->execute([
-            $nombreCompleto, $fechaNac, $estCivil, $empresaId, $domicilio, $cuil, $dni, $telefono,
-            $nroLegajo, $nroCredencial, $fechaVencCred, $activo, $objId,
-            $horaEntrada, $horaSalida, $pendiente, $email, $fechaAlta, $tipo, $urlLeg, $nacionalidad, $id
-        ]);
+        if ($contrasena) {
+            $hash = password_hash($contrasena, PASSWORD_DEFAULT);
+            $stmt = $db->prepare(
+                "UPDATE empleados
+                 SET nombre=?, fecha_nac=?, est_civil=?, empresa_id=?, domicilio=?, CUIL=?, DNI=?, telefono=?,
+                     nro_legajo=?, nro_credencial=?, fecha_venc_cred=?, activo=?, objetivo_id=?,
+                     hora_entrada=?, hora_salida=?, pendiente=?, email=?, contrasena=?, fecha_alta=?, tipo=?, url_leg=?, nacionalidad=?
+                 WHERE id_empleado=?" . ($esAdminReal ? "" : " AND COALESCE(tipo, 1) = 1")
+            );
+            $stmt->execute([
+                $nombreCompleto, $fechaNac, $estCivil, $empresaId, $domicilio, $cuil, $dni, $telefono,
+                $nroLegajo, $nroCredencial, $fechaVencCred, $activo, $objId,
+                $horaEntrada, $horaSalida, $pendiente, $email, $hash, $fechaAlta, $tipo, $urlLeg, $nacionalidad, $id
+            ]);
+        } else {
+            $stmt = $db->prepare(
+                "UPDATE empleados
+                 SET nombre=?, fecha_nac=?, est_civil=?, empresa_id=?, domicilio=?, CUIL=?, DNI=?, telefono=?,
+                     nro_legajo=?, nro_credencial=?, fecha_venc_cred=?, activo=?, objetivo_id=?,
+                     hora_entrada=?, hora_salida=?, pendiente=?, email=?, fecha_alta=?, tipo=?, url_leg=?, nacionalidad=?
+                 WHERE id_empleado=?" . ($esAdminReal ? "" : " AND COALESCE(tipo, 1) = 1")
+            );
+            $stmt->execute([
+                $nombreCompleto, $fechaNac, $estCivil, $empresaId, $domicilio, $cuil, $dni, $telefono,
+                $nroLegajo, $nroCredencial, $fechaVencCred, $activo, $objId,
+                $horaEntrada, $horaSalida, $pendiente, $email, $fechaAlta, $tipo, $urlLeg, $nacionalidad, $id
+            ]);
+        }
+        $accion = 'actualizado';
     }
-    echo json_encode(['success' => true, 'id' => $id, 'accion' => 'actualizado']);
+
+    $fechaMov = date('Y-m-d');
+    if ($objAnt !== $objId) {
+        $db->prepare(
+            "INSERT INTO movimientos_objetivos (objetivo_ant_id, objetivo_nuevo_id, fecha, empleado_id)
+             VALUES (?, ?, ?, ?)"
+        )->execute([$objAnt, $objId, $fechaMov, $id]);
+    }
+    if ($empAnt !== $empresaId) {
+        $db->prepare(
+            "INSERT INTO movimientos_empresas (empresa_ant_id, empresa_nuevo_id, fecha, empleado_id)
+             VALUES (?, ?, ?, ?)"
+        )->execute([$empAnt, $empresaId, $fechaMov, $id]);
+    }
+
+    $db->commit();
+} catch (Throwable $e) {
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+    http_response_code(500);
+    echo json_encode(['error' => 'No se pudo guardar el empleado']);
+    exit;
 }
+
+echo json_encode(['success' => true, 'id' => $id, 'accion' => $accion]);

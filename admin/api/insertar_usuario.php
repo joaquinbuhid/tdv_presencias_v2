@@ -116,41 +116,68 @@ if ($stmt->fetch()) {
 
 $hash = password_hash($contrasena, PASSWORD_DEFAULT);
 
-$stmt = $db->prepare(
-    "INSERT INTO empleados
-        (nombre, fecha_nac, est_civil, empresa_id, domicilio, CUIL, DNI, telefono,
-         nro_legajo, nro_credencial, fecha_venc_cred, activo, objetivo_id, fecha_alta,
-         hora_entrada, hora_salida, pendiente, email, contrasena, tipo, url_leg, nacionalidad)
-     VALUES
-        (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-);
-$stmt->execute([
-    $nombre,
-    $fechaNac,
-    $estCivil,
-    $empresaId,
-    $domicilio,
-    $cuil,
-    $dni,
-    $telefono,
-    $legajo,
-    $credencial,
-    $fechaVencCred,
-    $activo,
-    $objetivoId,
-    $fechaAlta,
-    $horaEntrada,
-    $horaSalida,
-    $pendiente,
-    $email,
-    $hash,
-    $tipo,
-    $urlLeg,
-    $nacionalidad,
-]);
+$db->beginTransaction();
+try {
+    $stmt = $db->prepare(
+        "INSERT INTO empleados
+            (nombre, fecha_nac, est_civil, empresa_id, domicilio, CUIL, DNI, telefono,
+             nro_legajo, nro_credencial, fecha_venc_cred, activo, objetivo_id, fecha_alta,
+             hora_entrada, hora_salida, pendiente, email, contrasena, tipo, url_leg, nacionalidad)
+         VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->execute([
+        $nombre,
+        $fechaNac,
+        $estCivil,
+        $empresaId,
+        $domicilio,
+        $cuil,
+        $dni,
+        $telefono,
+        $legajo,
+        $credencial,
+        $fechaVencCred,
+        $activo,
+        $objetivoId,
+        $fechaAlta,
+        $horaEntrada,
+        $horaSalida,
+        $pendiente,
+        $email,
+        $hash,
+        $tipo,
+        $urlLeg,
+        $nacionalidad,
+    ]);
+    $id = (int)$db->lastInsertId();
+
+    $fechaMov = date('Y-m-d');
+    if ($objetivoId !== null) {
+        $db->prepare(
+            "INSERT INTO movimientos_objetivos (objetivo_ant_id, objetivo_nuevo_id, fecha, empleado_id)
+             VALUES (NULL, ?, ?, ?)"
+        )->execute([$objetivoId, $fechaMov, $id]);
+    }
+    if ($empresaId !== null) {
+        $db->prepare(
+            "INSERT INTO movimientos_empresas (empresa_ant_id, empresa_nuevo_id, fecha, empleado_id)
+             VALUES (NULL, ?, ?, ?)"
+        )->execute([$empresaId, $fechaMov, $id]);
+    }
+
+    $db->commit();
+} catch (Throwable $e) {
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+    http_response_code(500);
+    echo json_encode(['error' => 'No se pudo crear el usuario']);
+    exit;
+}
 
 echo json_encode([
     'success' => true,
-    'id' => (int)$db->lastInsertId(),
+    'id' => $id,
     'mensaje' => 'Usuario creado correctamente',
 ]);

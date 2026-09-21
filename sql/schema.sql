@@ -60,8 +60,8 @@ CREATE TABLE IF NOT EXISTS empleados (
 
 CREATE TABLE IF NOT EXISTS movimientos_empresas (
   id_movimiento_emp int(11) NOT NULL AUTO_INCREMENT,
-  empresa_ant_id int(11) NOT NULL,
-  empresa_nuevo_id int(11) NOT NULL,
+  empresa_ant_id int(11) DEFAULT NULL,
+  empresa_nuevo_id int(11) DEFAULT NULL,
   fecha date NOT NULL,
   empleado_id int(11) NOT NULL,
   PRIMARY KEY (id_movimiento_emp)
@@ -69,8 +69,8 @@ CREATE TABLE IF NOT EXISTS movimientos_empresas (
 
 CREATE TABLE IF NOT EXISTS movimientos_objetivos (
   id_movimiento_obj int(11) NOT NULL AUTO_INCREMENT,
-  objetivo_ant_id int(11) NOT NULL,
-  objetivo_nuevo_id int(11) NOT NULL,
+  objetivo_ant_id int(11) DEFAULT NULL,
+  objetivo_nuevo_id int(11) DEFAULT NULL,
   fecha date NOT NULL,
   empleado_id int(11) NOT NULL,
   PRIMARY KEY (id_movimiento_obj)
