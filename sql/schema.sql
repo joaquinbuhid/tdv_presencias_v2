@@ -64,7 +64,10 @@ CREATE TABLE IF NOT EXISTS movimientos_empresas (
   empresa_nuevo_id int(11) DEFAULT NULL,
   fecha date NOT NULL,
   empleado_id int(11) NOT NULL,
-  PRIMARY KEY (id_movimiento_emp)
+  id_usuario int(11) DEFAULT NULL,
+  PRIMARY KEY (id_movimiento_emp),
+  KEY idx_mov_emp_usuario (id_usuario),
+  CONSTRAINT fk_mov_emp_usuario FOREIGN KEY (id_usuario) REFERENCES empleados (id_empleado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS movimientos_objetivos (
@@ -73,7 +76,10 @@ CREATE TABLE IF NOT EXISTS movimientos_objetivos (
   objetivo_nuevo_id int(11) DEFAULT NULL,
   fecha date NOT NULL,
   empleado_id int(11) NOT NULL,
-  PRIMARY KEY (id_movimiento_obj)
+  id_usuario int(11) DEFAULT NULL,
+  PRIMARY KEY (id_movimiento_obj),
+  KEY idx_mov_obj_usuario (id_usuario),
+  CONSTRAINT fk_mov_obj_usuario FOREIGN KEY (id_usuario) REFERENCES empleados (id_empleado)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS novedades (

@@ -119,6 +119,7 @@ $nombreCompleto = $nombre;
 
 $objAnt = null;
 $empAnt = null;
+$usuarioId = isset($_SESSION['empleado_id']) ? (int)$_SESSION['empleado_id'] : null;
 if ($id !== 0) {
     $objAnt = $empleadoActual['objetivo_id'] !== null ? (int)$empleadoActual['objetivo_id'] : null;
     $empAnt = $empleadoActual['empresa_id'] !== null ? (int)$empleadoActual['empresa_id'] : null;
@@ -177,15 +178,15 @@ try {
     $fechaMov = date('Y-m-d');
     if ($objAnt !== $objId) {
         $db->prepare(
-            "INSERT INTO movimientos_objetivos (objetivo_ant_id, objetivo_nuevo_id, fecha, empleado_id)
-             VALUES (?, ?, ?, ?)"
-        )->execute([$objAnt, $objId, $fechaMov, $id]);
+            "INSERT INTO movimientos_objetivos (objetivo_ant_id, objetivo_nuevo_id, fecha, empleado_id, id_usuario)
+             VALUES (?, ?, ?, ?, ?)"
+        )->execute([$objAnt, $objId, $fechaMov, $id, $usuarioId]);
     }
     if ($empAnt !== $empresaId) {
         $db->prepare(
-            "INSERT INTO movimientos_empresas (empresa_ant_id, empresa_nuevo_id, fecha, empleado_id)
-             VALUES (?, ?, ?, ?)"
-        )->execute([$empAnt, $empresaId, $fechaMov, $id]);
+            "INSERT INTO movimientos_empresas (empresa_ant_id, empresa_nuevo_id, fecha, empleado_id, id_usuario)
+             VALUES (?, ?, ?, ?, ?)"
+        )->execute([$empAnt, $empresaId, $fechaMov, $id, $usuarioId]);
     }
 
     $db->commit();

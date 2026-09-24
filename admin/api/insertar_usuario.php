@@ -153,17 +153,18 @@ try {
     $id = (int)$db->lastInsertId();
 
     $fechaMov = date('Y-m-d');
+    $usuarioId = isset($_SESSION['empleado_id']) ? (int)$_SESSION['empleado_id'] : null;
     if ($objetivoId !== null) {
         $db->prepare(
-            "INSERT INTO movimientos_objetivos (objetivo_ant_id, objetivo_nuevo_id, fecha, empleado_id)
-             VALUES (NULL, ?, ?, ?)"
-        )->execute([$objetivoId, $fechaMov, $id]);
+            "INSERT INTO movimientos_objetivos (objetivo_ant_id, objetivo_nuevo_id, fecha, empleado_id, id_usuario)
+             VALUES (NULL, ?, ?, ?, ?)"
+        )->execute([$objetivoId, $fechaMov, $id, $usuarioId]);
     }
     if ($empresaId !== null) {
         $db->prepare(
-            "INSERT INTO movimientos_empresas (empresa_ant_id, empresa_nuevo_id, fecha, empleado_id)
-             VALUES (NULL, ?, ?, ?)"
-        )->execute([$empresaId, $fechaMov, $id]);
+            "INSERT INTO movimientos_empresas (empresa_ant_id, empresa_nuevo_id, fecha, empleado_id, id_usuario)
+             VALUES (NULL, ?, ?, ?, ?)"
+        )->execute([$empresaId, $fechaMov, $id, $usuarioId]);
     }
 
     $db->commit();
