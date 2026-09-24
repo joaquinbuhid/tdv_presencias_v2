@@ -190,6 +190,7 @@ $esAdminReal = esAdminReal();
                 <input type="date" id="hasta">
             </div>
             <div class="filter-actions">
+                <a class="btn btn-primary btn-sm" href="https://postulaciones.tdvsrl.com" target="_blank" rel="noopener">+ Agregar</a>
                 <button type="button" class="btn btn-outline btn-sm" id="btnLimpiar">Limpiar</button>
                 <button type="button" class="btn btn-outline btn-sm" id="btnExcel">Excel</button>
                 <button type="submit" class="btn btn-primary btn-sm" id="btnBuscar">Filtrar</button>
