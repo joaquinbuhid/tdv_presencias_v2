@@ -14,8 +14,7 @@ $stmt = $db->query(
      FROM empleados e
      LEFT JOIN objetivos o ON e.objetivo_id = o.id_objetivo
      LEFT JOIN empresas emp ON e.empresa_id = emp.id_empresa
-     WHERE COALESCE(e.tipo, 1) = 1
-     ORDER BY e.pendiente DESC, e.nombre"
+     ORDER BY e.pendiente DESC, COALESCE(e.tipo, 1), e.nombre"
 );
 
 echo json_encode($stmt->fetchAll());

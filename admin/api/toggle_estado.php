@@ -21,7 +21,7 @@ if (!$id || !in_array($accion, ['aprobar','activar','desactivar'], true)) {
 }
 
 $db = getDB();
-$stmt = $db->prepare("SELECT id_empleado FROM empleados WHERE id_empleado = ? AND COALESCE(tipo, 1) = 1");
+$stmt = $db->prepare("SELECT id_empleado FROM empleados WHERE id_empleado = ?");
 $stmt->execute([$id]);
 if (!$stmt->fetch()) {
     http_response_code(404);

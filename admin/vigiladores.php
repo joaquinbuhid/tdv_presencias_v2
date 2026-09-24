@@ -13,7 +13,7 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TDV - Gestión de empleados</title>
+    <title>TDV - Gestión de usuarios</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
@@ -36,6 +36,7 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
         .pill-activo    { background:#eafaf1;color:#1e8449; }
         .pill-inactivo  { background:#fdecea;color:#c0392b; }
         .pill-pendiente { background:#fef9e7;color:#9a7d0a; }
+        .pill-tipo      { background:#ebf5fb;color:#1a5276; }
 
         /* Section header */
         .section-header {
@@ -108,9 +109,9 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
     <!-- Tabla de empleados -->
     <div class="card" style="overflow-x:auto;">
         <div class="section-header">
-            <span class="section-title">&#x1F464; empleados</span>
+            <span class="section-title">&#x1F464; Usuarios</span>
             <?php if ($esAdminReal): ?>
-            <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo vigilador</button>
+            <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo usuario</button>
             <?php endif; ?>
             <?php if ($puedeCrearEmpleado): ?>
             <a class="btn btn-primary btn-sm" href="usuarios.php?origen=empleados" title="Agregar empleado" aria-label="Agregar empleado">+</a>
@@ -130,7 +131,7 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
         <div class="modal-header">
-            <span class="modal-title" id="modalTitle">Nuevo vigilador</span>
+            <span class="modal-title" id="modalTitle">Nuevo usuario</span>
             <button class="modal-close" onclick="cerrarModal()">&#x2715;</button>
         </div>
 
@@ -301,6 +302,7 @@ $puedeCrearEmpleado = $esAdminReal || esOficinista();
 <script>
 let objetivos = [];
 const ES_ADMIN_REAL = <?= $esAdminReal ? 'true' : 'false' ?>;
+const TIPOS = { 1: 'Vigilador', 2: 'Supervisor', 3: 'Oficinista', 4: 'Administrador' };
 
 // ---- Inicio -----------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
@@ -332,30 +334,34 @@ async function cargarVigiladores() {
         document.getElementById('pendientesBanner').style.display = pendientes.length ? 'block' : 'none';
 
         if (!list.length) {
-            wrap.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:1.5rem;">Sin empleados registrados.</p>';
+            wrap.innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:1.5rem;">Sin usuarios registrados.</p>';
             return;
         }
 
         const tbody = list.map(v => {
             let estadoPill, acciones;
+            const puedeEditar = ES_ADMIN_REAL || Number(v.tipo || 1) === 1;
+            const btnEditar = puedeEditar
+                ? `<button class="btn btn-outline btn-sm" onclick="abrirModal(${v.id_empleado})">&#9998; Editar</button>`
+                : '<span style="color:var(--text-muted)">-</span>';
             if (v.pendiente == 1) {
                 estadoPill = '<span class="pill pill-pendiente">Pendiente</span>';
                 acciones = ES_ADMIN_REAL
                     ? `<button class="btn btn-success btn-sm" onclick="toggleEstado(${v.id_empleado},'aprobar')">&#9989; Aprobar</button>
                        <button class="btn btn-outline btn-sm" onclick="abrirModal(${v.id_empleado})">&#9998;</button>`
-                    : `<button class="btn btn-outline btn-sm" onclick="abrirModal(${v.id_empleado})">&#9998; Editar</button>`;
+                    : btnEditar;
             } else if (v.activo == 1) {
                 estadoPill = '<span class="pill pill-activo">Activo</span>';
                 acciones = ES_ADMIN_REAL
                     ? `<button class="btn btn-outline btn-sm" onclick="abrirModal(${v.id_empleado})">&#9998; Editar</button>
                        <button class="btn btn-danger  btn-sm" onclick="toggleEstado(${v.id_empleado},'desactivar')">&#x23F8; Desactivar</button>`
-                    : `<button class="btn btn-outline btn-sm" onclick="abrirModal(${v.id_empleado})">&#9998; Editar</button>`;
+                    : btnEditar;
             } else {
                 estadoPill = '<span class="pill pill-inactivo">Inactivo</span>';
                 acciones = ES_ADMIN_REAL
                     ? `<button class="btn btn-outline btn-sm" onclick="abrirModal(${v.id_empleado})">&#9998; Editar</button>
                        <button class="btn btn-success btn-sm" onclick="toggleEstado(${v.id_empleado},'activar')">&#9654; Activar</button>`
-                    : `<button class="btn btn-outline btn-sm" onclick="abrirModal(${v.id_empleado})">&#9998; Editar</button>`;
+                    : btnEditar;
             }
             const turno = (v.hora_entrada && v.hora_salida)
                 ? `<span class="turno-pill">${v.hora_entrada.substr(0,5)} - ${v.hora_salida.substr(0,5)}</span>`
@@ -367,6 +373,7 @@ async function cargarVigiladores() {
                 <td>${esc(v.dni)}</td>
                 <td>${esc(v.objetivo_nombre || '-')}</td>
                 <td>${turno}</td>
+                <td><span class="pill pill-tipo">${TIPOS[Number(v.tipo) || 1] || 'Vigilador'}</span></td>
                 <td class="estado-cell">${estadoPill}</td>
                 <td><div class="actions acciones-cell">${acciones}</div></td>
             </tr>`;
@@ -379,13 +386,14 @@ async function cargarVigiladores() {
                     <th>DNI</th>
                     <th>Objetivo</th>
                     <th>Turno</th>
+                    <th>Tipo</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr></thead>
                 <tbody>${tbody}</tbody>
             </table>`;
     } catch (e) {
-        wrap.innerHTML = '<p style="color:var(--danger);padding:1rem;">Error al cargar empleados.</p>';
+        wrap.innerHTML = '<p style="color:var(--danger);padding:1rem;">Error al cargar usuarios.</p>';
     }
 }
 
@@ -396,7 +404,7 @@ function abrirModal(id) {
     document.getElementById('fId').value = id;
 
     const esEdicion = id > 0;
-    document.getElementById('modalTitle').textContent = esEdicion ? 'Editar vigilador' : 'Nuevo vigilador';
+    document.getElementById('modalTitle').textContent = esEdicion ? 'Editar usuario' : 'Nuevo usuario';
     document.getElementById('passRequired').style.display = esEdicion ? 'none' : 'inline';
     document.getElementById('passHint').style.display     = esEdicion ? 'inline' : 'none';
 
@@ -500,7 +508,7 @@ async function onGuardar(e) {
             hora_salida:  horaSalida  !== '' ? horaSalida  : null,
         });
         cerrarModal();
-        mostrarExito(id ? 'Vigilador actualizado.' : 'Vigilador creado.');
+        mostrarExito(id ? 'Usuario actualizado.' : 'Usuario creado.');
         cargarVigiladores();
     } catch (err) {
         document.getElementById('modalErrorMsg').textContent = err.message;
@@ -514,7 +522,7 @@ async function onGuardar(e) {
 // ---- Toggle estado ----------------------------------------
 async function toggleEstado(id, accion) {
     const labels = { aprobar:'Aprobar', activar:'Activar', desactivar:'Desactivar' };
-    if (accion === 'desactivar' && !confirm('¿Desactivar este vigilador?')) return;
+    if (accion === 'desactivar' && !confirm('¿Desactivar este usuario?')) return;
 
     try {
         const resp = await apiFetch('api/toggle_estado.php', 'POST', { id, accion });
