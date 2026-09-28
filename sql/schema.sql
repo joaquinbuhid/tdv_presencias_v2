@@ -124,6 +124,52 @@ CREATE TABLE IF NOT EXISTS postulantes (
   KEY idx_postulantes_puesto (puesto_postula)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS entrevistas (
+  id_entrevista int(11) NOT NULL AUTO_INCREMENT,
+  postulante_id int(11) DEFAULT NULL,
+  empleado_id int(11) DEFAULT NULL,
+  fecha_entrevista datetime NOT NULL DEFAULT current_timestamp(),
+  -- Snapshot de los datos del postulante al momento de la entrevista
+  nombre_completo varchar(255) DEFAULT NULL,
+  dni varchar(20) DEFAULT NULL,
+  fecha_nacimiento date DEFAULT NULL,
+  telefono varchar(50) DEFAULT NULL,
+  email varchar(255) DEFAULT NULL,
+  localidad_residencia varchar(255) DEFAULT NULL,
+  puesto_postula varchar(255) DEFAULT NULL,
+  disponibilidad_horaria varchar(50) DEFAULT NULL,
+  experiencia_seguridad varchar(10) DEFAULT NULL,
+  curso_habilitante varchar(10) DEFAULT NULL,
+  credencial_vigente varchar(10) DEFAULT NULL,
+  parte_track_seguridad varchar(10) DEFAULT NULL,
+  monotributista varchar(10) DEFAULT NULL,
+  genero varchar(50) DEFAULT NULL,
+  -- Datos cargados durante la entrevista
+  peso decimal(5,1) DEFAULT NULL,
+  altura decimal(5,1) DEFAULT NULL,
+  relacion_peso_altura tinyint(4) DEFAULT NULL,
+  apariencia_vestimenta tinyint(4) DEFAULT NULL,
+  modulacion_habla tinyint(4) DEFAULT NULL,
+  estado_civil varchar(50) DEFAULT NULL,
+  hijos int(11) DEFAULT NULL,
+  domicilio varchar(255) DEFAULT NULL,
+  tiene_vehiculo enum('si','no') DEFAULT NULL,
+  vehiculo varchar(255) DEFAULT NULL,
+  fecha_ultimo_trabajo date DEFAULT NULL,
+  punto_ultimo_trabajo tinyint(4) NOT NULL DEFAULT 0,
+  valoracion_personal tinyint(4) DEFAULT NULL,
+  valoracion_texto text DEFAULT NULL,
+  puntaje_sin_valoracion int(11) DEFAULT NULL,
+  puntaje_total int(11) DEFAULT NULL,
+  fecha_registro timestamp NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (id_entrevista),
+  KEY idx_entrevistas_postulante (postulante_id),
+  KEY idx_entrevistas_empleado (empleado_id),
+  KEY idx_entrevistas_fecha (fecha_entrevista),
+  CONSTRAINT fk_entrevistas_postulante FOREIGN KEY (postulante_id) REFERENCES postulantes (id) ON DELETE SET NULL,
+  CONSTRAINT fk_entrevistas_empleado FOREIGN KEY (empleado_id) REFERENCES empleados (id_empleado) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 INSERT INTO tipo_novedad (nombre, descripcion)
 SELECT 'Entrada', 'Registro de inicio de turno'
 WHERE NOT EXISTS (SELECT 1 FROM tipo_novedad WHERE nombre = 'Entrada');
