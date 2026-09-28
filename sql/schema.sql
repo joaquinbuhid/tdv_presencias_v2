@@ -120,7 +120,7 @@ CREATE TABLE IF NOT EXISTS postulantes (
   fecha_registro timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (id),
   KEY idx_postulantes_fecha (fecha_registro),
-  KEY idx_postulantes_dni (dni),
+  UNIQUE KEY uq_postulantes_dni (dni),
   KEY idx_postulantes_puesto (puesto_postula)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

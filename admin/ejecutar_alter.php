@@ -89,6 +89,25 @@ try {
     } else {
         echo "INFO: La columna 'contratado' ya existe en la tabla 'entrevistas'.<br>";
     }
+
+    // 5. postulantes.dni unique key (elimina duplicados conservando el registro mas reciente)
+    $stmtTable = $db->query("SHOW TABLES LIKE 'postulantes'");
+    if ($stmtTable->fetch()) {
+        $stmtIdx = $db->query("SHOW INDEX FROM postulantes WHERE Key_name = 'uq_postulantes_dni'");
+        if (!$stmtIdx->fetch()) {
+            $deleted = $db->exec("DELETE p FROM postulantes p
+                INNER JOIN (
+                    SELECT dni, MAX(id) AS keep_id
+                    FROM postulantes
+                    GROUP BY dni
+                ) k ON p.dni = k.dni AND p.id <> k.keep_id");
+            echo "SUCCESS: Se eliminaron {$deleted} postulantes duplicados por DNI.<br>";
+            $db->exec("ALTER TABLE postulantes ADD UNIQUE KEY uq_postulantes_dni (dni)");
+            echo "SUCCESS: Indice unico 'uq_postulantes_dni' agregado a la tabla 'postulantes'.<br>";
+        } else {
+            echo "INFO: El indice 'uq_postulantes_dni' ya existe en la tabla 'postulantes'.<br>";
+        }
+    }
 } catch (Exception $e) {
     http_response_code(500);
     echo "ERROR: " . $e->getMessage();
