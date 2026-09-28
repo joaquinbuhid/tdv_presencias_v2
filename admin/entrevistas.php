@@ -47,6 +47,7 @@ $esAdminReal = esAdminReal();
 
         .hint-punto { display:none; font-size:.78rem; color:#1e8449; font-weight:600; margin-top:.3rem; }
         .hint-punto.show { display:block; }
+        .row-actions { display:flex; gap:.45rem; align-items:center; flex-wrap:nowrap; }
 
         .table-wrap { overflow-x:auto; background:var(--card); border-radius:10px; box-shadow:var(--shadow); }
         table { width:100%; border-collapse:collapse; min-width:900px; }
@@ -240,7 +241,7 @@ $esAdminReal = esAdminReal();
                         <th>Entrevistador</th>
                         <th>P. sin valoración</th>
                         <th>P. total</th>
-                        <th></th>
+                        <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="tbodyEntrevistas">
@@ -489,7 +490,12 @@ async function cargarEntrevistas() {
                 <td>${esc(it.entrevistador || '-')}</td>
                 <td><strong>${esc(it.puntaje_sin_valoracion)}</strong></td>
                 <td><strong>${esc(it.puntaje_total)}</strong></td>
-                <td><button class="btn btn-outline btn-sm" onclick="toggleDetalle(${Number(it.id_entrevista)})">Ver</button></td>
+                <td style="white-space:nowrap;">
+                    <div class="row-actions">
+                        <button class="btn btn-outline btn-sm" onclick="toggleDetalle(${Number(it.id_entrevista)})">Ver</button>
+                        <button class="btn btn-success btn-sm" onclick="contratarEntrevista(${Number(it.id_entrevista)})">Contratar</button>
+                    </div>
+                </td>
             </tr>
             <tr class="detail-row" id="detalle-${Number(it.id_entrevista)}">
                 <td colspan="6">
@@ -522,6 +528,23 @@ async function cargarEntrevistas() {
 function toggleDetalle(id) {
     const row = document.getElementById('detalle-' + id);
     if (row) row.classList.toggle('open');
+}
+
+async function contratarEntrevista(id) {
+    if (!confirm('¿Marcar esta entrevista como contratada? Pasará al historial de contratados.')) return;
+    try {
+        const res = await fetch('api/contratar_entrevista.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo actualizar la entrevista.');
+        showOk('Entrevista marcada como contratada. Ahora figura en la página Historial.');
+        cargarEntrevistas();
+    } catch (e) {
+        showError(e.message);
+    }
 }
 
 function detalle(label, value) {

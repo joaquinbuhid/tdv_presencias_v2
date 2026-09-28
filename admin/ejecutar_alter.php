@@ -63,6 +63,7 @@ try {
           vehiculo varchar(255) DEFAULT NULL,
           fecha_ultimo_trabajo date DEFAULT NULL,
           punto_ultimo_trabajo tinyint(4) NOT NULL DEFAULT 0,
+          contratado tinyint(1) NOT NULL DEFAULT 0,
           valoracion_personal tinyint(4) DEFAULT NULL,
           valoracion_texto text DEFAULT NULL,
           puntaje_sin_valoracion int(11) DEFAULT NULL,
@@ -78,6 +79,15 @@ try {
         echo "SUCCESS: Tabla 'entrevistas' creada exitosamente.<br>";
     } else {
         echo "INFO: La tabla 'entrevistas' ya existe en esta base de datos.<br>";
+    }
+
+    // 4. entrevistas.contratado column
+    $stmtCol = $db->query("SHOW COLUMNS FROM entrevistas LIKE 'contratado'");
+    if (!$stmtCol->fetch()) {
+        $db->exec("ALTER TABLE entrevistas ADD COLUMN contratado tinyint(1) NOT NULL DEFAULT 0");
+        echo "SUCCESS: Columna 'contratado' agregada exitosamente a la tabla 'entrevistas'.<br>";
+    } else {
+        echo "INFO: La columna 'contratado' ya existe en la tabla 'entrevistas'.<br>";
     }
 } catch (Exception $e) {
     http_response_code(500);

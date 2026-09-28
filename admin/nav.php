@@ -10,6 +10,7 @@ $navItems = [
     ['archivo' => 'usuarios.php',     'texto' => "\u{2795} Usuarios",      'soloAdmin' => true],
     ['archivo' => 'postulantes.php',  'texto' => 'Postulantes',            'soloAdmin' => false],
     ['archivo' => 'entrevistas.php',  'texto' => "\u{1F4DD} Entrevistas",  'soloAdmin' => false],
+    ['archivo' => 'historial_entrevistas.php', 'texto' => "\u{2705} Contratados", 'soloAdmin' => false],
     ['archivo' => 'vigiladores.php',  'texto' => "\u{1F464} Empleados",    'soloAdmin' => false],
     ['archivo' => 'legajos.php',      'texto' => "\u{1F4C1} Legajos",      'soloAdmin' => false],
     ['archivo' => 'supervisores.php', 'texto' => "\u{1F4BC} Supervisores", 'soloAdmin' => false],
