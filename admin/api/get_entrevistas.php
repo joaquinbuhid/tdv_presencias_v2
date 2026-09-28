@@ -12,7 +12,7 @@ try {
                 DATE_FORMAT(e.fecha_entrevista, '%d/%m/%Y %H:%i') AS fecha_fmt
          FROM entrevistas e
          LEFT JOIN empleados emp ON emp.id_empleado = e.empleado_id
-         ORDER BY e.fecha_entrevista DESC, e.id_entrevista DESC
+         ORDER BY e.puntaje_total DESC, e.fecha_entrevista DESC, e.id_entrevista DESC
          LIMIT 300"
     );
     echo json_encode($stmt->fetchAll());
