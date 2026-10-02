@@ -134,6 +134,7 @@ async function cargarHistorial() {
                         ${detalle('Último trabajo en rel. dep.', fmtFecha(it.fecha_ultimo_trabajo))}
                         ${detalle('Punto +6 meses', it.punto_ultimo_trabajo == 1 ? 'Si (+1)' : 'No')}
                         ${detalle('Punto vehículo', it.tiene_vehiculo === 'si' ? 'Si (+1)' : 'No')}
+                        ${detalle('Punto familiares', it.tiene_familiares === 'si' ? 'Si (-1)' : 'No')}
                         ${detalle('Valoración personal', it.valoracion_personal)}
                         ${detalle('Comentario', it.valoracion_texto)}
                         ${detalle('Teléfono', it.telefono)}

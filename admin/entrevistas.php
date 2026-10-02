@@ -188,11 +188,12 @@ $esAdminReal = esAdminReal();
                 </div>
                 <div class="form-group">
                     <label for="tiene_familiares">Familiares trabajando en la empresa</label>
-                    <select id="tiene_familiares">
+                    <select id="tiene_familiares" class="puntaje-input">
                         <option value="">Seleccione</option>
                         <option value="si">Si</option>
                         <option value="no">No</option>
                     </select>
+                    <div class="hint-punto" id="hintPuntoFamiliares">-1 punto: tiene familiares en la empresa</div>
                 </div>
                 <div class="form-group" id="grupoFamiliares" style="display:none;">
                     <label for="familiares">¿Quién/es?</label>
@@ -223,7 +224,7 @@ $esAdminReal = esAdminReal();
                 <div class="puntaje-box">
                     <div class="puntaje-label">Puntaje sin valoración personal</div>
                     <div class="puntaje-valor" id="puntajeBase">0</div>
-                    <div class="puntaje-hint">Peso/altura + apariencia + habla + punto por tiempo sin empleo + punto por vehículo</div>
+                    <div class="puntaje-hint">Peso/altura + apariencia + habla + punto por tiempo sin empleo + punto por vehículo - punto por familiares en la empresa</div>
                 </div>
                 <div class="puntaje-box">
                     <div class="puntaje-label">Puntaje con valoración personal</div>
@@ -399,6 +400,10 @@ function puntoVehiculo() {
     return document.getElementById('tiene_vehiculo').value === 'si' ? 1 : 0;
 }
 
+function puntoFamiliares() {
+    return document.getElementById('tiene_familiares').value === 'si' ? 1 : 0;
+}
+
 function puntaje(id) {
     const v = parseInt(document.getElementById(id).value, 10);
     return (v >= 1 && v <= 5) ? v : 0;
@@ -407,9 +412,11 @@ function puntaje(id) {
 function actualizarPuntajes() {
     const extra = puntoTrabajo();
     const extraVehiculo = puntoVehiculo();
+    const menosFamiliares = puntoFamiliares();
     document.getElementById('hintPuntoTrabajo').classList.toggle('show', extra === 1);
     document.getElementById('hintPuntoVehiculo').classList.toggle('show', extraVehiculo === 1);
-    const base = puntaje('relacion_peso_altura') + puntaje('apariencia_vestimenta') + puntaje('modulacion_habla') + extra + extraVehiculo;
+    document.getElementById('hintPuntoFamiliares').classList.toggle('show', menosFamiliares === 1);
+    const base = puntaje('relacion_peso_altura') + puntaje('apariencia_vestimenta') + puntaje('modulacion_habla') + extra + extraVehiculo - menosFamiliares;
     document.getElementById('puntajeBase').textContent = base;
     document.getElementById('puntajeTotal').textContent = base + puntaje('valoracion_personal');
 }
@@ -548,6 +555,7 @@ async function cargarEntrevistas() {
                         ${detalle('Último trabajo en rel. dep.', fmtFecha(it.fecha_ultimo_trabajo))}
                         ${detalle('Punto +6 meses', it.punto_ultimo_trabajo == 1 ? 'Si (+1)' : 'No')}
                         ${detalle('Punto vehículo', it.tiene_vehiculo === 'si' ? 'Si (+1)' : 'No')}
+                        ${detalle('Punto familiares', it.tiene_familiares === 'si' ? 'Si (-1)' : 'No')}
                         ${detalle('Valoración personal', it.valoracion_personal)}
                         ${detalle('Comentario', it.valoracion_texto)}
                         ${detalle('Teléfono', it.telefono)}

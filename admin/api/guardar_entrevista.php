@@ -127,7 +127,10 @@ if ($fechaUltimoTrabajo !== null && $fechaUltimoTrabajo < date('Y-m-d', strtotim
 // +1 punto si el postulante tiene vehiculo
 $puntoVehiculo = ($tieneVehiculo === 'si') ? 1 : 0;
 
-$puntajeSinValoracion = $relacionPesoAltura + $apariencia + $modulacion + $puntoUltimoTrabajo + $puntoVehiculo;
+// -1 punto si el postulante tiene familiares trabajando en la empresa
+$puntoFamiliares = ($tieneFamiliares === 'si') ? 1 : 0;
+
+$puntajeSinValoracion = $relacionPesoAltura + $apariencia + $modulacion + $puntoUltimoTrabajo + $puntoVehiculo - $puntoFamiliares;
 $puntajeTotal = $puntajeSinValoracion + $valoracion;
 
 try {
