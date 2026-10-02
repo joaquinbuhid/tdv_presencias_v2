@@ -186,6 +186,18 @@ $esAdminReal = esAdminReal();
                     <label for="vehiculo">¿Qué vehículo?</label>
                     <input type="text" id="vehiculo" placeholder="Ej: Auto Fiat Cronos / Moto">
                 </div>
+                <div class="form-group">
+                    <label for="tiene_familiares">Familiares trabajando en la empresa</label>
+                    <select id="tiene_familiares">
+                        <option value="">Seleccione</option>
+                        <option value="si">Si</option>
+                        <option value="no">No</option>
+                    </select>
+                </div>
+                <div class="form-group" id="grupoFamiliares" style="display:none;">
+                    <label for="familiares">¿Quién/es?</label>
+                    <input type="text" id="familiares" placeholder="Ej: Hermano - Juan Pérez">
+                </div>
                 <div class="form-group full">
                     <label for="domicilio">Domicilio</label>
                     <input type="text" id="domicilio" placeholder="Calle, número, localidad">
@@ -288,6 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
     buscarPostulante.addEventListener('input', renderPostulantes);
 
     document.getElementById('tiene_vehiculo').addEventListener('change', toggleVehiculo);
+    document.getElementById('tiene_familiares').addEventListener('change', toggleFamiliares);
     document.querySelectorAll('.puntaje-input').forEach(el => el.addEventListener('input', actualizarPuntajes));
 
     document.getElementById('btnLimpiar').addEventListener('click', limpiarFormulario);
@@ -368,6 +381,12 @@ function toggleVehiculo() {
     if (!tiene) document.getElementById('vehiculo').value = '';
 }
 
+function toggleFamiliares() {
+    const tiene = document.getElementById('tiene_familiares').value === 'si';
+    document.getElementById('grupoFamiliares').style.display = tiene ? '' : 'none';
+    if (!tiene) document.getElementById('familiares').value = '';
+}
+
 function puntoTrabajo() {
     const fecha = document.getElementById('fecha_ultimo_trabajo').value;
     if (!fecha) return 0;
@@ -403,6 +422,7 @@ function limpiarFormulario() {
     document.getElementById('postulanteElegido').textContent = 'Todavía no se eligió ningún postulante.';
     document.getElementById('datosPostulante').style.display = 'none';
     document.getElementById('grupoVehiculo').style.display = 'none';
+    document.getElementById('grupoFamiliares').style.display = 'none';
     document.getElementById('btnBuscarPostulante').disabled = false;
     document.getElementById('btnGuardar').textContent = 'Guardar entrevista';
     actualizarPuntajes();
@@ -433,6 +453,8 @@ async function onGuardar(e) {
         domicilio: field('domicilio'),
         tiene_vehiculo: field('tiene_vehiculo'),
         vehiculo: field('vehiculo'),
+        tiene_familiares: field('tiene_familiares'),
+        familiares: field('familiares'),
         fecha_ultimo_trabajo: field('fecha_ultimo_trabajo'),
         valoracion_personal: field('valoracion_personal'),
         valoracion_texto: field('valoracion_texto'),
@@ -446,6 +468,10 @@ async function onGuardar(e) {
     }
     if (payload.tiene_vehiculo === 'si' && !payload.vehiculo) {
         showError('Indicá qué vehículo tiene el postulante.');
+        return;
+    }
+    if (payload.tiene_familiares === 'si' && !payload.familiares) {
+        showError('Indicá qué familiares trabajan en la empresa.');
         return;
     }
 
@@ -518,6 +544,7 @@ async function cargarEntrevistas() {
                         ${detalle('Hijos', it.hijos)}
                         ${detalle('Domicilio', it.domicilio)}
                         ${detalle('Vehículo', it.tiene_vehiculo === 'si' ? (it.vehiculo || 'Si') : siNo(it.tiene_vehiculo))}
+                        ${detalle('Familiares en la empresa', it.tiene_familiares === 'si' ? (it.familiares || 'Si') : siNo(it.tiene_familiares))}
                         ${detalle('Último trabajo en rel. dep.', fmtFecha(it.fecha_ultimo_trabajo))}
                         ${detalle('Punto +6 meses', it.punto_ultimo_trabajo == 1 ? 'Si (+1)' : 'No')}
                         ${detalle('Punto vehículo', it.tiene_vehiculo === 'si' ? 'Si (+1)' : 'No')}
@@ -586,6 +613,9 @@ function editarEntrevista(id) {
     set('tiene_vehiculo', it.tiene_vehiculo);
     toggleVehiculo();
     set('vehiculo', it.vehiculo);
+    set('tiene_familiares', it.tiene_familiares);
+    toggleFamiliares();
+    set('familiares', it.familiares);
     set('domicilio', it.domicilio);
     set('valoracion_personal', it.valoracion_personal);
     set('valoracion_texto', it.valoracion_texto);

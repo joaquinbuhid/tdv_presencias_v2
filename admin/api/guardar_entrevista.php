@@ -66,6 +66,22 @@ if ($tieneVehiculo !== 'si') {
     $vehiculo = '';
 }
 
+$tieneFamiliares = trim($data['tiene_familiares'] ?? '');
+if ($tieneFamiliares !== '' && !in_array($tieneFamiliares, ['si', 'no'], true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Valor de familiares invalido']);
+    exit;
+}
+$familiares = trim($data['familiares'] ?? '');
+if ($tieneFamiliares === 'si' && $familiares === '') {
+    http_response_code(400);
+    echo json_encode(['error' => 'Indique que familiares trabajan en la empresa']);
+    exit;
+}
+if ($tieneFamiliares !== 'si') {
+    $familiares = '';
+}
+
 $fechaUltimoTrabajo = trim($data['fecha_ultimo_trabajo'] ?? '');
 if ($fechaUltimoTrabajo !== '') {
     $dt = DateTime::createFromFormat('Y-m-d', $fechaUltimoTrabajo);
@@ -137,7 +153,8 @@ try {
             "UPDATE entrevistas SET
                 peso = ?, altura = ?, relacion_peso_altura = ?, apariencia_vestimenta = ?,
                 modulacion_habla = ?, estado_civil = ?, hijos = ?, domicilio = ?,
-                tiene_vehiculo = ?, vehiculo = ?, fecha_ultimo_trabajo = ?, punto_ultimo_trabajo = ?,
+                tiene_vehiculo = ?, vehiculo = ?, tiene_familiares = ?, familiares = ?,
+                fecha_ultimo_trabajo = ?, punto_ultimo_trabajo = ?,
                 valoracion_personal = ?, valoracion_texto = ?,
                 puntaje_sin_valoracion = ?, puntaje_total = ?
              WHERE id_entrevista = ?"
@@ -146,6 +163,7 @@ try {
             $peso, $altura, $relacionPesoAltura, $apariencia,
             $modulacion, $estadoCivil !== '' ? $estadoCivil : null, $hijos, $domicilio !== '' ? $domicilio : null,
             $tieneVehiculo !== '' ? $tieneVehiculo : null, $vehiculo !== '' ? $vehiculo : null,
+            $tieneFamiliares !== '' ? $tieneFamiliares : null, $familiares !== '' ? $familiares : null,
             $fechaUltimoTrabajo, $puntoUltimoTrabajo,
             $valoracion, $valoracionTexto !== '' ? $valoracionTexto : null,
             $puntajeSinValoracion, $puntajeTotal,
@@ -197,10 +215,11 @@ try {
              parte_track_seguridad, monotributista, genero,
              peso, altura, relacion_peso_altura, apariencia_vestimenta,
              modulacion_habla, estado_civil, hijos, domicilio,
-             tiene_vehiculo, vehiculo, fecha_ultimo_trabajo, punto_ultimo_trabajo,
+             tiene_vehiculo, vehiculo, tiene_familiares, familiares,
+             fecha_ultimo_trabajo, punto_ultimo_trabajo,
              valoracion_personal, valoracion_texto,
              puntaje_sin_valoracion, puntaje_total)
-         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $stmt->execute([
         $postulanteId, $empleadoId,
@@ -213,6 +232,7 @@ try {
         $peso, $altura, $relacionPesoAltura, $apariencia,
         $modulacion, $estadoCivil !== '' ? $estadoCivil : null, $hijos, $domicilio !== '' ? $domicilio : null,
         $tieneVehiculo !== '' ? $tieneVehiculo : null, $vehiculo !== '' ? $vehiculo : null,
+        $tieneFamiliares !== '' ? $tieneFamiliares : null, $familiares !== '' ? $familiares : null,
         $fechaUltimoTrabajo, $puntoUltimoTrabajo,
         $valoracion, $valoracionTexto !== '' ? $valoracionTexto : null,
         $puntajeSinValoracion, $puntajeTotal,

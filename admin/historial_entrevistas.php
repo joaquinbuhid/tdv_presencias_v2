@@ -130,6 +130,7 @@ async function cargarHistorial() {
                         ${detalle('Hijos', it.hijos)}
                         ${detalle('Domicilio', it.domicilio)}
                         ${detalle('Vehículo', it.tiene_vehiculo === 'si' ? (it.vehiculo || 'Si') : siNo(it.tiene_vehiculo))}
+                        ${detalle('Familiares en la empresa', it.tiene_familiares === 'si' ? (it.familiares || 'Si') : siNo(it.tiene_familiares))}
                         ${detalle('Último trabajo en rel. dep.', fmtFecha(it.fecha_ultimo_trabajo))}
                         ${detalle('Punto +6 meses', it.punto_ultimo_trabajo == 1 ? 'Si (+1)' : 'No')}
                         ${detalle('Punto vehículo', it.tiene_vehiculo === 'si' ? 'Si (+1)' : 'No')}

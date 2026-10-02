@@ -157,6 +157,8 @@ CREATE TABLE IF NOT EXISTS entrevistas (
   vehiculo varchar(255) DEFAULT NULL,
   fecha_ultimo_trabajo date DEFAULT NULL,
   punto_ultimo_trabajo tinyint(4) NOT NULL DEFAULT 0,
+  tiene_familiares enum('si','no') DEFAULT NULL,
+  familiares varchar(255) DEFAULT NULL,
   contratado tinyint(1) NOT NULL DEFAULT 0,
   valoracion_personal tinyint(4) DEFAULT NULL,
   valoracion_texto text DEFAULT NULL,
