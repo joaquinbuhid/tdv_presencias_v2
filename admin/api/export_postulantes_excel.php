@@ -70,7 +70,8 @@ if ($edad_desde !== '' && $edad_hasta !== '' && (int)$edad_desde > (int)$edad_ha
     exit;
 }
 
-$where = [];
+// Los postulantes que ya tienen una entrevista registrada no se exportan
+$where = ["NOT EXISTS (SELECT 1 FROM entrevistas ent WHERE ent.postulante_id = postulantes.id)"];
 $params = [];
 
 if ($busqueda !== '') {

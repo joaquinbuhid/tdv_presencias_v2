@@ -108,6 +108,7 @@ $esAdminReal = esAdminReal();
         <div class="section-title">2. Datos de la entrevista</div>
         <form id="formEntrevista" novalidate>
             <input type="hidden" id="postulante_id" value="">
+            <input type="hidden" id="entrevista_id" value="">
 
             <div class="form-grid">
                 <div class="form-group">
@@ -270,6 +271,7 @@ $esAdminReal = esAdminReal();
 <script>
 let postulantes = [];
 let postulanteActual = null;
+let entrevistasData = [];
 
 const modalPostulantes = document.getElementById('modalPostulantes');
 const listaPostulantes = document.getElementById('listaPostulantes');
@@ -296,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function abrirModalPostulantes() {
     modalPostulantes.classList.add('open');
     buscarPostulante.focus();
-    if (postulantes.length) { renderPostulantes(); return; }
+    listaPostulantes.innerHTML = '<div style="padding:1rem;color:var(--text-muted);">Cargando postulantes...</div>';
     try {
         const res = await fetch('api/get_postulantes.php');
         const data = await res.json();
@@ -397,9 +399,12 @@ function limpiarFormulario() {
     form.reset();
     postulanteActual = null;
     document.getElementById('postulante_id').value = '';
+    document.getElementById('entrevista_id').value = '';
     document.getElementById('postulanteElegido').textContent = 'Todavía no se eligió ningún postulante.';
     document.getElementById('datosPostulante').style.display = 'none';
     document.getElementById('grupoVehiculo').style.display = 'none';
+    document.getElementById('btnBuscarPostulante').disabled = false;
+    document.getElementById('btnGuardar').textContent = 'Guardar entrevista';
     actualizarPuntajes();
 }
 
@@ -408,13 +413,15 @@ async function onGuardar(e) {
     err.classList.remove('show');
     ok.classList.remove('show');
 
-    const postulanteId = parseInt(document.getElementById('postulante_id').value, 10);
-    if (!postulanteId) {
+    const entrevistaId = parseInt(document.getElementById('entrevista_id').value, 10) || 0;
+    const postulanteId = parseInt(document.getElementById('postulante_id').value, 10) || 0;
+    if (!entrevistaId && !postulanteId) {
         showError('Primero elegí un postulante con el botón "Buscar postulante".');
         return;
     }
 
     const payload = {
+        entrevista_id: entrevistaId,
         postulante_id: postulanteId,
         peso: field('peso'),
         altura: field('altura'),
@@ -444,7 +451,7 @@ async function onGuardar(e) {
 
     const btn = document.getElementById('btnGuardar');
     btn.disabled = true;
-    btn.textContent = 'Guardando...';
+    btn.textContent = entrevistaId ? 'Actualizando...' : 'Guardando...';
 
     try {
         const res = await fetch('api/guardar_entrevista.php', {
@@ -456,7 +463,7 @@ async function onGuardar(e) {
         if (!res.ok || !data.success) {
             throw new Error(data.error || 'No se pudo guardar la entrevista.');
         }
-        showOk(`Entrevista guardada. Puntaje sin valoración: ${data.puntaje_sin_valoracion} · Puntaje total: ${data.puntaje_total}`);
+        showOk(`${data.actualizada ? 'Entrevista actualizada' : 'Entrevista guardada'}. Puntaje sin valoración: ${data.puntaje_sin_valoracion} · Puntaje total: ${data.puntaje_total}`);
         limpiarFormulario();
         cargarEntrevistas();
     } catch (error) {
@@ -464,7 +471,7 @@ async function onGuardar(e) {
     }
 
     btn.disabled = false;
-    btn.textContent = 'Guardar entrevista';
+    btn.textContent = parseInt(document.getElementById('entrevista_id').value, 10) ? 'Actualizar entrevista' : 'Guardar entrevista';
 }
 
 // ---- Historial --------------------------------------------
@@ -475,6 +482,7 @@ async function cargarEntrevistas() {
         const res = await fetch('api/get_entrevistas.php');
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al cargar entrevistas');
+        entrevistasData = data;
         counter.textContent = `${data.length} entrevista${data.length === 1 ? '' : 's'}`;
         if (!data.length) {
             tbody.innerHTML = '<tr><td colspan="6" class="empty">Todavía no hay entrevistas registradas.</td></tr>';
@@ -493,6 +501,7 @@ async function cargarEntrevistas() {
                 <td style="white-space:nowrap;">
                     <div class="row-actions">
                         <button class="btn btn-outline btn-sm" onclick="toggleDetalle(${Number(it.id_entrevista)})">Ver</button>
+                        <button class="btn btn-outline btn-sm" onclick="editarEntrevista(${Number(it.id_entrevista)})">Editar</button>
                         <button class="btn btn-success btn-sm" onclick="contratarEntrevista(${Number(it.id_entrevista)})">Contratar</button>
                     </div>
                 </td>
@@ -530,6 +539,62 @@ function toggleDetalle(id) {
     if (row) row.classList.toggle('open');
 }
 
+function editarEntrevista(id) {
+    const it = entrevistasData.find((item) => Number(item.id_entrevista) === id);
+    if (!it) return;
+
+    err.classList.remove('show');
+    ok.classList.remove('show');
+    form.reset();
+
+    document.getElementById('entrevista_id').value = it.id_entrevista;
+    document.getElementById('postulante_id').value = it.postulante_id || '';
+    document.getElementById('postulanteElegido').textContent = `Editando entrevista de ${it.nombre_completo} (DNI ${it.dni})`;
+    document.getElementById('btnBuscarPostulante').disabled = true;
+
+    const box = document.getElementById('datosPostulante');
+    box.style.display = 'grid';
+    box.innerHTML = [
+        ['Nombre', it.nombre_completo],
+        ['DNI', it.dni],
+        ['Fecha de nacimiento', fmtFecha(it.fecha_nacimiento)],
+        ['Género', generoLabel(it.genero)],
+        ['Teléfono', it.telefono],
+        ['Email', it.email],
+        ['Localidad', it.localidad_residencia],
+        ['Puesto', it.puesto_postula],
+        ['Disponibilidad', it.disponibilidad_horaria],
+        ['Experiencia en seguridad', siNo(it.experiencia_seguridad)],
+        ['Curso habilitante', siNo(it.curso_habilitante)],
+        ['Credencial vigente', siNo(it.credencial_vigente)],
+        ['Fue parte de Track', siNo(it.parte_track_seguridad)],
+        ['Monotributista', siNo(it.monotributista)],
+    ].map(([label, value]) => `
+        <div class="detail-item">
+            <div class="detail-label">${esc(label)}</div>
+            <div class="detail-value">${esc(value) || '-'}</div>
+        </div>`).join('');
+
+    set('peso', it.peso);
+    set('altura', it.altura);
+    set('relacion_peso_altura', it.relacion_peso_altura);
+    set('apariencia_vestimenta', it.apariencia_vestimenta);
+    set('modulacion_habla', it.modulacion_habla);
+    set('estado_civil', it.estado_civil);
+    set('hijos', it.hijos);
+    set('fecha_ultimo_trabajo', it.fecha_ultimo_trabajo);
+    set('tiene_vehiculo', it.tiene_vehiculo);
+    toggleVehiculo();
+    set('vehiculo', it.vehiculo);
+    set('domicilio', it.domicilio);
+    set('valoracion_personal', it.valoracion_personal);
+    set('valoracion_texto', it.valoracion_texto);
+    actualizarPuntajes();
+
+    document.getElementById('btnGuardar').textContent = 'Actualizar entrevista';
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function contratarEntrevista(id) {
     if (!confirm('¿Marcar esta entrevista como contratada? Pasará al historial de contratados.')) return;
     try {
@@ -558,6 +623,16 @@ function detalle(label, value) {
 // ---- Utilidades -------------------------------------------
 function field(id) {
     return document.getElementById(id).value.trim();
+}
+
+function set(id, v) {
+    document.getElementById(id).value = v ?? '';
+}
+
+function generoLabel(g) {
+    if (g === '1') return 'Masculino';
+    if (g === '2') return 'Femenino';
+    return g || '';
 }
 
 function siNo(v) {

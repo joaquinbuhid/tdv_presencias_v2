@@ -17,8 +17,9 @@ if (!is_array($data)) {
     exit;
 }
 
+$entrevistaId = isset($data['entrevista_id']) ? (int)$data['entrevista_id'] : 0;
 $postulanteId = isset($data['postulante_id']) ? (int)$data['postulante_id'] : 0;
-if ($postulanteId <= 0) {
+if ($entrevistaId <= 0 && $postulanteId <= 0) {
     http_response_code(400);
     echo json_encode(['error' => 'Debe seleccionar un postulante']);
     exit;
@@ -116,6 +117,51 @@ $puntajeTotal = $puntajeSinValoracion + $valoracion;
 try {
     $db = getDB();
 
+    // Modo edicion: actualizar una entrevista existente (no permitido si ya fue contratada)
+    if ($entrevistaId > 0) {
+        $stmt = $db->prepare("SELECT contratado FROM entrevistas WHERE id_entrevista = ?");
+        $stmt->execute([$entrevistaId]);
+        $entrevista = $stmt->fetch();
+        if (!$entrevista) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Entrevista no encontrada']);
+            exit;
+        }
+        if ((int)$entrevista['contratado'] === 1) {
+            http_response_code(409);
+            echo json_encode(['error' => 'La entrevista ya fue contratada y no se puede modificar']);
+            exit;
+        }
+
+        $stmt = $db->prepare(
+            "UPDATE entrevistas SET
+                peso = ?, altura = ?, relacion_peso_altura = ?, apariencia_vestimenta = ?,
+                modulacion_habla = ?, estado_civil = ?, hijos = ?, domicilio = ?,
+                tiene_vehiculo = ?, vehiculo = ?, fecha_ultimo_trabajo = ?, punto_ultimo_trabajo = ?,
+                valoracion_personal = ?, valoracion_texto = ?,
+                puntaje_sin_valoracion = ?, puntaje_total = ?
+             WHERE id_entrevista = ?"
+        );
+        $stmt->execute([
+            $peso, $altura, $relacionPesoAltura, $apariencia,
+            $modulacion, $estadoCivil !== '' ? $estadoCivil : null, $hijos, $domicilio !== '' ? $domicilio : null,
+            $tieneVehiculo !== '' ? $tieneVehiculo : null, $vehiculo !== '' ? $vehiculo : null,
+            $fechaUltimoTrabajo, $puntoUltimoTrabajo,
+            $valoracion, $valoracionTexto !== '' ? $valoracionTexto : null,
+            $puntajeSinValoracion, $puntajeTotal,
+            $entrevistaId,
+        ]);
+
+        echo json_encode([
+            'success' => true,
+            'id' => $entrevistaId,
+            'actualizada' => true,
+            'puntaje_sin_valoracion' => $puntajeSinValoracion,
+            'puntaje_total' => $puntajeTotal,
+        ]);
+        exit;
+    }
+
     $stmt = $db->prepare(
         "SELECT nombre_completo, dni, fecha_nacimiento, telefono, email,
                 localidad_residencia, puesto_postula, disponibilidad_horaria,
@@ -128,6 +174,15 @@ try {
     if (!$postulante) {
         http_response_code(404);
         echo json_encode(['error' => 'Postulante no encontrado']);
+        exit;
+    }
+
+    // Un postulante ya entrevistado no puede tener otra entrevista
+    $stmt = $db->prepare("SELECT 1 FROM entrevistas WHERE postulante_id = ? LIMIT 1");
+    $stmt->execute([$postulanteId]);
+    if ($stmt->fetch()) {
+        http_response_code(409);
+        echo json_encode(['error' => 'Este postulante ya tiene una entrevista registrada']);
         exit;
     }
 
