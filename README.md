@@ -30,7 +30,7 @@ El sistema usa `empleados.tipo` para diferenciar roles:
 
 El archivo `sql/schema.sql` contiene el esquema esperado y datos semilla minimos para `tipo_novedad` y un administrador inicial de desarrollo.
 
-Las migraciones incrementales viven en `sql/migrations/`. Si la base de produccion fue creada con una version anterior del esquema, ejecutar los `.sql` de esa carpeta que falten (en orden) antes de desplegar.
+Las migraciones incrementales viven en `sql/migrations/`. Si la base de produccion fue creada con una version anterior del esquema, aplicarlos desde `admin/migraciones.php` (solo administrador real; registra las aplicadas en la tabla `migraciones`) o ejecutarlos a mano en orden.
 
 Cambiar o eliminar el administrador inicial antes de produccion.
 
