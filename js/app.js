@@ -4,6 +4,7 @@
 
 const MAX_LOC_WAIT_MS   = 8000;  // Esperar hasta 8 segundos para obtener ubicación
 const TARGET_ACCURACY_M = 50;    // Precisión objetivos: 50 metros
+const API_BASE          = window.TDV_API_BASE || '';
 
 // ---- Inicialización ----------------------------------------
 
@@ -18,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function cargarTipos() {
     try {
-        const tipos = await apiGet('api/get_tipos.php');
+        const tipos = await apiGet(API_BASE + 'api/get_tipos.php');
         const sel   = document.getElementById('tipoNovedad');
         tipos.forEach(t => {
             const opt = document.createElement('option');
@@ -37,7 +38,7 @@ async function cargarTipos() {
 async function cargarEstado() {
     const cont = document.getElementById('estadoContent');
     try {
-        const registros = await apiGet('api/get_estado.php');
+        const registros = await apiGet(API_BASE + 'api/get_estado.php');
         if (registros.length === 0) {
             cont.innerHTML = '<p class="empty-msg">Sin registros hoy.</p>';
             return;
@@ -112,12 +113,15 @@ async function onSubmit(e) {
     const observaciones = document.getElementById('observaciones').value.trim();
 
     try {
-        const resp = await apiPost('api/registrar_novedad.php', {
+        const selObj  = document.getElementById('objetivoNovedad');
+        const payload = {
             tipo_id:      parseInt(tipoId),
             observaciones,
             lat: posicion.coords.latitude,
             lng: posicion.coords.longitude,
-        });
+        };
+        if (selObj && selObj.value) payload.objetivo_id = parseInt(selObj.value);
+        const resp = await apiPost(API_BASE + 'api/registrar_novedad.php', payload);
 
         mostrarExito(`${resp.mensaje} — ${resp.fecha} ${resp.hora} hs`);
         document.getElementById('observaciones').value = '';

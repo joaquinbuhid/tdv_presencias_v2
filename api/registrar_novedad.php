@@ -20,6 +20,7 @@ $tipo_id      = isset($data['tipo_id'])      ? (int)$data['tipo_id']      : 0;
 $observaciones = isset($data['observaciones']) ? trim($data['observaciones']) : '';
 $lat          = isset($data['lat'])          ? (float)$data['lat']        : null;
 $lng          = isset($data['lng'])          ? (float)$data['lng']        : null;
+$objetivo_id  = isset($data['objetivo_id'])  ? (int)$data['objetivo_id']  : 0;
 
 if (!$tipo_id || $lat === null || $lng === null || $lat == 0 || $lng == 0) {
     http_response_code(400);
@@ -58,19 +59,28 @@ if ($stmt->fetch()) {
     exit;
 }
 
-// --- Verificación 2: ubicación dentro del radio del objetivos ---
-$stmt = $db->prepare(
-    "SELECT o.coord_lat, o.coord_long, o.rad_metros, o.nombre AS objetivo_nombre
-     FROM empleados v
-     JOIN objetivos o ON v.objetivo_id = o.id_objetivo
-     WHERE v.id_empleado = ?"
-);
-$stmt->execute([$empleado_id]);
+// --- Verificación 2: ubicación dentro del radio del objetivo ---
+// El vigilador usa su objetivo asignado; el supervisor puede elegir uno de los que supervisa.
+if ($objetivo_id && !empty($_SESSION['es_supervisor'])) {
+    $stmt = $db->prepare(
+        "SELECT coord_lat, coord_long, rad_metros, nombre AS objetivo_nombre
+         FROM objetivos WHERE id_objetivo = ? AND supervisor_id = ?"
+    );
+    $stmt->execute([$objetivo_id, $empleado_id]);
+} else {
+    $stmt = $db->prepare(
+        "SELECT o.coord_lat, o.coord_long, o.rad_metros, o.nombre AS objetivo_nombre
+         FROM empleados v
+         JOIN objetivos o ON v.objetivo_id = o.id_objetivo
+         WHERE v.id_empleado = ?"
+    );
+    $stmt->execute([$empleado_id]);
+}
 $objetivos = $stmt->fetch();
 
 if (!$objetivos) {
     http_response_code(400);
-    echo json_encode(['error' => 'No tiene un objetivos asignado. Contacte al administrador']);
+    echo json_encode(['error' => 'No tiene un objetivo asignado. Contacte al administrador']);
     exit;
 }
 
