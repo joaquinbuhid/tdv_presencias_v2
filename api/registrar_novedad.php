@@ -63,13 +63,13 @@ if ($stmt->fetch()) {
 // El vigilador usa su objetivo asignado; el supervisor puede elegir uno de los que supervisa.
 if ($objetivo_id && !empty($_SESSION['es_supervisor'])) {
     $stmt = $db->prepare(
-        "SELECT coord_lat, coord_long, rad_metros, nombre AS objetivo_nombre
+        "SELECT id_objetivo, coord_lat, coord_long, rad_metros, nombre AS objetivo_nombre
          FROM objetivos WHERE id_objetivo = ? AND supervisor_id = ?"
     );
     $stmt->execute([$objetivo_id, $empleado_id]);
 } else {
     $stmt = $db->prepare(
-        "SELECT o.coord_lat, o.coord_long, o.rad_metros, o.nombre AS objetivo_nombre
+        "SELECT o.id_objetivo, o.coord_lat, o.coord_long, o.rad_metros, o.nombre AS objetivo_nombre
          FROM empleados v
          JOIN objetivos o ON v.objetivo_id = o.id_objetivo
          WHERE v.id_empleado = ?"
@@ -99,10 +99,10 @@ if ($distancia > $radio) {
 
 // --- Registrar la novedad ---
 $stmt = $db->prepare(
-    "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
 );
-$stmt->execute([$fecha, $hora, $tipo_id, $observaciones, $empleado_id, $ip, $lat, $lng]);
+$stmt->execute([$fecha, $hora, $tipo_id, $observaciones, $empleado_id, $ip, $lat, $lng, (int)$objetivos['id_objetivo']]);
 
 echo json_encode([
     'success'   => true,
