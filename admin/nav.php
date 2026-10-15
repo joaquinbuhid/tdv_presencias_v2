@@ -14,7 +14,6 @@ $navItems = [
     ['archivo' => 'vigiladores.php',  'texto' => "\u{1F464} Empleados",    'soloAdmin' => false],
     ['archivo' => 'legajos.php',      'texto' => "\u{1F4C1} Legajos",      'soloAdmin' => false],
     ['archivo' => 'supervisores.php', 'texto' => "\u{1F4BC} Supervisores", 'soloAdmin' => false],
-    ['archivo' => 'asistencia_supervisores.php', 'texto' => "\u{2705} Asist. sup.", 'soloAdmin' => true],
     ['archivo' => 'objetivos.php',    'texto' => "\u{1F3AF} Objetivos",    'soloAdmin' => true],
     ['archivo' => 'reportes.php',     'texto' => "\u{26A0} Reportes",      'soloAdmin' => true, 'badge' => true],
     ['archivo' => 'liquidacion.php',  'texto' => 'Horas',                  'soloAdmin' => false],

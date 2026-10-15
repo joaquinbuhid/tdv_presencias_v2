@@ -182,6 +182,12 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         </div>
     </div>
 
+    <!-- Supervisores -->
+    <h3 style="font-size:1rem;font-weight:700;color:var(--primary);margin:1.8rem 0 .8rem;">&#x1F4BC; Supervisores</h3>
+    <div class="cards-grid" id="supGrid">
+        <div style="color:var(--text-muted);font-size:.9rem;grid-column:1/-1;padding:1rem;text-align:center;">Cargando...</div>
+    </div>
+
 </div>
 
 <script>
@@ -216,6 +222,7 @@ async function refrescar() {
         const data = await readJson(res);
         if (!res.ok) throw new Error(data.error || 'Error al cargar presencias.');
         renderCards(data);
+        await refrescarSupervisores();
         document.getElementById('ultimaActz').textContent =
             new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
     } catch (e) {
@@ -320,6 +327,40 @@ function renderCards(guards) {
     if (cntSinSalida) {
         cntSinSalida.textContent = sinSalida;
         document.getElementById('cardSinSalida').style.display = sinSalida > 0 ? '' : 'none';
+    }
+}
+
+async function refrescarSupervisores() {
+    const grid = document.getElementById('supGrid');
+    try {
+        const res  = await fetch('api/get_asistencia_supervisores.php');
+        const sups = await readJson(res);
+        if (!res.ok) throw new Error(sups.error || 'Error al cargar supervisores.');
+        if (!sups.length) {
+            grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;">Sin supervisores activos.</p>';
+            return;
+        }
+        const labels = { presente:'En turno', completado:'Turno completado', 'sin-registro':'Sin registro hoy' };
+        const badges = { presente:'badge-presente', completado:'badge-completado', 'sin-registro':'badge-por-iniciar' };
+        grid.innerHTML = sups.map(s => `
+        <div class="guard-card ${s.estado === 'sin-registro' ? 'por-iniciar' : esc(s.estado)}">
+            <div class="gc-name">${esc(s.nombre)}</div>
+            <div class="gc-obj">&#x1F4CD; ${esc(s.objetivo_nombre || '-')}</div>
+            <div class="gc-badge ${badges[s.estado]}" style="margin-top:.5rem;">${labels[s.estado]}</div>
+            <div class="gc-times" style="margin-top:.5rem;">
+                <div class="gc-time-item">
+                    <span class="tl">Entrada</span>
+                    <span class="tv">${s.hora_entrada_hoy ? s.hora_entrada_hoy + ' hs' : '-'}</span>
+                </div>
+                <div class="gc-time-item">
+                    <span class="tl">Salida</span>
+                    <span class="tv">${s.hora_salida_hoy ? s.hora_salida_hoy + ' hs' : '-'}</span>
+                </div>
+            </div>
+        </div>`).join('');
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = `<p style="color:var(--danger);grid-column:1/-1;text-align:center;">${esc(e.message)}</p>`;
     }
 }
 
