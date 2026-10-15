@@ -92,9 +92,11 @@ CREATE TABLE IF NOT EXISTS novedades (
   ip_dispositivo varchar(50) DEFAULT NULL,
   coord_lat decimal(10,8) DEFAULT NULL,
   coord_long decimal(11,8) DEFAULT NULL,
+  objetivo_id int(11) DEFAULT NULL,
   PRIMARY KEY (id_novedad),
   KEY idx_novedades_empleado_fecha (empleado_id, fecha),
-  KEY idx_novedades_tipo (tipo_novedad)
+  KEY idx_novedades_tipo (tipo_novedad),
+  KEY idx_novedades_objetivo (objetivo_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS postulantes (
