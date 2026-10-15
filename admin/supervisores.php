@@ -167,7 +167,7 @@ async function cargarSupervisores() {
                    ${ES_ADMIN_REAL ? `<button class="btn btn-danger btn-sm" onclick="toggleEstado(${s.id_supervisor},'desactivar')">&#x23F8; Desactivar</button>` : ''}`
                 : `<button class="btn btn-outline btn-sm" onclick="abrirModal(${s.id_supervisor})">${ES_ADMIN_REAL ? '&#9998; Editar' : 'Ver'}</button>
                    ${ES_ADMIN_REAL ? `<button class="btn btn-success btn-sm" onclick="toggleEstado(${s.id_supervisor},'activar')">&#9654; Activar</button>` : ''}`;
-            const objCount = parseInt(s.objetivos_asignados);
+            const objCount = parseInt(s.objetivos_count);
             return `<tr>
                 <td><strong>${esc(s.nombre)}</strong></td>
                 <td>${esc(s.dni)}</td>
@@ -175,7 +175,7 @@ async function cargarSupervisores() {
                 <td>${s.email    ? esc(s.email)    : '<span style="color:var(--text-muted)">-</span>'}</td>
                 <td>${s.usuario  ? esc(s.usuario)  : '<span style="color:var(--text-muted)">-</span>'}</td>
                 <td>
-                    <span class="obj-count" title="Objetivos asignados">${objCount} objetivos${objCount !== 1 ? 's' : ''}</span>
+                    <span class="obj-count" title="Objetivos asignados">${objCount} objetivo${objCount !== 1 ? 's' : ''}</span>
                 </td>
                 <td>${estado}</td>
                 <td><div class="actions">${acciones}</div></td>
