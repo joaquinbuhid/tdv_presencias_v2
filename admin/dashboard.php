@@ -114,6 +114,15 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
         }
         .refresh-btn:hover { background: var(--bg); }
 
+        .obj-selector-card {
+            background: var(--card); border-radius: 10px;
+            box-shadow: var(--shadow); padding: 1rem 1.2rem;
+            margin-bottom: 1.2rem;
+            display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+        }
+        .obj-selector-card label { font-size: .88rem; font-weight: 600; white-space: nowrap; }
+        .obj-selector-card select { flex: 1; min-width: 200px; }
+
         @media (max-width: 600px) {
             .summary-strip { grid-template-columns: 1fr 1fr; }
         }
@@ -139,6 +148,14 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
                 --:--:--
             </span>
         </div>
+    </div>
+
+    <!-- Selector de objetivos -->
+    <div class="obj-selector-card">
+        <label for="selectObjetivo">&#x1F3AF; Objetivo:</label>
+        <select id="selectObjetivo">
+            <option value="0">- Todos los objetivos -</option>
+        </select>
     </div>
 
     <!-- Resumen -->
@@ -194,6 +211,39 @@ $adminNombre = $_SESSION['nombre_completo'] ?? 'Administrador';
 const REFRESH_SEC = 30;
 let countdown = REFRESH_SEC;
 let timer;
+let vigiladores = [];
+let supervisores = [];
+
+document.getElementById('selectObjetivo').addEventListener('change', () => {
+    renderCards(filtrarPorObjetivo(vigiladores));
+    renderSupervisores(filtrarPorObjetivo(supervisores));
+});
+
+function objetivoSeleccionado() {
+    return parseInt(document.getElementById('selectObjetivo').value) || 0;
+}
+
+function filtrarPorObjetivo(items) {
+    const objId = objetivoSeleccionado();
+    return objId ? items.filter(i => parseInt(i.id_objetivo) === objId) : items;
+}
+
+function actualizarSelector(guards) {
+    const sel = document.getElementById('selectObjetivo');
+    const actual = sel.value;
+    const objetivos = new Map();
+    guards.forEach(g => { if (g.id_objetivo) objetivos.set(parseInt(g.id_objetivo), g.objetivo_nombre); });
+    sel.innerHTML = '<option value="0">- Todos los objetivos -</option>';
+    [...objetivos.entries()]
+        .sort((a, b) => (a[1] || '').localeCompare(b[1] || '', 'es'))
+        .forEach(([id, nombre]) => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = nombre;
+            sel.appendChild(opt);
+        });
+    sel.value = [...sel.options].some(o => o.value === actual) ? actual : '0';
+}
 
 document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-AR', {
     weekday:'long', year:'numeric', month:'long', day:'numeric'
@@ -221,7 +271,9 @@ async function refrescar() {
         const res = await fetch('api/get_presentes.php');
         const data = await readJson(res);
         if (!res.ok) throw new Error(data.error || 'Error al cargar presencias.');
-        renderCards(data);
+        vigiladores = data;
+        actualizarSelector(vigiladores);
+        renderCards(filtrarPorObjetivo(vigiladores));
         await refrescarSupervisores();
         document.getElementById('ultimaActz').textContent =
             new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
@@ -336,13 +388,24 @@ async function refrescarSupervisores() {
         const res  = await fetch('api/get_asistencia_supervisores.php');
         const sups = await readJson(res);
         if (!res.ok) throw new Error(sups.error || 'Error al cargar supervisores.');
-        if (!sups.length) {
-            grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;">Sin supervisores activos.</p>';
-            return;
-        }
-        const labels = { presente:'En turno', completado:'Turno completado', 'sin-registro':'Sin registro hoy' };
-        const badges = { presente:'badge-presente', completado:'badge-completado', 'sin-registro':'badge-por-iniciar' };
-        grid.innerHTML = sups.map(s => `
+        supervisores = sups;
+        renderSupervisores(filtrarPorObjetivo(supervisores));
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = `<p style="color:var(--danger);grid-column:1/-1;text-align:center;">${esc(e.message)}</p>`;
+    }
+}
+
+function renderSupervisores(sups) {
+    const grid = document.getElementById('supGrid');
+    if (!sups.length) {
+        grid.innerHTML = '<p style="color:var(--text-muted);grid-column:1/-1;text-align:center;">'
+            + (objetivoSeleccionado() ? 'Sin supervisores con marcacion en este objetivo.' : 'Sin supervisores activos.') + '</p>';
+        return;
+    }
+    const labels = { presente:'En turno', completado:'Turno completado', 'sin-registro':'Sin registro hoy' };
+    const badges = { presente:'badge-presente', completado:'badge-completado', 'sin-registro':'badge-por-iniciar' };
+    grid.innerHTML = sups.map(s => `
         <div class="guard-card ${s.estado === 'sin-registro' ? 'por-iniciar' : esc(s.estado)}">
             <div class="gc-name">${esc(s.nombre)}</div>
             <div class="gc-obj">&#x1F4CD; ${esc(s.objetivo_nombre || '-')}</div>
@@ -358,10 +421,6 @@ async function refrescarSupervisores() {
                 </div>
             </div>
         </div>`).join('');
-    } catch (e) {
-        console.error(e);
-        grid.innerHTML = `<p style="color:var(--danger);grid-column:1/-1;text-align:center;">${esc(e.message)}</p>`;
-    }
 }
 
 function esc(s) {
