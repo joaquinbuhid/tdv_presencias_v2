@@ -6,13 +6,13 @@
 ALTER TABLE movimientos_objetivos
   MODIFY objetivo_ant_id int(11) DEFAULT NULL,
   MODIFY objetivo_nuevo_id int(11) DEFAULT NULL,
-  ADD COLUMN id_usuario int(11) DEFAULT NULL,
-  ADD KEY idx_mov_obj_usuario (id_usuario),
-  ADD CONSTRAINT fk_mov_obj_usuario FOREIGN KEY (id_usuario) REFERENCES empleados (id_empleado);
+  ADD COLUMN IF NOT EXISTS id_usuario int(11) DEFAULT NULL,
+  ADD KEY IF NOT EXISTS idx_mov_obj_usuario (id_usuario),
+  ADD CONSTRAINT fk_mov_obj_usuario FOREIGN KEY IF NOT EXISTS (id_usuario) REFERENCES empleados (id_empleado);
 
 ALTER TABLE movimientos_empresas
   MODIFY empresa_ant_id int(11) DEFAULT NULL,
   MODIFY empresa_nuevo_id int(11) DEFAULT NULL,
-  ADD COLUMN id_usuario int(11) DEFAULT NULL,
-  ADD KEY idx_mov_emp_usuario (id_usuario),
-  ADD CONSTRAINT fk_mov_emp_usuario FOREIGN KEY (id_usuario) REFERENCES empleados (id_empleado);
+  ADD COLUMN IF NOT EXISTS id_usuario int(11) DEFAULT NULL,
+  ADD KEY IF NOT EXISTS idx_mov_emp_usuario (id_usuario),
+  ADD CONSTRAINT fk_mov_emp_usuario FOREIGN KEY IF NOT EXISTS (id_usuario) REFERENCES empleados (id_empleado);

@@ -3,5 +3,5 @@
 -- Ejecutar una sola vez sobre la base de produccion (admin/migraciones.php).
 
 ALTER TABLE entrevistas
-  ADD COLUMN tiene_familiares enum('si','no') DEFAULT NULL,
-  ADD COLUMN familiares varchar(255) DEFAULT NULL;
+  ADD COLUMN IF NOT EXISTS tiene_familiares enum('si','no') DEFAULT NULL,
+  ADD COLUMN IF NOT EXISTS familiares varchar(255) DEFAULT NULL;
