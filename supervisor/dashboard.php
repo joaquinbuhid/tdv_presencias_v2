@@ -239,7 +239,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
 <div class="modal-overlay" id="modalTurno">
     <div class="modal">
         <div class="modal-header">
-            <span class="modal-title">&#x1F552; Modificar turno</span>
+            <span class="modal-title">&#x1F552; Modificar turno / objetivo</span>
             <button class="modal-close" onclick="cerrarModal()">&#x2715;</button>
         </div>
         <div class="alert alert-danger" id="modalError" role="alert">
@@ -248,6 +248,10 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
         <p id="modalGuardName" style="font-weight:600;color:var(--text);margin-bottom:1rem;font-size:.95rem;"></p>
         <form id="formTurno" novalidate>
             <input type="hidden" id="fVigiId" value="0">
+            <div class="form-group">
+                <label for="fObjetivo">Objetivo</label>
+                <select id="fObjetivo"></select>
+            </div>
             <div class="form-row">
                 <div class="form-group">
                     <label for="fEntrada">Hora de entrada <span style="color:var(--danger)">*</span></label>
@@ -273,6 +277,7 @@ const REFRESH_SEC = 30;
 let countdownVal  = REFRESH_SEC;
 let timer;
 let vigiladores = [];
+let misObjetivos = [];
 
 document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-AR', {
     weekday:'long', year:'numeric', month:'long', day:'numeric'
@@ -295,6 +300,7 @@ document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString(
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const objetivos = await apiFetch('api/get_objetivos.php');
+        misObjetivos = objetivos;
         const sel = document.getElementById('selectObjetivo');
         objetivos.forEach(o => {
             const opt = document.createElement('option');
@@ -317,7 +323,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const btn = e.target.closest('[data-edit-turno]');
         if (!btn) return;
         const guard = vigiladores.find(v => v.id_empleado == btn.dataset.editTurno);
-        if (guard) abrirModal(guard.id_empleado, `${guard.nombre} ${guard.apellido}`, guard.turno_entrada, guard.turno_salida);
+        if (guard) abrirModal(guard.id_empleado, `${guard.nombre} ${guard.apellido}`, guard.turno_entrada, guard.turno_salida, guard.id_objetivo);
     });
 });
 
@@ -440,8 +446,13 @@ function renderCards(guards) {
 }
 
 // ---- Modal editar turno ----
-function abrirModal(vigiladorId, nombre, entrada, salida) {
+function abrirModal(vigiladorId, nombre, entrada, salida, objetivoId) {
     document.getElementById('modalError').classList.remove('show');
+    const selObj = document.getElementById('fObjetivo');
+    selObj.innerHTML = misObjetivos.map(o =>
+        `<option value="${Number(o.id_objetivo)}">${esc(o.nombre)}</option>`).join('');
+    selObj.value = String(objetivoId || '');
+    selObj.dataset.original = selObj.value;
     document.getElementById('fVigiId').value          = vigiladorId;
     document.getElementById('modalGuardName').textContent = nombre;
     document.getElementById('fEntrada').value          = entrada || '';
@@ -466,6 +477,9 @@ async function onGuardarTurno(e) {
     const empleado_id  = parseInt(document.getElementById('fVigiId').value);
     const hora_entrada  = document.getElementById('fEntrada').value;
     const hora_salida   = document.getElementById('fSalida').value;
+    const selObj        = document.getElementById('fObjetivo');
+    const objetivo_id   = parseInt(selObj.value);
+    const cambiaObj     = selObj.value !== selObj.dataset.original;
 
     if (!hora_entrada || !hora_salida) {
         document.getElementById('modalErrorMsg').textContent = 'Complete ambas horas.';
@@ -478,8 +492,13 @@ async function onGuardarTurno(e) {
 
     try {
         const res = await apiFetch('api/actualizar_turno.php', 'POST', { empleado_id, hora_entrada, hora_salida });
+        let msg = res.mensaje;
+        if (cambiaObj) {
+            const r2 = await apiFetch('api/cambiar_objetivo.php', 'POST', { empleado_id, objetivo_id });
+            msg = r2.mensaje;
+        }
         cerrarModal();
-        mostrarExito(res.mensaje);
+        mostrarExito(msg);
         refrescar();
     } catch (err) {
         document.getElementById('modalErrorMsg').textContent = err.message;
