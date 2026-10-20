@@ -26,7 +26,7 @@ if (!in_array($tipoInicial, [1, 2, 3, 4], true)) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV - Alta de usuarios</title>
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin.css?v=20261020">
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
         .form-shell { max-width: 980px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }

@@ -11,7 +11,7 @@ $esAdminReal = esAdminReal();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV - Historial de contratados</title>
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin.css?v=20261020">
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
         .page-shell { max-width: 1200px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }
