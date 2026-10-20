@@ -36,7 +36,7 @@ $pre_ids = $_GET['ids'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV — Envío de Emails Masivos</title>
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/admin.css?v=20261020">
     <link rel="icon" href="../favicon.ico" type="image/x-icon">
     <style>
         .layout-grid {
