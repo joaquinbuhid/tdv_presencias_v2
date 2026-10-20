@@ -23,6 +23,10 @@ $navGrupos = [
         ['archivo' => 'entrevistas.php',  'icono' => "\u{1F4DD}", 'texto' => 'Entrevistas',  'soloAdmin' => false],
         ['archivo' => 'historial_entrevistas.php', 'icono' => "\u{2705}", 'texto' => 'Contratados', 'soloAdmin' => false],
     ],
+    'Sistemas' => [
+        ['archivo' => 'dispositivos.php', 'icono' => "\u{1F4BB}", 'texto' => 'Dispositivos', 'soloAdmin' => true],
+        ['archivo' => 'tickets.php',      'icono' => "\u{1F3AB}", 'texto' => 'Tickets',      'soloAdmin' => true],
+    ],
     'Comunicación' => [
         ['archivo' => 'enviar_mails.php', 'icono' => "\u{2709}",  'texto' => 'Mails',        'soloAdmin' => false],
     ],

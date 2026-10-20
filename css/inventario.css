@@ -1,0 +1,202 @@
+/* ============================================================
+   TDV - Inventario de dispositivos y tickets
+   ============================================================ */
+
+.inv-shell { max-width: 1250px; margin: 0 auto; padding: 1.2rem 1rem 2rem; }
+
+.inv-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin-bottom: 1rem;
+}
+
+.inv-title { font-size: 1.25rem; color: var(--primary); margin: 0; }
+.inv-counter { font-size: .85rem; color: var(--text-muted); margin-left: .5rem; font-weight: 400; }
+
+/* ---- Filtros ---- */
+.inv-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.inv-filters input[type="text"],
+.inv-filters select {
+    width: auto;
+    flex: 1 1 180px;
+    padding: .55rem .8rem;
+    font-size: .92rem;
+}
+
+.inv-filters .inv-search { flex: 2 1 240px; }
+
+.inv-check {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .88rem;
+    font-weight: 400;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.inv-tabs { display: inline-flex; border: 2px solid var(--border); border-radius: 10px; overflow: hidden; }
+.inv-tabs button {
+    background: #fff;
+    border: none;
+    padding: .5rem .9rem;
+    font-size: .88rem;
+    cursor: pointer;
+    color: var(--text);
+}
+.inv-tabs button + button { border-left: 1px solid var(--border); }
+.inv-tabs button.active { background: var(--primary); color: #fff; font-weight: 600; }
+
+/* ---- Tabla ---- */
+.inv-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.inv-table th {
+    background: var(--primary);
+    color: #fff;
+    padding: .65rem .8rem;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.inv-table td { padding: .65rem .8rem; border-bottom: 1px solid var(--bg); vertical-align: top; }
+.inv-table tr:hover td { background: #f7f9fc; }
+.inv-table .actions { display: flex; gap: .35rem; flex-wrap: wrap; }
+.inv-table .actions .btn { padding: .4rem .7rem; font-size: .82rem; }
+
+.inv-muted { color: var(--text-muted); font-size: .8rem; }
+.inv-specs { font-size: .8rem; color: var(--text-muted); line-height: 1.45; }
+.inv-specs b { color: var(--text); font-weight: 600; }
+.inv-problema { max-width: 380px; white-space: pre-wrap; word-break: break-word; }
+
+.pill {
+    display: inline-block;
+    border-radius: 20px;
+    padding: .15rem .65rem;
+    font-size: .76rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.pill-tipo     { background: #ebf5fb; color: #1a5276; }
+.pill-abierto  { background: #fdecea; color: #c0392b; }
+.pill-resuelto { background: #eafaf1; color: #1e8449; }
+.pill-neutro   { background: var(--bg); color: var(--text-muted); }
+
+a.pill { text-decoration: none; }
+
+/* ---- Modal ---- */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .55);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+    background: #fff;
+    border-radius: var(--radius);
+    box-shadow: 0 8px 40px rgba(0, 0, 0, .25);
+    width: 100%;
+    max-width: 640px;
+    max-height: 92vh;
+    overflow-y: auto;
+    padding: 1.6rem;
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.1rem; }
+.modal-title { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+.modal-close { background: none; border: none; font-size: 1.4rem; cursor: pointer; color: var(--text-muted); }
+.modal-close:hover { color: var(--text); }
+.modal .form-group { margin-bottom: 1rem; }
+.modal input, .modal select, .modal textarea { font-size: 1rem; padding: .7rem .9rem; }
+.modal label { font-size: .92rem; }
+
+.modal-section {
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border);
+    padding-top: .9rem;
+    margin: 1.2rem 0 .8rem;
+}
+
+.modal-actions { display: flex; gap: .8rem; justify-content: flex-end; margin-top: 1rem; }
+
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+
+.req { color: var(--danger); }
+
+.pass-wrap { position: relative; }
+.pass-wrap input { padding-right: 3rem; }
+.pass-toggle {
+    position: absolute;
+    right: .4rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: .3rem;
+}
+
+/* ---- Mobile: cada fila pasa a ser una tarjeta ---- */
+@media (max-width: 760px) {
+    .inv-shell { padding: 1rem .75rem 2rem; }
+    .inv-head .btn { width: 100%; }
+    .inv-filters > * { flex: 1 1 100%; }
+    .inv-tabs { display: flex; }
+    .inv-tabs button { flex: 1; }
+
+    .inv-card-wrap { background: none; box-shadow: none; padding: 0; }
+    .inv-table thead { display: none; }
+    .inv-table, .inv-table tbody, .inv-table tr, .inv-table td { display: block; width: 100%; }
+    .inv-table tr {
+        background: var(--card);
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        margin-bottom: .8rem;
+        padding: .6rem .9rem;
+    }
+    .inv-table tr:hover td { background: none; }
+    .inv-table td {
+        border-bottom: 1px solid var(--bg);
+        padding: .5rem 0;
+        display: flex;
+        gap: .8rem;
+    }
+    .inv-table td:last-child { border-bottom: none; }
+    .inv-table td[data-label]::before {
+        content: attr(data-label);
+        flex: 0 0 6.5rem;
+        font-size: .75rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        padding-top: .1rem;
+    }
+    /* El contenido de cada celda va envuelto en un único <div> */
+    .inv-table td > div { flex: 1; min-width: 0; }
+    .inv-table td.inv-main { font-size: 1rem; }
+    .inv-table .actions { width: 100%; }
+    .inv-table .actions .btn { flex: 1; padding: .6rem; font-size: .9rem; }
+    .inv-problema { max-width: none; }
+
+    .form-row { grid-template-columns: 1fr; }
+    .modal { padding: 1.2rem; max-height: 95vh; }
+    .modal-actions .btn { flex: 1; }
+}
