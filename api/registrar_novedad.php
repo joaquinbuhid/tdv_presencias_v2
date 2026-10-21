@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 require_once '../config/db.php';
+require_once __DIR__ . '/presencias_helper.php';
 
 if (!isset($_SESSION['empleado_id'])) {
     http_response_code(401);
@@ -45,21 +46,7 @@ if (!$tipo) {
     exit;
 }
 
-// --- Verificación: el vigilador no haya registrado este tipo hoy ---
-$stmt = $db->prepare(
-    "SELECT id_novedad FROM novedades
-     WHERE empleado_id = ? AND tipo_novedad = ? AND fecha = ?"
-);
-$stmt->execute([$empleado_id, $tipo_id, $fecha]);
-if ($stmt->fetch()) {
-    http_response_code(409);
-    echo json_encode([
-        'error' => "Ya registró \"{$tipo['nombre']}\" el día de hoy."
-    ]);
-    exit;
-}
-
-// --- Verificación 2: ubicación dentro del radio del objetivo ---
+// --- Verificación: ubicación dentro del radio del objetivo ---
 // El vigilador usa su objetivo asignado; el supervisor puede elegir uno de los que supervisa.
 if ($objetivo_id && !empty($_SESSION['es_supervisor'])) {
     $stmt = $db->prepare(
@@ -97,12 +84,44 @@ if ($distancia > $radio) {
     exit;
 }
 
-// --- Registrar la novedad ---
-$stmt = $db->prepare(
-    "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-);
-$stmt->execute([$fecha, $hora, $tipo_id, $observaciones, $empleado_id, $ip, $lat, $lng, (int)$objetivos['id_objetivo']]);
+// --- Validar el turno y registrar, en una transacción ---
+// Bloquear la fila del empleado serializa dos envíos simultáneos (doble toque, reintento),
+// así el segundo ve la marca del primero.
+try {
+    $db->beginTransaction();
+    $db->prepare("SELECT id_empleado FROM empleados WHERE id_empleado = ? FOR UPDATE")->execute([$empleado_id]);
+
+    // Entrada solo si no hay turno abierto; Salida solo si lo hay. Novedad/Incidente sin límite.
+    if ($tipo['nombre'] === 'Entrada' || $tipo['nombre'] === 'Salida') {
+        $abierta = entradaAbierta($db, $empleado_id);
+        $error = null;
+        if ($tipo['nombre'] === 'Entrada' && $abierta) {
+            $error = 'Ya tenés una entrada abierta desde ' . describirEntrada($abierta) . '. Si terminaste el turno, marcá la Salida.';
+        } elseif ($tipo['nombre'] === 'Salida' && !$abierta) {
+            $error = 'No tenés una entrada abierta. Marcá primero la Entrada; si te olvidaste de marcarla, avisale a tu supervisor.';
+        }
+        if ($error) {
+            $db->rollBack();
+            http_response_code(409);
+            echo json_encode(['error' => $error]);
+            exit;
+        }
+    }
+
+    $stmt = $db->prepare(
+        "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->execute([$fecha, $hora, $tipo_id, $observaciones, $empleado_id, $ip, $lat, $lng, (int)$objetivos['id_objetivo']]);
+    $db->commit();
+} catch (PDOException $e) {
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+    http_response_code(500);
+    echo json_encode(['error' => 'No se pudo registrar. Intentá de nuevo.']);
+    exit;
+}
 
 echo json_encode([
     'success'   => true,

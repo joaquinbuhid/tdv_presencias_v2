@@ -9,11 +9,41 @@ const API_BASE          = window.TDV_API_BASE || '';
 // ---- Inicialización ----------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    cargarTipos();
-    cargarEstado();
+    Promise.all([cargarTipos(), cargarEstado()]).then(sugerirTipo);
 
     document.getElementById('formNovedad').addEventListener('submit', onSubmit);
 });
+
+// ---- Marca sugerida -----------------------------------------
+// Con una entrada abierta se sugiere Salida; si no, Entrada.
+// Solo se preselecciona si el usuario todavía no eligió un tipo.
+
+async function sugerirTipo() {
+    const sel = document.getElementById('tipoNovedad');
+    let hint = document.getElementById('tipoHint');
+    if (!hint) {
+        hint = document.createElement('p');
+        hint.id = 'tipoHint';
+        hint.style.cssText = 'font-size:.9rem;color:var(--text-muted);margin-top:.45rem;';
+        sel.insertAdjacentElement('afterend', hint);
+    }
+
+    let turno;
+    try {
+        turno = await apiGet(API_BASE + 'api/get_turno_abierto.php');
+    } catch (e) {
+        hint.textContent = '';
+        return;
+    }
+
+    const sugerido = turno.abierta ? 'Salida' : 'Entrada';
+    const opt = [...sel.options].find(o => o.textContent === sugerido);
+    if (opt && !sel.value) sel.value = opt.value;
+
+    hint.textContent = turno.abierta
+        ? `Tenés una entrada abierta desde ${turno.desde}. Al terminar el turno marcá la Salida.`
+        : 'No tenés un turno abierto. Para empezar, marcá la Entrada.';
+}
 
 // ---- Tipos de novedad --------------------------------------
 
@@ -128,6 +158,7 @@ async function onSubmit(e) {
         document.getElementById('tipoNovedad').value   = '';
         setLocStatus('ok', `Registrado a ${resp.distancia} m del objetivos.`);
         await cargarEstado();
+        await sugerirTipo();
 
     } catch (err) {
         mostrarError(err.message);
