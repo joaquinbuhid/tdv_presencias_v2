@@ -1,10 +1,11 @@
 <?php
 // Crea o edita un ticket. Si viene "solucion" se marca como resuelto;
 // si viene vacía en un ticket resuelto, se reabre.
+// Los oficinistas solo pueden crear tickets a su nombre, sin resolución.
 header('Content-Type: application/json');
 require_once __DIR__ . '/../auth.php';
 require_once '../../config/db.php';
-requireAdminRealApi();
+requireBackofficeApi();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -37,6 +38,17 @@ $pedidoPor   = (int)($data['pedido_por'] ?? 0) ?: null;
 $problema    = trim((string)($data['problema'] ?? ''));
 $creacion    = fechaHora($data['fecha_hora_creacion'] ?? null) ?? date('Y-m-d H:i:s');
 $solucion    = trim((string)($data['solucion'] ?? ''));
+
+if (!esAdminReal()) {
+    if ($id !== 0) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Solo un administrador puede modificar tickets']);
+        exit;
+    }
+    $pedidoPor = (int)($_SESSION['empleado_id'] ?? 0) ?: null;
+    $creacion  = date('Y-m-d H:i:s');
+    $solucion  = '';
+}
 
 if (!$dispositivo) {
     http_response_code(400);

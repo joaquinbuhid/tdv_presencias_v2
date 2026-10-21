@@ -1,15 +1,21 @@
 <?php
 // ?estado=abiertos|resueltos (vacío = todos), ?dispositivo=N
+// Los oficinistas solo ven los tickets que pidieron ellos.
 header('Content-Type: application/json');
 require_once __DIR__ . '/../auth.php';
 require_once '../../config/db.php';
-requireAdminRealApi();
+requireBackofficeApi();
 
 try {
     $db = getDB();
 
     $where  = [];
     $params = [];
+
+    if (!esAdminReal()) {
+        $where[]  = 'tk.pedido_por = ?';
+        $params[] = (int)($_SESSION['empleado_id'] ?? 0);
+    }
 
     $estado = $_GET['estado'] ?? '';
     if ($estado === 'abiertos')  $where[] = 'tk.fecha_hora_resuelto IS NULL';
