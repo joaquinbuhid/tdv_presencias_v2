@@ -22,6 +22,10 @@ $observaciones = isset($data['observaciones']) ? trim($data['observaciones']) : 
 $lat          = isset($data['lat'])          ? (float)$data['lat']        : null;
 $lng          = isset($data['lng'])          ? (float)$data['lng']        : null;
 $objetivo_id  = isset($data['objetivo_id'])  ? (int)$data['objetivo_id']  : 0;
+// Precisión informada por el GPS, en metros (solo informativa, no se usa para validar).
+$precision    = isset($data['precision']) && is_numeric($data['precision'])
+    ? max(0, min(1000000, (int)round((float)$data['precision'])))
+    : null;
 
 if (!$tipo_id || $lat === null || $lng === null || $lat == 0 || $lng == 0) {
     http_response_code(400);
@@ -108,11 +112,24 @@ try {
         }
     }
 
-    $stmt = $db->prepare(
-        "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    );
-    $stmt->execute([$fecha, $hora, $tipo_id, $observaciones, $empleado_id, $ip, $lat, $lng, (int)$objetivos['id_objetivo']]);
+    $valores = [$fecha, $hora, $tipo_id, $observaciones, $empleado_id, $ip, $lat, $lng, (int)$objetivos['id_objetivo']];
+    try {
+        $stmt = $db->prepare(
+            "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id, precision_m)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute([...$valores, $precision]);
+    } catch (PDOException $e) {
+        // Si todavía no se aplicó la migración de precision_m, registrar igual sin ese dato.
+        if ($e->getCode() !== '42S22') {
+            throw $e;
+        }
+        $stmt = $db->prepare(
+            "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+        );
+        $stmt->execute($valores);
+    }
     $db->commit();
 } catch (PDOException $e) {
     if ($db->inTransaction()) {

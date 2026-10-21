@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS novedades (
   coord_lat decimal(10,8) DEFAULT NULL,
   coord_long decimal(11,8) DEFAULT NULL,
   objetivo_id int(11) DEFAULT NULL,
+  precision_m int(11) DEFAULT NULL,
   PRIMARY KEY (id_novedad),
   KEY idx_novedades_empleado_fecha (empleado_id, fecha),
   KEY idx_novedades_tipo (tipo_novedad),
