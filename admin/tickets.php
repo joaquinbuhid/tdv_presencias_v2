@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/auth.php';
-requireAdminRealPage();
+requireBackofficePage();
+// Los oficinistas ven solo sus tickets y pueden crear nuevos; el resto es de admin.
+$esAdmin = esAdminReal();
+$ocultoSiNoAdmin = $esAdmin ? '' : ' style="display:none;"';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -19,7 +22,7 @@ requireAdminRealPage();
 
 <main class="inv-shell">
     <div class="inv-head">
-        <h1 class="inv-title">&#x1F3AB; Tickets <span class="inv-counter" id="counter"></span></h1>
+        <h1 class="inv-title">&#x1F3AB; <?= $esAdmin ? 'Tickets' : 'Mis tickets' ?> <span class="inv-counter" id="counter"></span></h1>
         <button class="btn btn-primary btn-sm" onclick="abrirModal(0)">+ Nuevo ticket</button>
     </div>
 
@@ -66,7 +69,7 @@ requireAdminRealPage();
                 <select id="fDispositivo" required><option value="">- Elegir -</option></select>
             </div>
 
-            <div class="form-row">
+            <div class="form-row"<?= $ocultoSiNoAdmin ?>>
                 <div class="form-group">
                     <label for="fPedidoPor">Pedido por</label>
                     <select id="fPedidoPor"><option value="">- Sin indicar -</option></select>
@@ -79,9 +82,10 @@ requireAdminRealPage();
 
             <div class="form-group">
                 <label for="fProblema">Problema <span class="req">*</span></label>
-                <textarea id="fProblema" rows="3" required></textarea>
+                <textarea id="fProblema" rows="3" required placeholder="Contá qué pasa: qué estabas haciendo, qué error aparece..."></textarea>
             </div>
 
+            <div<?= $ocultoSiNoAdmin ?>>
             <div class="modal-section">Resolución</div>
 
             <div class="form-group">
@@ -99,6 +103,7 @@ requireAdminRealPage();
                     <input type="datetime-local" id="fResuelto">
                 </div>
             </div>
+            </div>
 
             <div class="modal-actions">
                 <button type="button" class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
@@ -109,6 +114,7 @@ requireAdminRealPage();
 </div>
 
 <script>
+const ES_ADMIN = <?= $esAdmin ? 'true' : 'false' ?>;
 let tickets = [];
 let yo = 0;
 const params = new URLSearchParams(location.search);
@@ -158,10 +164,19 @@ async function cargarListas() {
     try {
         const l = await apiFetch('api/get_inventario_listas.php');
         yo = Number(l.yo);
-        const disps = l.dispositivos.map(d =>
-            `<option value="${Number(d.id_disp)}">${esc(d.nombre_disp)} · ${esc(d.tipo_nombre)}${d.empleado_nombre ? ' · ' + esc(d.empleado_nombre) : ''}</option>`).join('');
-        document.getElementById('fDispositivo').insertAdjacentHTML('beforeend', disps);
+        const opt = d =>
+            `<option value="${Number(d.id_disp)}">${esc(d.nombre_disp)} · ${esc(d.tipo_nombre)}${d.empleado_nombre ? ' · ' + esc(d.empleado_nombre) : ''}</option>`;
+        const disps = l.dispositivos.map(opt).join('');
         document.getElementById('fDispFiltro').insertAdjacentHTML('beforeend', disps);
+
+        // Al oficinista le mostramos primero sus propios dispositivos.
+        const mios = l.dispositivos.filter(d => Number(d.es_mio));
+        document.getElementById('fDispositivo').insertAdjacentHTML('beforeend', !ES_ADMIN && mios.length
+            ? `<optgroup label="Mis dispositivos">${mios.map(opt).join('')}</optgroup>
+               <optgroup label="Otros">${l.dispositivos.filter(d => !Number(d.es_mio)).map(opt).join('')}</optgroup>`
+            : disps);
+
+        if (!ES_ADMIN) return;
 
         const emp = arr => arr.map(e => `<option value="${Number(e.id_empleado)}">${esc(e.nombre)}</option>`).join('');
         document.getElementById('fPedidoPor').insertAdjacentHTML('beforeend', emp(l.empleados));
@@ -215,22 +230,22 @@ function renderTabla() {
                 <strong>#${Number(t.id_ticket)} · ${esc(t.nombre_disp)}</strong>
                 <div class="inv-muted">${esc(t.tipo_nombre)} · ${fmtFecha(t.fecha_hora_creacion)}</div>
             </div></td>
-            <td data-label="Pedido por"><div>${t.pedido_por_nombre ? esc(t.pedido_por_nombre) : '<span class="inv-muted">-</span>'}</div></td>
+            ${ES_ADMIN ? `<td data-label="Pedido por"><div>${t.pedido_por_nombre ? esc(t.pedido_por_nombre) : '<span class="inv-muted">-</span>'}</div></td>` : ''}
             <td data-label="Problema"><div class="inv-problema">${esc(t.problema)}${t.solucion
                 ? `<div class="inv-muted" style="margin-top:.35rem;"><b>Solución:</b> ${esc(t.solucion)}</div>` : ''}</div></td>
             <td data-label="Estado"><div>${estadoHtml}</div></td>
-            <td><div class="actions">
+            ${ES_ADMIN ? `<td><div class="actions">
                 ${resuelto ? '' : `<button class="btn btn-success btn-sm" data-action="resolve" data-id="${Number(t.id_ticket)}">&#10003; Resolver</button>`}
                 <button class="btn btn-outline btn-sm" data-action="edit" data-id="${Number(t.id_ticket)}">&#9998; Editar</button>
                 <button class="btn btn-danger btn-sm" data-action="delete" data-id="${Number(t.id_ticket)}" aria-label="Eliminar">&#x1F5D1;</button>
-            </div></td>
+            </div></td>` : ''}
         </tr>`;
     }).join('');
 
     wrap.innerHTML = `
         <table class="inv-table">
             <thead><tr>
-                <th>Ticket</th><th>Pedido por</th><th>Problema</th><th>Estado</th><th>Acciones</th>
+                <th>Ticket</th>${ES_ADMIN ? '<th>Pedido por</th>' : ''}<th>Problema</th><th>Estado</th>${ES_ADMIN ? '<th>Acciones</th>' : ''}
             </tr></thead>
             <tbody>${tbody}</tbody>
         </table>`;
