@@ -122,7 +122,7 @@ $objetivos = $stmt->fetchAll();
 <footer class="app-footer">TDV Seguridad &mdash; <?= date('d/m/Y') ?></footer>
 
 <script>window.TDV_API_BASE = '../';</script>
-<script src="../js/app.js?v=3"></script>
+<script src="../js/app.js?v=4"></script>
 <script>
 (function reloj() {
     const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];

@@ -2,13 +2,17 @@
    TDV - Dashboard principal
    ============================================================ */
 
-const MAX_LOC_WAIT_MS   = 8000;  // Esperar hasta 8 segundos para obtener ubicación
-const TARGET_ACCURACY_M = 50;    // Precisión objetivos: 50 metros
-const API_BASE          = window.TDV_API_BASE || '';
+const MAX_LOC_WAIT_MS      = 20000; // Esperar hasta 20 segundos si no se llega a la precisión buscada
+const TARGET_ACCURACY_M    = 50;    // Precisión objetivo: 50 metros
+const LECTURA_VIGENCIA_MS  = 30000; // Lecturas del GPS precalentado que se aceptan al marcar
+const PRECISION_MUY_BAJA_M = 500;   // Por encima de esto, la señal se considera muy débil...
+const AVISO_SENAL_DEBIL_MS = 25000; // ...si sigue así después de este tiempo buscando
+const API_BASE             = window.TDV_API_BASE || '';
 
 // ---- Inicialización ----------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
+    iniciarGps();
     Promise.all([cargarTipos(), cargarEstado()]).then(sugerirTipo);
 
     document.getElementById('formNovedad').addEventListener('submit', onSubmit);
@@ -115,6 +119,7 @@ async function onSubmit(e) {
     }
 
     const btn = document.getElementById('btnRegistrar');
+    gpsUiLibreDesde = Infinity;
     setBoton(btn, true, 'Obteniendo ubicación...');
     setLocStatus('active', null);
     mostrarProgress(true);
@@ -132,6 +137,7 @@ async function onSubmit(e) {
         setLocStatus('error', err.message);
         setBoton(btn, false, 'Confirmar asistencia');
         mostrarError(err.message);
+        gpsUiLibreDesde = Date.now() + 8000;
         return;
     }
 
@@ -149,6 +155,7 @@ async function onSubmit(e) {
             observaciones,
             lat: posicion.coords.latitude,
             lng: posicion.coords.longitude,
+            precision: Math.round(posicion.coords.accuracy),
         };
         if (selObj && selObj.value) payload.objetivo_id = parseInt(selObj.value);
         const resp = await apiPost(API_BASE + 'api/registrar_novedad.php', payload);
@@ -166,9 +173,84 @@ async function onSubmit(e) {
     }
 
     setBoton(btn, false, 'Confirmar asistencia');
+    // Dejar a la vista el resultado unos segundos antes de volver a mostrar la señal.
+    gpsUiLibreDesde = Date.now() + 8000;
 }
 
+// ---- GPS precalentado ---------------------------------------
+// El GPS se enciende al abrir la página (y se apaga si pasa a segundo plano),
+// así al marcar ya tiene señal. Los teléfonos viejos tardan en engancharse.
+
+let gpsWatchId    = null;
+let gpsLecturas   = [];   // { pos, t } de los últimos LECTURA_VIGENCIA_MS
+let gpsInicio     = 0;
+let gpsUiLibreDesde = 0;  // mientras se marca (y un rato después) no se pisa el estado
+
+function iniciarGps() {
+    if (!navigator.geolocation || gpsWatchId !== null) return;
+    gpsInicio = Date.now();
+    if (Date.now() >= gpsUiLibreDesde) setLocStatus('active', 'Buscando señal GPS...');
+
+    gpsWatchId = navigator.geolocation.watchPosition(
+        (pos) => {
+            guardarLectura(pos);
+            mostrarSenalGps();
+        },
+        (err) => {
+            // Sin señal momentánea el watch sigue intentando; solo se corta si no hay permiso.
+            if (err.code === 1) {
+                detenerGps();
+                if (Date.now() >= gpsUiLibreDesde) {
+                    setLocStatus('error', 'Permiso de ubicación denegado. Habilite la ubicación en su dispositivo.');
+                }
+            }
+        },
+        { enableHighAccuracy: true, maximumAge: 0 }
+    );
+}
+
+function detenerGps() {
+    if (gpsWatchId === null) return;
+    navigator.geolocation.clearWatch(gpsWatchId);
+    gpsWatchId = null;
+}
+
+function guardarLectura(pos) {
+    const ahora = Date.now();
+    gpsLecturas.push({ pos, t: ahora });
+    gpsLecturas = gpsLecturas.filter(l => ahora - l.t <= LECTURA_VIGENCIA_MS);
+}
+
+function mejorLecturaReciente() {
+    const ahora = Date.now();
+    return gpsLecturas
+        .filter(l => ahora - l.t <= LECTURA_VIGENCIA_MS)
+        .reduce((mejor, l) => (!mejor || l.pos.coords.accuracy < mejor.coords.accuracy) ? l.pos : mejor, null);
+}
+
+function mostrarSenalGps() {
+    if (Date.now() < gpsUiLibreDesde) return;
+    const pos = mejorLecturaReciente();
+    if (!pos) return;
+
+    const acc = Math.round(pos.coords.accuracy);
+    if (acc <= TARGET_ACCURACY_M) {
+        setLocStatus('ok', `Señal GPS lista (±${acc} m). Ya podés marcar.`);
+    } else if (acc >= PRECISION_MUY_BAJA_M && Date.now() - gpsInicio > AVISO_SENAL_DEBIL_MS) {
+        setLocStatus('error', `Señal GPS muy débil (±${acc} m). Si estás bajo techo salí al aire libre, y revisá que la ubicación del teléfono esté en "alta precisión" y no en ahorro de batería.`);
+    } else {
+        setLocStatus('active', `Mejorando señal GPS... (±${acc} m). Esperá a que se ponga en verde.`);
+    }
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) detenerGps();
+    else iniciarGps();
+});
+
 // ---- Geolocalización con espera de precisión ---------------
+// Arranca con la mejor lectura del precalentado: si ya es buena se usa al instante;
+// si no, sigue escuchando hasta MAX_LOC_WAIT_MS y se queda con la mejor.
 
 function obtenerUbicacionPrecisa(onProgress) {
     return new Promise((resolve, reject) => {
@@ -177,9 +259,15 @@ function obtenerUbicacionPrecisa(onProgress) {
             return;
         }
 
-        let mejorPosicion = null;
-        let watchId       = null;
-        let elapsed       = 0;
+        let mejorPosicion = mejorLecturaReciente();
+        if (mejorPosicion && mejorPosicion.coords.accuracy <= TARGET_ACCURACY_M) {
+            resolve(mejorPosicion);
+            return;
+        }
+
+        let watchId = null;
+        let elapsed = 0;
+        let timer   = null;
 
         const tick = setInterval(() => {
             elapsed += 500;
@@ -189,38 +277,41 @@ function obtenerUbicacionPrecisa(onProgress) {
             }
         }, 500);
 
-        const finalizar = (pos) => {
+        const finalizar = (pos, error) => {
+            clearTimeout(timer);
             clearInterval(tick);
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
             if (pos) resolve(pos);
-            else reject(new Error('No se pudo obtener la ubicación. Verifique que el GPS esté activo.'));
+            else reject(new Error(error || 'No se pudo obtener la ubicación. Verifique que el GPS esté activo.'));
         };
 
-        const timer = setTimeout(() => finalizar(mejorPosicion), MAX_LOC_WAIT_MS);
+        timer = setTimeout(() => finalizar(mejorPosicion), MAX_LOC_WAIT_MS);
 
         watchId = navigator.geolocation.watchPosition(
             (pos) => {
+                guardarLectura(pos);
                 if (!mejorPosicion || pos.coords.accuracy < mejorPosicion.coords.accuracy) {
                     mejorPosicion = pos;
                 }
                 // Resolver antes si ya alcanzamos precisión suficiente
                 if (pos.coords.accuracy <= TARGET_ACCURACY_M) {
-                    clearTimeout(timer);
                     finalizar(mejorPosicion);
                 }
             },
             (err) => {
-                clearTimeout(timer);
-                clearInterval(tick);
-                if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+                // Si ya hay una lectura (del precalentado o de esta espera), usar esa.
+                if (mejorPosicion && err.code !== 1) {
+                    finalizar(mejorPosicion);
+                    return;
+                }
                 const msgs = {
                     1: 'Permiso de ubicación denegado. Habilite la ubicación en su dispositivo.',
                     2: 'No se pudo obtener la ubicación. Verifique que el GPS esté activo.',
                     3: 'Tiempo de espera agotado al obtener la ubicación.'
                 };
-                reject(new Error(msgs[err.code] || 'Error al obtener ubicación.'));
+                finalizar(null, msgs[err.code] || 'Error al obtener ubicación.');
             },
-            { enableHighAccuracy: true, maximumAge: 0, timeout: MAX_LOC_WAIT_MS }
+            { enableHighAccuracy: true, maximumAge: 0 }
         );
     });
 }
