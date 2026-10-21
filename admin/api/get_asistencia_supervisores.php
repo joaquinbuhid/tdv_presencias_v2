@@ -8,19 +8,28 @@ try {
     $db  = getDB();
     $hoy = date('Y-m-d');
 
+    // Puede haber varias entradas/salidas en el día: primera entrada, última salida
+    // (solo si es posterior a la última entrada) y el objetivo de la última marca.
     $stmt = $db->prepare(
-        "SELECT e.id_empleado, e.nombre,
-                TIME_FORMAT(ent.hora, '%H:%i') AS hora_entrada_hoy,
-                TIME_FORMAT(sal.hora, '%H:%i') AS hora_salida_hoy,
+        "SELECT x.id_empleado, x.nombre,
+                TIME_FORMAT(x.primera_entrada, '%H:%i') AS hora_entrada_hoy,
+                TIME_FORMAT(IF(x.ultima_salida > COALESCE(x.ultima_entrada, '00:00:00'), x.ultima_salida, NULL), '%H:%i') AS hora_salida_hoy,
                 o.id_objetivo, o.nombre AS objetivo_nombre
-         FROM empleados e
-         LEFT JOIN novedades ent ON ent.empleado_id = e.id_empleado AND ent.fecha = ? AND ent.tipo_novedad = 1
-         LEFT JOIN novedades sal ON sal.empleado_id = e.id_empleado AND sal.fecha = ? AND sal.tipo_novedad = 2
-         LEFT JOIN objetivos o   ON o.id_objetivo = COALESCE(ent.objetivo_id, sal.objetivo_id)
-         WHERE e.activo = 1 AND e.pendiente = 0 AND e.tipo = 2
-         ORDER BY e.nombre"
+         FROM (
+             SELECT e.id_empleado, e.nombre,
+                    (SELECT MIN(n.hora) FROM novedades n WHERE n.empleado_id = e.id_empleado AND n.fecha = ? AND n.tipo_novedad = 1) AS primera_entrada,
+                    (SELECT MAX(n.hora) FROM novedades n WHERE n.empleado_id = e.id_empleado AND n.fecha = ? AND n.tipo_novedad = 1) AS ultima_entrada,
+                    (SELECT MAX(n.hora) FROM novedades n WHERE n.empleado_id = e.id_empleado AND n.fecha = ? AND n.tipo_novedad = 2) AS ultima_salida,
+                    (SELECT n.objetivo_id FROM novedades n
+                     WHERE n.empleado_id = e.id_empleado AND n.fecha = ? AND n.tipo_novedad IN (1, 2)
+                     ORDER BY n.hora DESC, n.id_novedad DESC LIMIT 1) AS objetivo_id
+             FROM empleados e
+             WHERE e.activo = 1 AND e.pendiente = 0 AND e.tipo = 2
+         ) x
+         LEFT JOIN objetivos o ON o.id_objetivo = x.objetivo_id
+         ORDER BY x.nombre"
     );
-    $stmt->execute([$hoy, $hoy]);
+    $stmt->execute([$hoy, $hoy, $hoy, $hoy]);
     $rows = $stmt->fetchAll();
 
     foreach ($rows as &$r) {

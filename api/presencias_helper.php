@@ -1,5 +1,42 @@
 <?php
 
+// Una entrada sin salida deja de contar como turno abierto pasado este plazo
+// (mismo límite que usa la liquidación de horas).
+const HORAS_MAX_TURNO = 18;
+
+// Devuelve la entrada abierta del empleado (última marca Entrada/Salida es una Entrada
+// de hace menos de HORAS_MAX_TURNO) o null si no tiene turno abierto.
+function entradaAbierta(PDO $db, int $empleadoId): ?array {
+    $stmt = $db->prepare(
+        "SELECT n.fecha, n.hora, tn.nombre AS tipo_nombre
+         FROM novedades n
+         JOIN tipo_novedad tn ON n.tipo_novedad = tn.id_tipo
+         WHERE n.empleado_id = ? AND tn.nombre IN ('Entrada', 'Salida')
+         ORDER BY n.fecha DESC, n.hora DESC, n.id_novedad DESC
+         LIMIT 1"
+    );
+    $stmt->execute([$empleadoId]);
+    $ultima = $stmt->fetch();
+
+    if (!$ultima || $ultima['tipo_nombre'] !== 'Entrada') {
+        return null;
+    }
+    $desde = new DateTime($ultima['fecha'] . ' ' . $ultima['hora']);
+    $limite = (new DateTime())->modify('-' . HORAS_MAX_TURNO . ' hours');
+    if ($desde < $limite) {
+        return null;
+    }
+    return ['fecha' => $ultima['fecha'], 'hora' => substr($ultima['hora'], 0, 5)];
+}
+
+// "las 17:04" si es de hoy, "el 20/10 a las 19:00" si no.
+function describirEntrada(array $entrada): string {
+    if ($entrada['fecha'] === date('Y-m-d')) {
+        return "las {$entrada['hora']}";
+    }
+    return 'el ' . date('d/m', strtotime($entrada['fecha'])) . " a las {$entrada['hora']}";
+}
+
 function timeOrNull(?string $value): ?string {
     if (!$value) {
         return null;
@@ -93,6 +130,9 @@ function buildTurnoWindows(array $empleado, DateTime $now): array {
     ];
 }
 
+// Puede haber varias entradas/salidas en el turno (salió y volvió a entrar):
+// se informa la primera entrada y la última salida, y la salida solo cuenta
+// si fue la última marca (si después volvió a entrar, el turno sigue abierto).
 function resumirNovedadesTurno(array $novedades, array $window): array {
     $entrada = null;
     $salida = null;
@@ -107,7 +147,8 @@ function resumirNovedadesTurno(array $novedades, array $window): array {
         $hora = substr($nov['hora'], 0, 5);
         $ultimaActividad = $hora;
         if ($nov['tipo_nombre'] === 'Entrada') {
-            $entrada = $hora;
+            $entrada = $entrada ?? $hora;
+            $salida = null;
         } elseif ($nov['tipo_nombre'] === 'Salida') {
             $salida = $hora;
         }
