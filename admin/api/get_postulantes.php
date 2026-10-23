@@ -115,9 +115,9 @@ if ($genero !== '') {
 
 if ($tieneBaja !== '') {
     if ($tieneBaja === 'si') {
-        $where[] = "(baja_adjunta IS NOT NULL AND baja_adjunta != '')";
+        $where[] = "(COALESCE(NULLIF(baja_adjunta, ''), url_baja, '') != '')";
     } else if ($tieneBaja === 'no') {
-        $where[] = "(baja_adjunta IS NULL OR baja_adjunta = '')";
+        $where[] = "(COALESCE(NULLIF(baja_adjunta, ''), url_baja, '') = '')";
     }
 }
 
@@ -133,7 +133,7 @@ try {
                    localidad_residencia, experiencia_seguridad, curso_habilitante,
                    credencial_vigente, disponibilidad_horaria, puesto_postula,
                    parte_track_seguridad, archivo_adjunto,
-                   monotributista, baja_adjunta,
+                   monotributista, COALESCE(NULLIF(baja_adjunta, ''), NULLIF(url_baja, '')) AS baja_adjunta,
                    CASE 
                        WHEN genero = '1' THEN 'Masculino'
                        WHEN genero = '2' THEN 'Femenino'
