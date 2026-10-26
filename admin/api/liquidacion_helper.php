@@ -2,10 +2,30 @@
 // PHP helper functions for processing shifts and liquidaciones
 
 /**
+ * Days of margin to fetch around the requested period, so shifts that cross
+ * the period boundary (e.g. 19:00 -> 07:00) keep both of their marks.
+ */
+const LIQUIDACION_MARGEN_DIAS = 1;
+
+/**
+ * Returns [desde, hasta] widened by LIQUIDACION_MARGEN_DIAS, for the novedades query.
+ */
+function rangoConMargen(string $fecha_inicio, string $fecha_fin): array {
+    $m = LIQUIDACION_MARGEN_DIAS;
+    return [
+        date('Y-m-d', strtotime("$fecha_inicio -$m day")),
+        date('Y-m-d', strtotime("$fecha_fin +$m day")),
+    ];
+}
+
+/**
  * Calculates shifts from raw novelty/check-in rows
  * Each row must have: fecha, hora, tipo, vigilador_id, nombre, apellido, observaciones
+ *
+ * If $desde/$hasta are given, rows are expected to include the margin from rangoConMargen():
+ * a shift belongs to the period of its entry date, and anomalies outside the period are dropped.
  */
-function calcularLiquidacion(array $rows): array {
+function calcularLiquidacion(array $rows, ?string $desde = null, ?string $hasta = null): array {
     $by_vigilador = [];
     foreach ($rows as $r) {
         $vid = (string)$r['vigilador_id'];
@@ -125,6 +145,22 @@ function calcularLiquidacion(array $rows): array {
                 'dt' => $active_entry['dt']->format('Y-m-d H:i:s'),
                 'obs' => $active_entry['obs']
             ];
+        }
+
+        if ($desde !== null && $hasta !== null) {
+            $enPeriodo = function (string $dt) use ($desde, $hasta): bool {
+                $fecha = substr($dt, 0, 10);
+                return $fecha >= $desde && $fecha <= $hasta;
+            };
+            $vigilador_report['shifts'] = array_values(array_filter(
+                $vigilador_report['shifts'], fn($s) => $enPeriodo($s['entry'])
+            ));
+            $vigilador_report['anomalies'] = array_values(array_filter(
+                $vigilador_report['anomalies'], fn($a) => $enPeriodo($a['dt'])
+            ));
+            if (!$vigilador_report['shifts'] && !$vigilador_report['anomalies']) {
+                continue;
+            }
         }
 
         $report[] = $vigilador_report;

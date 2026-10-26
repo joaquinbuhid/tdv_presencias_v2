@@ -62,13 +62,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     WHERE o.id_objetivo = ? AND o.supervisor_id = ? AND n.fecha BETWEEN ? AND ?
                     ORDER BY n.fecha ASC, n.hora ASC
                 ");
-                $stmt->execute([$selected_objetivo_id, $supId, $fecha_inicio, $fecha_fin]);
+                $stmt->execute([$selected_objetivo_id, $supId, ...rangoConMargen($fecha_inicio, $fecha_fin)]);
                 $rows = $stmt->fetchAll();
+                $result_data = calcularLiquidacion($rows, $fecha_inicio, $fecha_fin);
 
-                if (empty($rows)) {
+                if (empty($result_data)) {
                     $error = 'No se encontraron novedades registradas para el objetivo seleccionado en el rango de fechas.';
                 } else {
-                    $result_data = calcularLiquidacion($rows);
                     $_SESSION['last_informe'] = $result_data;
                     $_SESSION['informe_title'] = "Objetivo: " . $objNombre . " (" . date('d/m/Y', strtotime($fecha_inicio)) . " al " . date('d/m/Y', strtotime($fecha_fin)) . ")";
                     $title = $_SESSION['informe_title'];
