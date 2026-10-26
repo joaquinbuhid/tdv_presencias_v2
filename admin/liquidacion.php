@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $where_obj = '';
-            $params = [$fecha_inicio, $fecha_fin];
+            $params = rangoConMargen($fecha_inicio, $fecha_fin);
             $objNombre = 'Todos los objetivos';
             
             if ($selected_objetivo_id > 0) {
@@ -65,10 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute($params);
             $rows = $stmt->fetchAll();
 
-            if (empty($rows)) {
+            $result_data = calcularLiquidacion($rows, $fecha_inicio, $fecha_fin);
+
+            if (empty($result_data)) {
                 $error = 'No se encontraron novedades registradas en el rango de fechas.';
             } else {
-                $result_data = calcularLiquidacion($rows);
                 $_SESSION['last_liquidacion'] = $result_data;
                 $_SESSION['liquidacion_title'] = "Objetivo: " . $objNombre . " (" . date('d/m/Y', strtotime($fecha_inicio)) . " al " . date('d/m/Y', strtotime($fecha_fin)) . ")";
                 $title = $_SESSION['liquidacion_title'];
