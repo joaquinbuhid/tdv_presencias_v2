@@ -61,7 +61,10 @@ $esAdminReal = esAdminReal();
     <section class="panel">
         <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
             <span>Entrevistas que terminaron en contratación</span>
-            <span class="muted" id="counterEntrevistas"></span>
+            <span style="display:flex; align-items:center; gap:.6rem;">
+                <span class="muted" id="counterEntrevistas"></span>
+                <a class="btn btn-success btn-sm" href="api/export_entrevistas_excel.php?contratadas=1" style="width:auto; text-decoration:none;">🟢 Exportar Excel</a>
+            </span>
         </div>
         <div class="table-wrap" style="box-shadow:none;">
             <table>
