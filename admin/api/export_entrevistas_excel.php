@@ -11,6 +11,18 @@ function siNo(?string $v): string {
     return $v === 'si' ? 'SI' : ($v === 'no' ? 'NO' : '');
 }
 
+// El formulario de postulaciones guarda el género como código.
+function generoLabel(?string $g): string {
+    if ($g === '1') return 'Masculino';
+    if ($g === '2') return 'Femenino';
+    return $g ?? '';
+}
+
+// Puntajes 1 a 5 de la entrevista.
+function puntaje($v): string {
+    return $v === null || $v === '' ? '' : $v . ' / 5';
+}
+
 function fechaDMY(?string $fecha): string {
     if (!$fecha) {
         return '';
@@ -61,7 +73,7 @@ $columnas = [
     'DNI'                         => fn($r) => $r['dni'],
     'Fecha nacimiento'            => fn($r) => fechaDMY($r['fecha_nacimiento']),
     'Edad'                        => fn($r) => $r['edad'],
-    'Género'                      => fn($r) => $r['genero'],
+    'Género'                      => fn($r) => generoLabel($r['genero']),
     'Teléfono'                    => fn($r) => $r['telefono'],
     'Email'                       => fn($r) => $r['email'],
     'Localidad'                   => fn($r) => $r['localidad_residencia'],
@@ -75,16 +87,16 @@ $columnas = [
     'Monotributista'              => fn($r) => siNo($r['monotributista']),
     'Peso (kg)'                   => fn($r) => $r['peso'],
     'Altura (cm)'                 => fn($r) => $r['altura'],
-    'Relación peso/altura'        => fn($r) => $r['relacion_peso_altura'],
-    'Apariencia/vestimenta'       => fn($r) => $r['apariencia_vestimenta'],
-    'Modulación y habla'          => fn($r) => $r['modulacion_habla'],
+    'Relación peso/altura'        => fn($r) => puntaje($r['relacion_peso_altura']),
+    'Apariencia/vestimenta'       => fn($r) => puntaje($r['apariencia_vestimenta']),
+    'Modulación y habla'          => fn($r) => puntaje($r['modulacion_habla']),
     'Estado civil'                => fn($r) => $r['estado_civil'],
     'Hijos'                       => fn($r) => $r['hijos'],
     'Vehículo'                    => fn($r) => $r['tiene_vehiculo'] === 'si' ? ($r['vehiculo'] ?: 'SI') : siNo($r['tiene_vehiculo']),
     'Familiares en la empresa'    => fn($r) => ($r['tiene_familiares'] ?? null) === 'si' ? ($r['familiares'] ?: 'SI') : siNo($r['tiene_familiares'] ?? null),
     'Último trabajo en rel. dep.' => fn($r) => fechaDMY($r['fecha_ultimo_trabajo']),
     'Punto +6 meses'              => fn($r) => (int)$r['punto_ultimo_trabajo'] === 1 ? 'SI' : 'NO',
-    'Valoración personal'         => fn($r) => $r['valoracion_personal'],
+    'Valoración personal'         => fn($r) => puntaje($r['valoracion_personal']),
     'Comentario'                  => fn($r) => $r['valoracion_texto'],
     'Puntaje sin valoración'      => fn($r) => $r['puntaje_sin_valoracion'],
     'Puntaje total'               => fn($r) => $r['puntaje_total'],
