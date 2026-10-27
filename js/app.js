@@ -7,6 +7,7 @@ const TARGET_ACCURACY_M    = 50;    // Precisión objetivo: 50 metros
 const LECTURA_VIGENCIA_MS  = 30000; // Lecturas del GPS precalentado que se aceptan al marcar
 const PRECISION_MUY_BAJA_M = 500;   // Por encima de esto, la señal se considera muy débil...
 const AVISO_SENAL_DEBIL_MS = 25000; // ...si sigue así después de este tiempo buscando
+const RESPALDO_RED_MS     = 10000; // Último intento con ubicación por red si el GPS no dio ninguna lectura
 const API_BASE             = window.TDV_API_BASE || '';
 
 // ---- Inicialización ----------------------------------------
@@ -277,7 +278,12 @@ function obtenerUbicacionPrecisa(onProgress) {
             }
         }, 500);
 
+        let ultimoError = null;
+        let terminado   = false;
+
         const finalizar = (pos, error) => {
+            if (terminado) return;
+            terminado = true;
             clearTimeout(timer);
             clearInterval(tick);
             if (watchId !== null) navigator.geolocation.clearWatch(watchId);
@@ -285,7 +291,25 @@ function obtenerUbicacionPrecisa(onProgress) {
             else reject(new Error(error || 'No se pudo obtener la ubicación. Verifique que el GPS esté activo.'));
         };
 
-        timer = setTimeout(() => finalizar(mejorPosicion), MAX_LOC_WAIT_MS);
+        // Sin ninguna lectura del GPS en todo el tiempo de espera: último intento con la
+        // ubicación por red (wifi/antenas), que algunos teléfonos dan aunque el GPS no enganche.
+        const agotado = () => {
+            if (mejorPosicion) {
+                finalizar(mejorPosicion);
+                return;
+            }
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (pos) => finalizar(pos),
+                (err) => finalizar(null, mensajeErrorGps(err.code === 1 ? 1 : (ultimoError || err.code))),
+                { enableHighAccuracy: false, maximumAge: 60000, timeout: RESPALDO_RED_MS }
+            );
+        };
+
+        timer = setTimeout(agotado, MAX_LOC_WAIT_MS);
 
         watchId = navigator.geolocation.watchPosition(
             (pos) => {
@@ -299,21 +323,32 @@ function obtenerUbicacionPrecisa(onProgress) {
                 }
             },
             (err) => {
+                // Sin permiso no tiene sentido esperar.
+                if (err.code === 1) {
+                    finalizar(null, mensajeErrorGps(1));
+                    return;
+                }
                 // Si ya hay una lectura (del precalentado o de esta espera), usar esa.
-                if (mejorPosicion && err.code !== 1) {
+                if (mejorPosicion) {
                     finalizar(mejorPosicion);
                     return;
                 }
-                const msgs = {
-                    1: 'Permiso de ubicación denegado. Habilite la ubicación en su dispositivo.',
-                    2: 'No se pudo obtener la ubicación. Verifique que el GPS esté activo.',
-                    3: 'Tiempo de espera agotado al obtener la ubicación.'
-                };
-                finalizar(null, msgs[err.code] || 'Error al obtener ubicación.');
+                // "Ubicación no disponible" suele ser momentáneo (GPS recién encendido):
+                // el watch sigue intentando hasta que se agote la espera.
+                ultimoError = err.code;
             },
             { enableHighAccuracy: true, maximumAge: 0 }
         );
     });
+}
+
+function mensajeErrorGps(code) {
+    const msgs = {
+        1: 'Permiso de ubicación denegado. Habilite la ubicación en su dispositivo.',
+        2: 'No se pudo obtener la ubicación. Verifique que la ubicación del teléfono esté activa y en "alta precisión", y que el navegador tenga permiso de ubicación.',
+        3: 'Tiempo de espera agotado al obtener la ubicación. Salí al aire libre y probá de nuevo.'
+    };
+    return msgs[code] || 'Error al obtener ubicación.';
 }
 
 // ---- Utilidades UI -----------------------------------------
