@@ -223,6 +223,47 @@ function novedadesPorEmpleado(PDO $db, array $empleados, DateTime $now): array {
     return $porEmpleado;
 }
 
+// Sin horario asignado, el turno se arma con las marcas reales: arranca en la última
+// entrada si sigue abierta (menos de HORAS_MAX_TURNO) o si su salida fue hoy (turno
+// nocturno ya cerrado); si no, se miran las marcas de hoy.
+function ventanaSinHorario(array $novedades, DateTime $now): array {
+    $start = new DateTime($now->format('Y-m-d') . ' 00:00:00');
+    $end = new DateTime($now->format('Y-m-d') . ' 23:59:59');
+    $limite = (clone $now)->modify('-' . HORAS_MAX_TURNO . ' hours');
+
+    $ultimaEntrada = null;
+    $salidaPosterior = null;
+    foreach ($novedades as $nov) {
+        $dt = new DateTime($nov['fecha'] . ' ' . $nov['hora']);
+        if ($dt > $now) {
+            continue;
+        }
+        if ($nov['tipo_nombre'] === 'Entrada') {
+            $ultimaEntrada = $dt;
+            $salidaPosterior = null;
+        } elseif ($nov['tipo_nombre'] === 'Salida' && $ultimaEntrada && !$salidaPosterior) {
+            $salidaPosterior = $dt;
+        }
+    }
+
+    if ($ultimaEntrada && $ultimaEntrada < $start) {
+        $abierta = !$salidaPosterior && $ultimaEntrada >= $limite;
+        $cerroHoy = $salidaPosterior && $salidaPosterior >= $start
+            && $salidaPosterior->getTimestamp() - $ultimaEntrada->getTimestamp() <= HORAS_MAX_TURNO * 3600;
+        if ($abierta || $cerroHoy) {
+            $start = $ultimaEntrada;
+        }
+    }
+
+    return [
+        'sin_horario' => true,
+        'start' => $start,
+        'end' => $end,
+        'lookup_start' => $start,
+        'lookup_end' => $end,
+    ];
+}
+
 function aplicarEstadoPresencias(PDO $db, array $empleados): array {
     $now = new DateTime();
     $novedades = novedadesPorEmpleado($db, $empleados, $now);
@@ -230,27 +271,15 @@ function aplicarEstadoPresencias(PDO $db, array $empleados): array {
     foreach ($empleados as &$empleado) {
         $novedadesEmpleado = $novedades[(int)$empleado['id_empleado']] ?? [];
 
-        // Si no tiene horario predefinido y entró ayer por la tarde/noche sin salida ayer,
-        // le asignamos un turno dinámico para que la lógica de ventana de medianoche aplique.
-        $entrada = timeOrNull($empleado['turno_entrada'] ?? null);
-        $salida = timeOrNull($empleado['turno_salida'] ?? null);
-        if (!$entrada || !$salida) {
-            $entradaAyer = null;
-            $ayerStr = (clone $now)->modify('-1 day')->format('Y-m-d');
-            foreach ($novedadesEmpleado as $nov) {
-                if ($nov['fecha'] === $ayerStr && $nov['tipo_nombre'] === 'Entrada' && $nov['hora'] >= '12:00:00') {
-                    $entradaAyer = $nov['hora'];
-                }
-            }
-            if ($entradaAyer) {
-                $empleado['turno_entrada'] = substr($entradaAyer, 0, 5);
-                $dtEntrada = new DateTime($ayerStr . ' ' . $entradaAyer);
-                $dtSalida = (clone $dtEntrada)->modify('+12 hours');
-                $empleado['turno_salida'] = $dtSalida->format('H:i');
-            }
+        if (timeOrNull($empleado['turno_entrada'] ?? null) && timeOrNull($empleado['turno_salida'] ?? null)) {
+            $turno = elegirTurnoPresencias($empleado, $novedadesEmpleado, $now);
+        } else {
+            $window = ventanaSinHorario($novedadesEmpleado, $now);
+            $turno = [
+                'window' => $window,
+                'summary' => resumirNovedadesTurno($novedadesEmpleado, $window),
+            ];
         }
-
-        $turno = elegirTurnoPresencias($empleado, $novedadesEmpleado, $now);
         $window = $turno['window'];
         $entradaHoy = $turno['summary']['entrada'];
         $salidaHoy = $turno['summary']['salida'];
