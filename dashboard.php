@@ -68,7 +68,16 @@ $vigi = $stmt->fetch();
             &#x1F4CD; <?= htmlspecialchars($vigi['obj_nombre'] ?? 'Sin objetivos') ?>
         </span>
         <div style="font-size:1rem;color:var(--text-muted);margin-top:.35rem;">
-            Turno: <?= substr($vigi['hora_entrada'],0,5) ?> hs &mdash; <?= substr($vigi['hora_salida'],0,5) ?> hs
+            <?php
+            $turnoEntrada = substr((string)($vigi['hora_entrada'] ?? ''), 0, 5);
+            $turnoSalida  = substr((string)($vigi['hora_salida'] ?? ''), 0, 5);
+            ?>
+            <?php if ($turnoEntrada === '' || $turnoSalida === '' || ($turnoEntrada === '00:00' && $turnoSalida === '00:00')): ?>
+                Sin horario fijo
+            <?php else: ?>
+                Turno: <?= $turnoEntrada ?> hs &mdash; <?= $turnoSalida ?> hs
+            <?php endif; ?>
+
         </div>
     </div>
 
@@ -183,7 +192,7 @@ $vigi = $stmt->fetch();
     </div>
 </div>
 
-<script src="js/app.js?v=5"></script>
+<script src="js/app.js?v=6"></script>
 
 <!-- HELP DROPDOWN -->
 <div class="help-dropdown-wrap" id="helpWrapDash">

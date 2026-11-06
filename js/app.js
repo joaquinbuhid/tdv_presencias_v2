@@ -14,16 +14,18 @@ const API_BASE             = window.TDV_API_BASE || '';
 
 document.addEventListener('DOMContentLoaded', () => {
     iniciarGps();
-    Promise.all([cargarTipos(), cargarEstado()]).then(sugerirTipo);
+    Promise.all([cargarTipos(), cargarEstado()]).then(() => sugerirTipo(true));
 
     document.getElementById('formNovedad').addEventListener('submit', onSubmit);
 });
 
 // ---- Marca sugerida -----------------------------------------
 // Con una entrada abierta se sugiere Salida; si no, Entrada.
-// Solo se preselecciona si el usuario todavía no eligió un tipo.
+// Solo se preselecciona al abrir la página y si el usuario todavía no eligió un tipo.
+// Después de marcar no: un segundo toque del botón registraba la marca contraria
+// (Salida y enseguida Entrada).
 
-async function sugerirTipo() {
+async function sugerirTipo(preseleccionar = false) {
     const sel = document.getElementById('tipoNovedad');
     let hint = document.getElementById('tipoHint');
     if (!hint) {
@@ -43,11 +45,15 @@ async function sugerirTipo() {
 
     const sugerido = turno.abierta ? 'Salida' : 'Entrada';
     const opt = [...sel.options].find(o => o.textContent === sugerido);
-    if (opt && !sel.value) sel.value = opt.value;
+    if (preseleccionar && opt && !sel.value) sel.value = opt.value;
 
-    hint.textContent = turno.abierta
-        ? `Tenés una entrada abierta desde ${turno.desde}. Al terminar el turno marcá la Salida.`
-        : 'No tenés un turno abierto. Para empezar, marcá la Entrada.';
+    if (turno.abierta) {
+        hint.textContent = `Tenés una entrada abierta desde ${turno.desde}. Al terminar el turno marcá la Salida.`;
+    } else {
+        hint.textContent = preseleccionar
+            ? 'No tenés un turno abierto. Para empezar, marcá la Entrada.'
+            : 'Tu turno quedó cerrado. No hace falta marcar nada más.';
+    }
 }
 
 // ---- Tipos de novedad --------------------------------------

@@ -4,9 +4,12 @@
 // (mismo límite que usa la liquidación de horas).
 const HORAS_MAX_TURNO = 18;
 
-// Devuelve la entrada abierta del empleado (última marca Entrada/Salida es una Entrada
-// de hace menos de HORAS_MAX_TURNO) o null si no tiene turno abierto.
-function entradaAbierta(PDO $db, int $empleadoId): ?array {
+// Una Entrada o Salida pegada a la marca anterior (menos de estos minutos) es casi
+// siempre un segundo toque del botón: Salida y enseguida Entrada, o al revés.
+const MINUTOS_ENTRE_MARCAS = 3;
+
+// Última marca Entrada/Salida del empleado: ['fecha', 'hora', 'tipo_nombre'] o null.
+function ultimaMarca(PDO $db, int $empleadoId): ?array {
     $stmt = $db->prepare(
         "SELECT n.fecha, n.hora, tn.nombre AS tipo_nombre
          FROM novedades n
@@ -16,7 +19,26 @@ function entradaAbierta(PDO $db, int $empleadoId): ?array {
          LIMIT 1"
     );
     $stmt->execute([$empleadoId]);
-    $ultima = $stmt->fetch();
+    return $stmt->fetch() ?: null;
+}
+
+// Si la última marca Entrada/Salida es de hace menos de MINUTOS_ENTRE_MARCAS, la devuelve
+// (['tipo', 'hora']); si no, null.
+function marcaReciente(?array $ultima, DateTime $now): ?array {
+    if (!$ultima) {
+        return null;
+    }
+    $dt = new DateTime($ultima['fecha'] . ' ' . $ultima['hora']);
+    if ($now->getTimestamp() - $dt->getTimestamp() >= MINUTOS_ENTRE_MARCAS * 60) {
+        return null;
+    }
+    return ['tipo' => $ultima['tipo_nombre'], 'hora' => substr($ultima['hora'], 0, 5)];
+}
+
+// Devuelve la entrada abierta del empleado (última marca Entrada/Salida es una Entrada
+// de hace menos de HORAS_MAX_TURNO) o null si no tiene turno abierto.
+function entradaAbierta(PDO $db, int $empleadoId, ?array $ultima = null): ?array {
+    $ultima = $ultima ?? ultimaMarca($db, $empleadoId);
 
     if (!$ultima || $ultima['tipo_nombre'] !== 'Entrada') {
         return null;
