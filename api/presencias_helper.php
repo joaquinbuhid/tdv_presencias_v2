@@ -35,20 +35,45 @@ function marcaReciente(?array $ultima, DateTime $now): ?array {
     return ['tipo' => $ultima['tipo_nombre'], 'hora' => substr($ultima['hora'], 0, 5)];
 }
 
-// Devuelve la entrada abierta del empleado (última marca Entrada/Salida es una Entrada
-// de hace menos de HORAS_MAX_TURNO) o null si no tiene turno abierto.
-function entradaAbierta(PDO $db, int $empleadoId, ?array $ultima = null): ?array {
-    $ultima = $ultima ?? ultimaMarca($db, $empleadoId);
-
+// Si la última marca Entrada/Salida es una Entrada, la devuelve como
+// ['fecha', 'hora' (HH:MM), 'vencida' (más de HORAS_MAX_TURNO)]; si no, null.
+function ultimaEntradaSinSalida(?array $ultima): ?array {
     if (!$ultima || $ultima['tipo_nombre'] !== 'Entrada') {
         return null;
     }
     $desde = new DateTime($ultima['fecha'] . ' ' . $ultima['hora']);
     $limite = (new DateTime())->modify('-' . HORAS_MAX_TURNO . ' hours');
-    if ($desde < $limite) {
+    return [
+        'fecha'   => $ultima['fecha'],
+        'hora'    => substr($ultima['hora'], 0, 5),
+        'vencida' => $desde < $limite,
+    ];
+}
+
+// Devuelve la entrada abierta del empleado (última marca Entrada/Salida es una Entrada
+// de hace menos de HORAS_MAX_TURNO) o null si no tiene turno abierto.
+function entradaAbierta(PDO $db, int $empleadoId, ?array $ultima = null): ?array {
+    $entrada = ultimaEntradaSinSalida($ultima ?? ultimaMarca($db, $empleadoId));
+    if (!$entrada || $entrada['vencida']) {
         return null;
     }
-    return ['fecha' => $ultima['fecha'], 'hora' => substr($ultima['hora'], 0, 5)];
+    return ['fecha' => $entrada['fecha'], 'hora' => $entrada['hora']];
+}
+
+// Entrada que quedó sin Salida y pasó HORAS_MAX_TURNO (ya no se puede cerrar), o null.
+function entradaVencida(PDO $db, int $empleadoId, ?array $ultima = null): ?array {
+    $entrada = ultimaEntradaSinSalida($ultima ?? ultimaMarca($db, $empleadoId));
+    if (!$entrada || !$entrada['vencida']) {
+        return null;
+    }
+    return ['fecha' => $entrada['fecha'], 'hora' => $entrada['hora']];
+}
+
+// Mensaje para una Entrada vencida: "Tu última entrada fue el 07/11 a las 06:52 y quedó sin Salida..."
+function mensajeEntradaVencida(array $vencida): string {
+    return 'Tu última entrada fue ' . describirEntrada($vencida) . ' y quedó sin Salida. '
+        . 'Pasaron más de ' . HORAS_MAX_TURNO . ' hs y ya no se puede cerrar: avisale a tu supervisor para que la corrija. '
+        . 'Si estás empezando un turno nuevo, marcá la Entrada.';
 }
 
 // "las 17:04" si es de hoy, "el 20/10 a las 19:00" si no.

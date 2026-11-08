@@ -108,7 +108,10 @@ try {
         } elseif ($tipo['nombre'] === 'Entrada' && $abierta) {
             $error = 'Ya tenés una entrada abierta desde ' . describirEntrada($abierta) . '. Si terminaste el turno, marcá la Salida.';
         } elseif ($tipo['nombre'] === 'Salida' && !$abierta) {
-            $error = 'No tenés una entrada abierta. Marcá primero la Entrada; si te olvidaste de marcarla, avisale a tu supervisor.';
+            $vencida = entradaVencida($db, $empleado_id, $ultima);
+            $error = $vencida
+                ? mensajeEntradaVencida($vencida)
+                : 'No tenés una entrada abierta. Marcá primero la Entrada; si te olvidaste de marcarla, avisale a tu supervisor.';
         }
         if ($error) {
             $db->rollBack();
