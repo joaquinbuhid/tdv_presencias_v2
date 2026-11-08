@@ -97,12 +97,21 @@ try {
 
     // Entrada solo si no hay turno abierto; Salida solo si lo hay. Novedad/Incidente sin límite.
     if ($tipo['nombre'] === 'Entrada' || $tipo['nombre'] === 'Salida') {
-        $abierta = entradaAbierta($db, $empleado_id);
+        $ultima = ultimaMarca($db, $empleado_id);
+        $abierta = entradaAbierta($db, $empleado_id, $ultima);
+        $reciente = marcaReciente($ultima, new DateTime());
         $error = null;
-        if ($tipo['nombre'] === 'Entrada' && $abierta) {
+        if ($reciente && $reciente['tipo'] !== $tipo['nombre']) {
+            // Salida y enseguida Entrada (o al revés): segundo toque del botón.
+            $error = "Acabás de marcar la {$reciente['tipo']} a las {$reciente['hora']}. "
+                . 'No hace falta marcar de nuevo. Si fue un error, avisale a tu supervisor.';
+        } elseif ($tipo['nombre'] === 'Entrada' && $abierta) {
             $error = 'Ya tenés una entrada abierta desde ' . describirEntrada($abierta) . '. Si terminaste el turno, marcá la Salida.';
         } elseif ($tipo['nombre'] === 'Salida' && !$abierta) {
-            $error = 'No tenés una entrada abierta. Marcá primero la Entrada; si te olvidaste de marcarla, avisale a tu supervisor.';
+            $vencida = entradaVencida($db, $empleado_id, $ultima);
+            $error = $vencida
+                ? mensajeEntradaVencida($vencida)
+                : 'No tenés una entrada abierta. Marcá primero la Entrada; si te olvidaste de marcarla, avisale a tu supervisor.';
         }
         if ($error) {
             $db->rollBack();

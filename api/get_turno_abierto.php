@@ -11,9 +11,15 @@ if (!isset($_SESSION['empleado_id'])) {
     exit;
 }
 
-$abierta = entradaAbierta(getDB(), (int)$_SESSION['empleado_id']);
+$db = getDB();
+$empleadoId = (int)$_SESSION['empleado_id'];
+$ultima = ultimaMarca($db, $empleadoId);
+$abierta = entradaAbierta($db, $empleadoId, $ultima);
+$vencida = $abierta ? null : entradaVencida($db, $empleadoId, $ultima);
 
 echo json_encode([
     'abierta' => (bool)$abierta,
     'desde'   => $abierta ? describirEntrada($abierta) : null,
+    // Entrada que quedó sin Salida y venció: "el 07/11 a las 06:52".
+    'vencida' => $vencida ? describirEntrada($vencida) : null,
 ]);

@@ -14,16 +14,35 @@ const API_BASE             = window.TDV_API_BASE || '';
 
 document.addEventListener('DOMContentLoaded', () => {
     iniciarGps();
-    Promise.all([cargarTipos(), cargarEstado()]).then(sugerirTipo);
+    Promise.all([cargarTipos(), cargarEstado()]).then(() => sugerirTipo('inicio'));
 
     document.getElementById('formNovedad').addEventListener('submit', onSubmit);
+    // Si el usuario elige un tipo a mano, ya no se lo cambia al refrescar.
+    document.getElementById('tipoNovedad').addEventListener('change', () => { tipoAuto = null; });
 });
+
+// ---- Refresco del estado -----------------------------------
+// Los registros y la marca sugerida se cargan al abrir la página. Si la pestaña quedó
+// abierta de fondo (horas o días), al volver se recargan; también después de una marca
+// rechazada, para que la pantalla no contradiga al servidor.
+
+let marcando = false;
+
+function refrescarEstado() {
+    if (marcando) return Promise.resolve();
+    return Promise.all([cargarEstado(), sugerirTipo('refresco')]);
+}
 
 // ---- Marca sugerida -----------------------------------------
 // Con una entrada abierta se sugiere Salida; si no, Entrada.
-// Solo se preselecciona si el usuario todavía no eligió un tipo.
+// modo 'inicio' / 'refresco': se preselecciona si el selector está vacío o tiene la
+// sugerencia anterior (no la elegida por el usuario).
+// modo 'marcado' (después de una marca exitosa): no se preselecciona, porque un segundo
+// toque del botón registraba la marca contraria (Salida y enseguida Entrada).
 
-async function sugerirTipo() {
+let tipoAuto = null; // valor del selector puesto por la sugerencia, null si lo eligió el usuario
+
+async function sugerirTipo(modo) {
     const sel = document.getElementById('tipoNovedad');
     let hint = document.getElementById('tipoHint');
     if (!hint) {
@@ -43,11 +62,22 @@ async function sugerirTipo() {
 
     const sugerido = turno.abierta ? 'Salida' : 'Entrada';
     const opt = [...sel.options].find(o => o.textContent === sugerido);
-    if (opt && !sel.value) sel.value = opt.value;
+    if (modo === 'marcado') {
+        tipoAuto = null;
+    } else if (opt && (!sel.value || sel.value === tipoAuto)) {
+        sel.value = opt.value;
+        tipoAuto = opt.value;
+    }
 
-    hint.textContent = turno.abierta
-        ? `Tenés una entrada abierta desde ${turno.desde}. Al terminar el turno marcá la Salida.`
-        : 'No tenés un turno abierto. Para empezar, marcá la Entrada.';
+    if (turno.abierta) {
+        hint.textContent = `Tenés una entrada abierta desde ${turno.desde}. Al terminar el turno marcá la Salida.`;
+    } else if (turno.vencida) {
+        hint.textContent = `Tu última entrada fue ${turno.vencida} y quedó sin Salida: avisale a tu supervisor para que la corrija. Para empezar un turno nuevo, marcá la Entrada.`;
+    } else if (modo === 'marcado') {
+        hint.textContent = 'Tu turno quedó cerrado. No hace falta marcar nada más.';
+    } else {
+        hint.textContent = 'No tenés un turno abierto. Para empezar, marcá la Entrada.';
+    }
 }
 
 // ---- Tipos de novedad --------------------------------------
@@ -120,6 +150,7 @@ async function onSubmit(e) {
     }
 
     const btn = document.getElementById('btnRegistrar');
+    marcando = true;
     gpsUiLibreDesde = Infinity;
     setBoton(btn, true, 'Obteniendo ubicación...');
     setLocStatus('active', null);
@@ -139,6 +170,7 @@ async function onSubmit(e) {
         setBoton(btn, false, 'Confirmar asistencia');
         mostrarError(err.message);
         gpsUiLibreDesde = Date.now() + 8000;
+        marcando = false;
         return;
     }
 
@@ -166,13 +198,16 @@ async function onSubmit(e) {
         document.getElementById('tipoNovedad').value   = '';
         setLocStatus('ok', `Registrado a ${resp.distancia} m del objetivos.`);
         await cargarEstado();
-        await sugerirTipo();
+        await sugerirTipo('marcado');
 
     } catch (err) {
         mostrarError(err.message);
         setLocStatus('error', 'No se pudo registrar la novedad.');
+        marcando = false;
+        refrescarEstado();
     }
 
+    marcando = false;
     setBoton(btn, false, 'Confirmar asistencia');
     // Dejar a la vista el resultado unos segundos antes de volver a mostrar la señal.
     gpsUiLibreDesde = Date.now() + 8000;
@@ -245,8 +280,12 @@ function mostrarSenalGps() {
 }
 
 document.addEventListener('visibilitychange', () => {
-    if (document.hidden) detenerGps();
-    else iniciarGps();
+    if (document.hidden) {
+        detenerGps();
+    } else {
+        iniciarGps();
+        refrescarEstado();
+    }
 });
 
 // ---- Geolocalización con espera de precisión ---------------
