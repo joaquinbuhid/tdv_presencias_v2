@@ -199,6 +199,15 @@ $esAdminReal = esAdminReal();
                     <label for="familiares">¿Quién/es?</label>
                     <input type="text" id="familiares" placeholder="Ej: Hermano - Juan Pérez">
                 </div>
+                <div class="form-group">
+                    <label for="curso_vigilador_verificado">¿Tiene curso de vigilador? (verificado) <span style="color:var(--danger)">*</span></label>
+                    <select id="curso_vigilador_verificado" required>
+                        <option value="">Seleccione</option>
+                        <option value="si">Si</option>
+                        <option value="no">No</option>
+                    </select>
+                    <div class="hint-punto" id="hintCursoDeclarado" style="color:var(--danger);">⚠ En la postulación declaró que SÍ tiene curso</div>
+                </div>
                 <div class="form-group full">
                     <label for="domicilio">Domicilio</label>
                     <input type="text" id="domicilio" placeholder="Calle, número, localidad">
@@ -290,6 +299,7 @@ $esAdminReal = esAdminReal();
 let postulantes = [];
 let postulanteActual = null;
 let entrevistasData = [];
+let cursoDeclarado = ''; // lo que el postulante declaró en la postulación ('si'/'no')
 
 const modalPostulantes = document.getElementById('modalPostulantes');
 const listaPostulantes = document.getElementById('listaPostulantes');
@@ -307,6 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('tiene_vehiculo').addEventListener('change', toggleVehiculo);
     document.getElementById('tiene_familiares').addEventListener('change', toggleFamiliares);
+    document.getElementById('curso_vigilador_verificado').addEventListener('change', actualizarHintCurso);
     document.querySelectorAll('.puntaje-input').forEach(el => el.addEventListener('input', actualizarPuntajes));
 
     document.getElementById('btnLimpiar').addEventListener('click', limpiarFormulario);
@@ -382,6 +393,8 @@ function importarPostulante(id) {
     const p = postulantes.find((item) => Number(item.id) === id);
     if (!p) return;
     postulanteActual = p;
+    cursoDeclarado = p.curso_habilitante || '';
+    actualizarHintCurso();
     document.getElementById('postulante_id').value = p.id;
     document.getElementById('postulanteElegido').textContent = `${p.nombre_completo} (DNI ${p.dni})`;
 
@@ -424,6 +437,12 @@ function toggleFamiliares() {
     if (!tiene) document.getElementById('familiares').value = '';
 }
 
+// Avisa si el postulante declaró tener curso pero el entrevistador marcó que no.
+function actualizarHintCurso() {
+    const verificado = document.getElementById('curso_vigilador_verificado').value;
+    document.getElementById('hintCursoDeclarado').classList.toggle('show', cursoDeclarado === 'si' && verificado === 'no');
+}
+
 function puntoTrabajo() {
     const fecha = document.getElementById('fecha_ultimo_trabajo').value;
     if (!fecha) return 0;
@@ -460,6 +479,8 @@ function actualizarPuntajes() {
 function limpiarFormulario() {
     form.reset();
     postulanteActual = null;
+    cursoDeclarado = '';
+    actualizarHintCurso();
     document.getElementById('postulante_id').value = '';
     document.getElementById('entrevista_id').value = '';
     document.getElementById('postulanteElegido').textContent = 'Todavía no se eligió ningún postulante.';
@@ -498,6 +519,7 @@ async function onGuardar(e) {
         vehiculo: field('vehiculo'),
         tiene_familiares: field('tiene_familiares'),
         familiares: field('familiares'),
+        curso_vigilador_verificado: field('curso_vigilador_verificado'),
         fecha_ultimo_trabajo: field('fecha_ultimo_trabajo'),
         valoracion_personal: field('valoracion_personal'),
         valoracion_texto: field('valoracion_texto'),
@@ -508,6 +530,10 @@ async function onGuardar(e) {
             showError('Completá todos los puntajes (1 a 5).');
             return;
         }
+    }
+    if (!payload.curso_vigilador_verificado) {
+        showError('Indicá si el postulante tiene curso de vigilador.');
+        return;
     }
     if (payload.tiene_vehiculo === 'si' && !payload.vehiculo) {
         showError('Indicá qué vehículo tiene el postulante.');
@@ -592,6 +618,8 @@ async function cargarEntrevistas() {
                         ${detalle('Domicilio', it.domicilio)}
                         ${detalle('Vehículo', it.tiene_vehiculo === 'si' ? (it.vehiculo || 'Si') : siNo(it.tiene_vehiculo))}
                         ${detalle('Familiares en la empresa', it.tiene_familiares === 'si' ? (it.familiares || 'Si') : siNo(it.tiene_familiares))}
+                        ${detalle('Curso vigilador declarado', siNo(it.curso_habilitante))}
+                        ${detalle('Curso vigilador verificado', siNo(it.curso_vigilador_verificado))}
                         ${detalle('Último trabajo en rel. dep.', fmtFecha(it.fecha_ultimo_trabajo))}
                         ${detalle('Punto +6 meses', it.punto_ultimo_trabajo == 1 ? 'Si (+1)' : 'No')}
                         ${detalle('Punto vehículo', it.tiene_vehiculo === 'si' ? 'Si (+1)' : 'No')}
@@ -665,6 +693,9 @@ function editarEntrevista(id) {
     set('tiene_familiares', it.tiene_familiares);
     toggleFamiliares();
     set('familiares', it.familiares);
+    set('curso_vigilador_verificado', it.curso_vigilador_verificado);
+    cursoDeclarado = it.curso_habilitante || '';
+    actualizarHintCurso();
     set('domicilio', it.domicilio);
     set('valoracion_personal', it.valoracion_personal);
     set('valoracion_texto', it.valoracion_texto);
