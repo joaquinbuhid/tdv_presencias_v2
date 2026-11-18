@@ -21,6 +21,7 @@ $navGrupos = [
     'Selección' => [
         ['archivo' => 'postulantes.php',  'icono' => "\u{1F4CB}", 'texto' => 'Postulantes',  'soloAdmin' => false],
         ['archivo' => 'entrevistas.php',  'icono' => "\u{1F4DD}", 'texto' => 'Entrevistas',  'soloAdmin' => false],
+        ['archivo' => 'convocados.php',   'icono' => "\u{1F4DE}", 'texto' => 'Convocados',   'soloAdmin' => false],
         ['archivo' => 'historial_entrevistas.php', 'icono' => "\u{2705}", 'texto' => 'Contratados', 'soloAdmin' => false],
     ],
     'Sistemas' => [

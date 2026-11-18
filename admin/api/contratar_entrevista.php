@@ -27,8 +27,10 @@ if ($id <= 0) {
 
 try {
     $db = getDB();
-    $stmt = $db->prepare("UPDATE entrevistas SET contratado = ? WHERE id_entrevista = ?");
-    $stmt->execute([$contratado, $id]);
+    // Todo contratado pasa por convocado: al contratar se marca convocado=1,
+    // así al "Devolver" desde Contratados vuelve a la lista de Convocados.
+    $stmt = $db->prepare("UPDATE entrevistas SET contratado = ?, convocado = IF(? = 1, 1, convocado) WHERE id_entrevista = ?");
+    $stmt->execute([$contratado, $contratado, $id]);
 
     $check = $db->prepare("SELECT 1 FROM entrevistas WHERE id_entrevista = ?");
     $check->execute([$id]);

@@ -352,7 +352,7 @@ function actualizarSeleccionEntrevistas() {
 function exportarExcel() {
     const ids = idsSeleccionados();
     // contratadas=0: nunca incluir contratados en el Excel de esta pantalla.
-    window.location.href = 'api/export_entrevistas_excel.php?contratadas=0' + (ids.length ? '&ids=' + ids.join(',') : '');
+    window.location.href = 'api/export_entrevistas_excel.php?estado=pendientes' + (ids.length ? '&ids=' + ids.join(',') : '');
 }
 
 // ---- Modal postulantes ------------------------------------
@@ -601,7 +601,7 @@ async function cargarEntrevistas() {
                     <div class="row-actions">
                         <button class="btn btn-outline btn-sm" onclick="toggleDetalle(${Number(it.id_entrevista)})">Ver</button>
                         <button class="btn btn-outline btn-sm" onclick="editarEntrevista(${Number(it.id_entrevista)})">Editar</button>
-                        <button class="btn btn-success btn-sm" onclick="contratarEntrevista(${Number(it.id_entrevista)})">Contratar</button>
+                        <button class="btn btn-success btn-sm" onclick="convocarEntrevista(${Number(it.id_entrevista)})">Convocar</button>
                     </div>
                 </td>
             </tr>
@@ -705,17 +705,17 @@ function editarEntrevista(id) {
     form.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-async function contratarEntrevista(id) {
-    if (!confirm('¿Marcar esta entrevista como contratada? Pasará al historial de contratados.')) return;
+async function convocarEntrevista(id) {
+    if (!confirm('¿Marcar a este postulante como convocado? Pasará a la página Convocados.')) return;
     try {
-        const res = await fetch('api/contratar_entrevista.php', {
+        const res = await fetch('api/convocar_entrevista.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id }),
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo actualizar la entrevista.');
-        showOk('Entrevista marcada como contratada. Ahora figura en la página Historial.');
+        showOk('Postulante convocado. Ahora figura en la página Convocados.');
         cargarEntrevistas();
     } catch (e) {
         showError(e.message);
