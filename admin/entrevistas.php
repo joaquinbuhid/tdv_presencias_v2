@@ -340,7 +340,8 @@ function actualizarSeleccionEntrevistas() {
 
 function exportarExcel() {
     const ids = idsSeleccionados();
-    window.location.href = 'api/export_entrevistas_excel.php' + (ids.length ? '?ids=' + ids.join(',') : '');
+    // contratadas=0: nunca incluir contratados en el Excel de esta pantalla.
+    window.location.href = 'api/export_entrevistas_excel.php?contratadas=0' + (ids.length ? '&ids=' + ids.join(',') : '');
 }
 
 // ---- Modal postulantes ------------------------------------
