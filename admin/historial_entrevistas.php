@@ -122,14 +122,14 @@ function actualizarSeleccionEntrevistas() {
 
 function exportarExcel() {
     const ids = idsSeleccionados();
-    window.location.href = 'api/export_entrevistas_excel.php?contratadas=1' + (ids.length ? '&ids=' + ids.join(',') : '');
+    window.location.href = 'api/export_entrevistas_excel.php?estado=contratados' + (ids.length ? '&ids=' + ids.join(',') : '');
 }
 
 async function cargarHistorial() {
     const tbody = document.getElementById('tbodyEntrevistas');
     const counter = document.getElementById('counterEntrevistas');
     try {
-        const res = await fetch('api/get_entrevistas.php?contratadas=1');
+        const res = await fetch('api/get_entrevistas.php?estado=contratados');
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al cargar el historial');
         counter.textContent = `${data.length} contratado${data.length === 1 ? '' : 's'}`;
@@ -197,7 +197,7 @@ function toggleDetalle(id) {
 }
 
 async function devolverEntrevista(id) {
-    if (!confirm('¿Quitar esta entrevista del historial de contratados? Volverá a la lista de entrevistas.')) return;
+    if (!confirm('¿Quitar esta entrevista del historial de contratados? Volverá a la lista de Convocados.')) return;
     try {
         const res = await fetch('api/contratar_entrevista.php', {
             method: 'POST',
@@ -206,7 +206,7 @@ async function devolverEntrevista(id) {
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo actualizar la entrevista.');
-        showOk('La entrevista volvió a la lista de entrevistas.');
+        showOk('La entrevista volvió a la lista de Convocados.');
         cargarHistorial();
     } catch (e) {
         showError(e.message);

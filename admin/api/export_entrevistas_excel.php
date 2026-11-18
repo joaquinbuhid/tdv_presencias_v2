@@ -31,8 +31,18 @@ function fechaDMY(?string $fecha): string {
     return $dt ? $dt->format('d/m/Y') : $fecha;
 }
 
-// ?contratadas=0 (entrevistas pendientes), 1 (contratados), vacío = todas.
-$contratadas = $_GET['contratadas'] ?? '';
+// Estado: pendientes (entrevistados), convocados o contratados.
+// Compatibilidad: ?contratadas=1 equivale a contratados, ?contratadas=0 a pendientes.
+$estado = $_GET['estado'] ?? '';
+if ($estado === '' && isset($_GET['contratadas'])) {
+    $estado = $_GET['contratadas'] === '1' ? 'contratados' : ($_GET['contratadas'] === '0' ? 'pendientes' : '');
+}
+$filtrosEstado = [
+    'pendientes'  => 'e.contratado = 0 AND e.convocado = 0',
+    'convocados'  => 'e.contratado = 0 AND e.convocado = 1',
+    'contratados' => 'e.contratado = 1',
+];
+// Vacío = todas.
 
 // ?ids=1,2,3 exporta solo las entrevistas seleccionadas.
 $ids = [];
@@ -52,9 +62,8 @@ try {
             LEFT JOIN empleados emp ON emp.id_empleado = e.empleado_id";
     $where = [];
     $params = [];
-    if ($contratadas === '0' || $contratadas === '1') {
-        $where[] = "e.contratado = ?";
-        $params[] = (int)$contratadas;
+    if (isset($filtrosEstado[$estado])) {
+        $where[] = $filtrosEstado[$estado];
     }
     if ($ids) {
         $where[] = "e.id_entrevista IN (" . implode(',', array_fill(0, count($ids), '?')) . ")";
@@ -75,7 +84,7 @@ try {
     exit;
 }
 
-$sufijo = ($contratadas === '1' ? 'contratados_' : '') . ($ids ? 'seleccion_' : '');
+$sufijo = (in_array($estado, ['convocados', 'contratados'], true) ? $estado . '_' : '') . ($ids ? 'seleccion_' : '');
 $filename = 'entrevistas_' . $sufijo . date('Ymd_His') . '.xls';
 header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -86,6 +95,7 @@ $columnas = [
     'ID'                          => fn($r) => $r['id_entrevista'],
     'Fecha entrevista'            => fn($r) => $r['fecha_fmt'],
     'Entrevistador'               => fn($r) => $r['entrevistador'],
+    'Convocado'                   => fn($r) => (int)($r['convocado'] ?? 0) === 1 ? 'SI' : 'NO',
     'Contratado'                  => fn($r) => (int)$r['contratado'] === 1 ? 'SI' : 'NO',
     'Nombre completo'             => fn($r) => $r['nombre_completo'],
     'DNI'                         => fn($r) => $r['dni'],
