@@ -82,6 +82,14 @@ if ($tieneFamiliares !== 'si') {
     $familiares = '';
 }
 
+// Verificacion del curso de vigilador hecha por el entrevistador (obligatoria).
+$cursoVerificado = trim($data['curso_vigilador_verificado'] ?? '');
+if (!in_array($cursoVerificado, ['si', 'no'], true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Indique si el postulante tiene curso de vigilador']);
+    exit;
+}
+
 $fechaUltimoTrabajo = trim($data['fecha_ultimo_trabajo'] ?? '');
 if ($fechaUltimoTrabajo !== '') {
     $dt = DateTime::createFromFormat('Y-m-d', $fechaUltimoTrabajo);
@@ -157,6 +165,7 @@ try {
                 peso = ?, altura = ?, relacion_peso_altura = ?, apariencia_vestimenta = ?,
                 modulacion_habla = ?, estado_civil = ?, hijos = ?, domicilio = ?,
                 tiene_vehiculo = ?, vehiculo = ?, tiene_familiares = ?, familiares = ?,
+                curso_vigilador_verificado = ?,
                 fecha_ultimo_trabajo = ?, punto_ultimo_trabajo = ?,
                 valoracion_personal = ?, valoracion_texto = ?,
                 puntaje_sin_valoracion = ?, puntaje_total = ?
@@ -167,6 +176,7 @@ try {
             $modulacion, $estadoCivil !== '' ? $estadoCivil : null, $hijos, $domicilio !== '' ? $domicilio : null,
             $tieneVehiculo !== '' ? $tieneVehiculo : null, $vehiculo !== '' ? $vehiculo : null,
             $tieneFamiliares !== '' ? $tieneFamiliares : null, $familiares !== '' ? $familiares : null,
+            $cursoVerificado,
             $fechaUltimoTrabajo, $puntoUltimoTrabajo,
             $valoracion, $valoracionTexto !== '' ? $valoracionTexto : null,
             $puntajeSinValoracion, $puntajeTotal,
@@ -219,10 +229,11 @@ try {
              peso, altura, relacion_peso_altura, apariencia_vestimenta,
              modulacion_habla, estado_civil, hijos, domicilio,
              tiene_vehiculo, vehiculo, tiene_familiares, familiares,
+             curso_vigilador_verificado,
              fecha_ultimo_trabajo, punto_ultimo_trabajo,
              valoracion_personal, valoracion_texto,
              puntaje_sin_valoracion, puntaje_total)
-         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $stmt->execute([
         $postulanteId, $empleadoId,
@@ -236,6 +247,7 @@ try {
         $modulacion, $estadoCivil !== '' ? $estadoCivil : null, $hijos, $domicilio !== '' ? $domicilio : null,
         $tieneVehiculo !== '' ? $tieneVehiculo : null, $vehiculo !== '' ? $vehiculo : null,
         $tieneFamiliares !== '' ? $tieneFamiliares : null, $familiares !== '' ? $familiares : null,
+        $cursoVerificado,
         $fechaUltimoTrabajo, $puntoUltimoTrabajo,
         $valoracion, $valoracionTexto !== '' ? $valoracionTexto : null,
         $puntajeSinValoracion, $puntajeTotal,
