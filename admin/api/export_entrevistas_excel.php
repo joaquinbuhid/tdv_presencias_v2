@@ -34,6 +34,15 @@ function fechaDMY(?string $fecha): string {
 // ?contratadas=0 (entrevistas pendientes), 1 (contratados), vacío = todas.
 $contratadas = $_GET['contratadas'] ?? '';
 
+// ?ids=1,2,3 exporta solo las entrevistas seleccionadas.
+$ids = [];
+if (!empty($_GET['ids'])) {
+    $ids = array_values(array_unique(array_filter(
+        array_map('intval', explode(',', (string)$_GET['ids'])),
+        fn($id) => $id > 0
+    )));
+}
+
 try {
     $db = getDB();
     $sql = "SELECT e.*, emp.nombre AS entrevistador,
@@ -41,12 +50,21 @@ try {
                    TIMESTAMPDIFF(YEAR, e.fecha_nacimiento, CURDATE()) AS edad
             FROM entrevistas e
             LEFT JOIN empleados emp ON emp.id_empleado = e.empleado_id";
+    $where = [];
     $params = [];
     if ($contratadas === '0' || $contratadas === '1') {
-        $sql .= " WHERE e.contratado = ?";
+        $where[] = "e.contratado = ?";
         $params[] = (int)$contratadas;
     }
-    $sql .= " ORDER BY e.fecha_entrevista DESC, e.id_entrevista DESC";
+    if ($ids) {
+        $where[] = "e.id_entrevista IN (" . implode(',', array_fill(0, count($ids), '?')) . ")";
+        $params = array_merge($params, $ids);
+    }
+    if ($where) {
+        $sql .= " WHERE " . implode(' AND ', $where);
+    }
+    // Ordenado por puntaje total (mayor primero); empates por fecha más reciente.
+    $sql .= " ORDER BY e.puntaje_total DESC, e.fecha_entrevista DESC, e.id_entrevista DESC";
 
     $stmt = $db->prepare($sql);
     $stmt->execute($params);
@@ -57,7 +75,7 @@ try {
     exit;
 }
 
-$sufijo = $contratadas === '1' ? 'contratados_' : '';
+$sufijo = ($contratadas === '1' ? 'contratados_' : '') . ($ids ? 'seleccion_' : '');
 $filename = 'entrevistas_' . $sufijo . date('Ymd_His') . '.xls';
 header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');

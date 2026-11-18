@@ -63,13 +63,15 @@ $esAdminReal = esAdminReal();
             <span>Entrevistas que terminaron en contratación</span>
             <span style="display:flex; align-items:center; gap:.6rem;">
                 <span class="muted" id="counterEntrevistas"></span>
-                <a class="btn btn-success btn-sm" href="api/export_entrevistas_excel.php?contratadas=1" style="width:auto; text-decoration:none;">🟢 Exportar Excel</a>
+                <span class="muted" id="counterSeleccion"></span>
+                <button type="button" class="btn btn-success btn-sm" id="btnExportarExcel" style="width:auto;">🟢 Exportar Excel</button>
             </span>
         </div>
         <div class="table-wrap" style="box-shadow:none;">
             <table>
                 <thead>
                     <tr>
+                        <th style="width:40px; text-align:center;"><input type="checkbox" id="selectAllEntrevistas" title="Seleccionar todas"></th>
                         <th>Postulante</th>
                         <th>Fecha</th>
                         <th>Entrevistador</th>
@@ -79,7 +81,7 @@ $esAdminReal = esAdminReal();
                     </tr>
                 </thead>
                 <tbody id="tbodyEntrevistas">
-                    <tr><td colspan="6" class="empty">Cargando historial...</td></tr>
+                    <tr><td colspan="7" class="empty">Cargando historial...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -90,7 +92,38 @@ $esAdminReal = esAdminReal();
 const err = document.getElementById('msgError');
 const ok = document.getElementById('msgOk');
 
-document.addEventListener('DOMContentLoaded', cargarHistorial);
+document.addEventListener('DOMContentLoaded', () => {
+    cargarHistorial();
+    document.getElementById('selectAllEntrevistas').addEventListener('change', function () {
+        document.querySelectorAll('.entrevista-select').forEach(cb => cb.checked = this.checked);
+        actualizarSeleccionEntrevistas();
+    });
+    document.getElementById('btnExportarExcel').addEventListener('click', exportarExcel);
+});
+
+// ---- Selección y exportación ------------------------------
+function idsSeleccionados() {
+    return Array.from(document.querySelectorAll('.entrevista-select:checked')).map(cb => cb.value);
+}
+
+function actualizarSeleccionEntrevistas() {
+    const todos = document.querySelectorAll('.entrevista-select');
+    const ids = idsSeleccionados();
+    const selectAll = document.getElementById('selectAllEntrevistas');
+    selectAll.checked = todos.length > 0 && ids.length === todos.length;
+    selectAll.indeterminate = ids.length > 0 && ids.length < todos.length;
+    document.getElementById('counterSeleccion').textContent = ids.length
+        ? `· ${ids.length} seleccionada${ids.length === 1 ? '' : 's'}`
+        : '';
+    document.getElementById('btnExportarExcel').textContent = ids.length
+        ? `🟢 Exportar seleccionadas (${ids.length})`
+        : '🟢 Exportar Excel';
+}
+
+function exportarExcel() {
+    const ids = idsSeleccionados();
+    window.location.href = 'api/export_entrevistas_excel.php?contratadas=1' + (ids.length ? '&ids=' + ids.join(',') : '');
+}
 
 async function cargarHistorial() {
     const tbody = document.getElementById('tbodyEntrevistas');
@@ -101,11 +134,15 @@ async function cargarHistorial() {
         if (!res.ok) throw new Error(data.error || 'Error al cargar el historial');
         counter.textContent = `${data.length} contratado${data.length === 1 ? '' : 's'}`;
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty">Todavía no hay entrevistas contratadas.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" class="empty">Todavía no hay entrevistas contratadas.</td></tr>';
+            actualizarSeleccionEntrevistas();
             return;
         }
         tbody.innerHTML = data.map((it) => `
             <tr>
+                <td style="text-align:center;">
+                    <input type="checkbox" class="entrevista-select" value="${Number(it.id_entrevista)}" onchange="actualizarSeleccionEntrevistas()">
+                </td>
                 <td>
                     <div class="name">${esc(it.nombre_completo)}</div>
                     <div class="muted">DNI ${esc(it.dni)} · ${esc(it.puesto_postula || '')}</div>
@@ -122,7 +159,7 @@ async function cargarHistorial() {
                 </td>
             </tr>
             <tr class="detail-row" id="detalle-${Number(it.id_entrevista)}">
-                <td colspan="6">
+                <td colspan="7">
                     <div class="detail-box">
                         ${detalle('Peso', it.peso ? it.peso + ' kg' : '')}
                         ${detalle('Altura', it.altura ? it.altura + ' cm' : '')}
@@ -146,8 +183,9 @@ async function cargarHistorial() {
                     </div>
                 </td>
             </tr>`).join('');
+        actualizarSeleccionEntrevistas();
     } catch (e) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty" style="color:var(--danger);">${esc(e.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="empty" style="color:var(--danger);">${esc(e.message)}</td></tr>`;
     }
 }
 
