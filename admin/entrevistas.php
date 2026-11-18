@@ -200,13 +200,21 @@ $esAdminReal = esAdminReal();
                     <input type="text" id="familiares" placeholder="Ej: Hermano - Juan Pérez">
                 </div>
                 <div class="form-group">
-                    <label for="curso_vigilador_verificado">¿Tiene curso de vigilador? (verificado) <span style="color:var(--danger)">*</span></label>
+                    <label for="curso_vigilador_verificado">¿Tiene curso de vigilador provincial? (verificado) <span style="color:var(--danger)">*</span></label>
                     <select id="curso_vigilador_verificado" required>
                         <option value="">Seleccione</option>
                         <option value="si">Si</option>
                         <option value="no">No</option>
                     </select>
                     <div class="hint-punto" id="hintCursoDeclarado" style="color:var(--danger);">⚠ En la postulación declaró que SÍ tiene curso</div>
+                </div>
+                <div class="form-group">
+                    <label for="titulo_secundario">¿Tiene título secundario? <span style="color:var(--danger)">*</span></label>
+                    <select id="titulo_secundario" required>
+                        <option value="">Seleccione</option>
+                        <option value="si">Si</option>
+                        <option value="no">No</option>
+                    </select>
                 </div>
                 <div class="form-group full">
                     <label for="domicilio">Domicilio</label>
@@ -520,6 +528,7 @@ async function onGuardar(e) {
         tiene_familiares: field('tiene_familiares'),
         familiares: field('familiares'),
         curso_vigilador_verificado: field('curso_vigilador_verificado'),
+        titulo_secundario: field('titulo_secundario'),
         fecha_ultimo_trabajo: field('fecha_ultimo_trabajo'),
         valoracion_personal: field('valoracion_personal'),
         valoracion_texto: field('valoracion_texto'),
@@ -532,7 +541,11 @@ async function onGuardar(e) {
         }
     }
     if (!payload.curso_vigilador_verificado) {
-        showError('Indicá si el postulante tiene curso de vigilador.');
+        showError('Indicá si el postulante tiene curso de vigilador provincial.');
+        return;
+    }
+    if (!payload.titulo_secundario) {
+        showError('Indicá si el postulante tiene título secundario.');
         return;
     }
     if (payload.tiene_vehiculo === 'si' && !payload.vehiculo) {
@@ -620,7 +633,8 @@ async function cargarEntrevistas() {
                         ${detalle('Vehículo', it.tiene_vehiculo === 'si' ? (it.vehiculo || 'Si') : siNo(it.tiene_vehiculo))}
                         ${detalle('Familiares en la empresa', it.tiene_familiares === 'si' ? (it.familiares || 'Si') : siNo(it.tiene_familiares))}
                         ${detalle('Curso vigilador declarado', siNo(it.curso_habilitante))}
-                        ${detalle('Curso vigilador verificado', siNo(it.curso_vigilador_verificado))}
+                        ${detalle('Curso vigilador provincial verificado', siNo(it.curso_vigilador_verificado))}
+                        ${detalle('Título secundario', siNo(it.titulo_secundario))}
                         ${detalle('Último trabajo en rel. dep.', fmtFecha(it.fecha_ultimo_trabajo))}
                         ${detalle('Punto +6 meses', it.punto_ultimo_trabajo == 1 ? 'Si (+1)' : 'No')}
                         ${detalle('Punto vehículo', it.tiene_vehiculo === 'si' ? 'Si (+1)' : 'No')}
@@ -695,6 +709,7 @@ function editarEntrevista(id) {
     toggleFamiliares();
     set('familiares', it.familiares);
     set('curso_vigilador_verificado', it.curso_vigilador_verificado);
+    set('titulo_secundario', it.titulo_secundario);
     cursoDeclarado = it.curso_habilitante || '';
     actualizarHintCurso();
     set('domicilio', it.domicilio);

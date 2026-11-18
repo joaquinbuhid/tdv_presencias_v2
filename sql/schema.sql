@@ -163,6 +163,7 @@ CREATE TABLE IF NOT EXISTS entrevistas (
   tiene_familiares enum('si','no') DEFAULT NULL,
   familiares varchar(255) DEFAULT NULL,
   curso_vigilador_verificado enum('si','no') DEFAULT NULL,
+  titulo_secundario enum('si','no') DEFAULT NULL,
   convocado tinyint(1) NOT NULL DEFAULT 0,
   contratado tinyint(1) NOT NULL DEFAULT 0,
   valoracion_personal tinyint(4) DEFAULT NULL,
