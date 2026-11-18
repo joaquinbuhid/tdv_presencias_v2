@@ -353,33 +353,51 @@ if (ALTA_EMPLEADO) {
         modalImportar.classList.remove('open');
         modalPostulantes.classList.add('open');
         buscarPostulante.focus();
-        if (postulantes.length) return;
-        try {
-            const res = await fetch('api/get_postulantes.php');
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los postulantes.');
-            postulantes = data;
-            renderPostulantes();
-        } catch (error) {
-            listaPostulantes.innerHTML = `<div style="padding:1rem;color:var(--danger);">${esc(error.message)}</div>`;
-        }
+        buscarPostulantesServidor();
     });
     document.getElementById('btnCerrarPostulantes').addEventListener('click', () => modalPostulantes.classList.remove('open'));
-    buscarPostulante.addEventListener('input', renderPostulantes);
+    buscarPostulante.addEventListener('input', programarBusquedaPostulantes);
 
-    function renderPostulantes() {
-        const q = buscarPostulante.value.trim().toLowerCase();
-        const visibles = postulantes.filter((p) => [p.nombre_completo, p.dni, p.email, p.telefono]
-            .some((valor) => String(valor || '').toLowerCase().includes(q)));
-        if (!visibles.length) {
+    // Busca en el servidor (toda la base), no solo en los primeros registros.
+    const MAX_RESULTADOS_POSTULANTES = 30;
+    let busquedaPostulantesTimer = null;
+    let busquedaPostulantesId = 0;
+
+    function programarBusquedaPostulantes() {
+        clearTimeout(busquedaPostulantesTimer);
+        busquedaPostulantesTimer = setTimeout(buscarPostulantesServidor, 300);
+    }
+
+    async function buscarPostulantesServidor() {
+        const q = buscarPostulante.value.trim();
+        const id = ++busquedaPostulantesId;
+        listaPostulantes.innerHTML = '<div style="padding:1rem;color:var(--text-muted);">Buscando...</div>';
+        try {
+            const res = await fetch('api/get_postulantes.php?page=1&per_page=' + MAX_RESULTADOS_POSTULANTES + (q ? '&q=' + encodeURIComponent(q) : ''));
+            const resp = await res.json();
+            if (id !== busquedaPostulantesId) return; // llegó una búsqueda más nueva
+            if (!res.ok) throw new Error(resp.error || 'No se pudieron cargar los postulantes.');
+            postulantes = resp.items;
+            renderPostulantes(resp.total);
+        } catch (error) {
+            if (id !== busquedaPostulantesId) return;
+            listaPostulantes.innerHTML = `<div style="padding:1rem;color:var(--danger);">${esc(error.message)}</div>`;
+        }
+    }
+
+    function renderPostulantes(total) {
+        if (!postulantes.length) {
             listaPostulantes.innerHTML = '<div style="padding:1rem;color:var(--text-muted);">No se encontraron postulantes.</div>';
             return;
         }
-        listaPostulantes.innerHTML = visibles.map((p) => `
+        const aviso = total > postulantes.length
+            ? `<div style="padding:.6rem 1rem;color:var(--text-muted);font-size:.82rem;">Mostrando ${postulantes.length} de ${total}. Escribí nombre o DNI para encontrar a otro.</div>`
+            : '';
+        listaPostulantes.innerHTML = postulantes.map((p) => `
             <div class="postulante-item">
                 <div><strong>${esc(p.nombre_completo)}</strong><small>DNI ${esc(p.dni)} · ${esc(p.email)} · ${esc(p.telefono)}</small></div>
                 <button type="button" class="btn btn-primary btn-sm" data-postulante-id="${Number(p.id)}">Elegir</button>
-            </div>`).join('');
+            </div>`).join('') + aviso;
         listaPostulantes.querySelectorAll('[data-postulante-id]').forEach((button) => {
             button.addEventListener('click', () => importarPostulante(Number(button.dataset.postulanteId)));
         });
