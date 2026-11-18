@@ -86,7 +86,15 @@ if ($tieneFamiliares !== 'si') {
 $cursoVerificado = trim($data['curso_vigilador_verificado'] ?? '');
 if (!in_array($cursoVerificado, ['si', 'no'], true)) {
     http_response_code(400);
-    echo json_encode(['error' => 'Indique si el postulante tiene curso de vigilador']);
+    echo json_encode(['error' => 'Indique si el postulante tiene curso de vigilador provincial']);
+    exit;
+}
+
+// Titulo secundario, indicado por el entrevistador (obligatorio, sin adjunto).
+$tituloSecundario = trim($data['titulo_secundario'] ?? '');
+if (!in_array($tituloSecundario, ['si', 'no'], true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Indique si el postulante tiene titulo secundario']);
     exit;
 }
 
@@ -165,7 +173,7 @@ try {
                 peso = ?, altura = ?, relacion_peso_altura = ?, apariencia_vestimenta = ?,
                 modulacion_habla = ?, estado_civil = ?, hijos = ?, domicilio = ?,
                 tiene_vehiculo = ?, vehiculo = ?, tiene_familiares = ?, familiares = ?,
-                curso_vigilador_verificado = ?,
+                curso_vigilador_verificado = ?, titulo_secundario = ?,
                 fecha_ultimo_trabajo = ?, punto_ultimo_trabajo = ?,
                 valoracion_personal = ?, valoracion_texto = ?,
                 puntaje_sin_valoracion = ?, puntaje_total = ?
@@ -176,7 +184,7 @@ try {
             $modulacion, $estadoCivil !== '' ? $estadoCivil : null, $hijos, $domicilio !== '' ? $domicilio : null,
             $tieneVehiculo !== '' ? $tieneVehiculo : null, $vehiculo !== '' ? $vehiculo : null,
             $tieneFamiliares !== '' ? $tieneFamiliares : null, $familiares !== '' ? $familiares : null,
-            $cursoVerificado,
+            $cursoVerificado, $tituloSecundario,
             $fechaUltimoTrabajo, $puntoUltimoTrabajo,
             $valoracion, $valoracionTexto !== '' ? $valoracionTexto : null,
             $puntajeSinValoracion, $puntajeTotal,
@@ -229,11 +237,11 @@ try {
              peso, altura, relacion_peso_altura, apariencia_vestimenta,
              modulacion_habla, estado_civil, hijos, domicilio,
              tiene_vehiculo, vehiculo, tiene_familiares, familiares,
-             curso_vigilador_verificado,
+             curso_vigilador_verificado, titulo_secundario,
              fecha_ultimo_trabajo, punto_ultimo_trabajo,
              valoracion_personal, valoracion_texto,
              puntaje_sin_valoracion, puntaje_total)
-         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+         VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     $stmt->execute([
         $postulanteId, $empleadoId,
@@ -247,7 +255,7 @@ try {
         $modulacion, $estadoCivil !== '' ? $estadoCivil : null, $hijos, $domicilio !== '' ? $domicilio : null,
         $tieneVehiculo !== '' ? $tieneVehiculo : null, $vehiculo !== '' ? $vehiculo : null,
         $tieneFamiliares !== '' ? $tieneFamiliares : null, $familiares !== '' ? $familiares : null,
-        $cursoVerificado,
+        $cursoVerificado, $tituloSecundario,
         $fechaUltimoTrabajo, $puntoUltimoTrabajo,
         $valoracion, $valoracionTexto !== '' ? $valoracionTexto : null,
         $puntajeSinValoracion, $puntajeTotal,
