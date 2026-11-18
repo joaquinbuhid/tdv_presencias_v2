@@ -43,7 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $objNombre = 'Todos los objetivos';
             
             if ($selected_objetivo_id > 0) {
-                $where_obj = "AND o.id_objetivo = ?";
+                // Objetivo donde se hizo la marca; si la marca es vieja (sin objetivo_id),
+                // el objetivo asignado al empleado.
+                $where_obj = "AND COALESCE(n.objetivo_id, e.objetivo_id) = ?";
                 $params[] = $selected_objetivo_id;
                 
                 foreach ($objetivos as $obj) {
@@ -58,7 +60,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 SELECT n.fecha, n.hora, n.tipo_novedad AS tipo, n.observaciones, n.empleado_id AS vigilador_id, e.nombre AS nombre, '' AS apellido
                 FROM novedades n
                 JOIN empleados e ON n.empleado_id = e.id_empleado
-                JOIN objetivos o ON e.objetivo_id = o.id_objetivo
                 WHERE n.fecha BETWEEN ? AND ? $where_obj
                 ORDER BY n.fecha ASC, n.hora ASC
             ");
