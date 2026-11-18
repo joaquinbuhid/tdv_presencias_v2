@@ -237,10 +237,16 @@ $esAdminReal = esAdminReal();
             </tbody>
         </table>
     </div>
+    <div id="paginador"></div>
 </main>
 
+<script src="../js/paginador.js"></script>
 <script>
 const form = document.getElementById('formFiltros');
+// Selección guardada entre páginas.
+const seleccion = new Set();
+let paginaActual = 1;
+const POR_PAGINA = 50;
 const tbody = document.getElementById('tbody');
 const counter = document.getElementById('counter');
 const POSTULANTES_UPLOAD_URL = 'https://postulaciones.tdvsrl.com/uploads/';
@@ -248,11 +254,13 @@ const POSTULANTES_UPLOAD_URL = 'https://postulaciones.tdvsrl.com/uploads/';
 document.addEventListener('DOMContentLoaded', () => cargar());
 form.addEventListener('submit', (e) => {
     e.preventDefault();
-    cargar();
+    seleccion.clear();
+    cargar(1);
 });
 document.getElementById('btnLimpiar').addEventListener('click', () => {
     form.reset();
-    cargar();
+    seleccion.clear();
+    cargar(1);
 });
 document.getElementById('btnExcel').addEventListener('click', () => {
     const query = paramsFiltros().toString();
@@ -263,19 +271,27 @@ function valor(id) {
     return document.getElementById(id).value.trim();
 }
 
-async function cargar() {
+async function cargar(pagina = paginaActual) {
     tbody.innerHTML = '<tr><td colspan="11" class="empty">Cargando postulantes...</td></tr>';
     counter.textContent = 'Cargando...';
     document.getElementById('selectAll').checked = false;
     actualizarSeleccion();
 
     const params = paramsFiltros();
+    params.set('page', pagina);
+    params.set('per_page', POR_PAGINA);
 
     try {
         const res = await fetch('api/get_postulantes.php?' + params.toString());
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al cargar postulantes');
-        render(data);
+        paginaActual = data.page;
+        render(data.items, data.total);
+        actualizarSeleccion();
+        renderPaginador(document.getElementById('paginador'), data, (p) => {
+            cargar(p);
+            window.scrollTo({ top: document.querySelector('.table-wrap').offsetTop, behavior: 'smooth' });
+        });
     } catch (e) {
         tbody.innerHTML = `<tr><td colspan="11" class="empty" style="color:var(--danger);">${esc(e.message)}</td></tr>`;
         counter.textContent = 'Error';
@@ -291,8 +307,8 @@ function paramsFiltros() {
     return params;
 }
 
-function render(items) {
-    counter.textContent = `${items.length} postulante${items.length === 1 ? '' : 's'}`;
+function render(items, total = items.length) {
+    counter.textContent = `${total} postulante${total === 1 ? '' : 's'}`;
     if (!items.length) {
         tbody.innerHTML = '<tr><td colspan="11" class="empty">No hay postulantes para esos filtros.</td></tr>';
         return;
@@ -304,7 +320,7 @@ function render(items) {
         return `
             <tr>
                 <td style="text-align: center; vertical-align: middle;">
-                    <input type="checkbox" class="postulante-select" value="${Number(p.id)}" onclick="actualizarSeleccion()">
+                    <input type="checkbox" class="postulante-select" value="${Number(p.id)}" ${seleccion.has(String(p.id)) ? 'checked' : ''} onclick="toggleSeleccion(this)">
                 </td>
                 <td>
                     <div class="name">${esc(p.nombre_completo)}</div>
@@ -380,6 +396,7 @@ async function eliminarPostulante(id) {
         if (!res.ok || !data.success) {
             throw new Error(data.error || 'No se pudo eliminar el postulante.');
         }
+        seleccion.delete(String(id));
         cargar();
     } catch (e) {
         alert(e.message);
@@ -425,27 +442,37 @@ function escAttr(s) {
 // Toggle select all
 document.getElementById('selectAll').addEventListener('change', function() {
     const checkboxes = document.querySelectorAll('.postulante-select');
-    checkboxes.forEach(cb => cb.checked = this.checked);
+    checkboxes.forEach((cb) => {
+        cb.checked = this.checked;
+        if (cb.checked) seleccion.add(cb.value); else seleccion.delete(cb.value);
+    });
     actualizarSeleccion();
 });
 
+function toggleSeleccion(cb) {
+    if (cb.checked) seleccion.add(cb.value); else seleccion.delete(cb.value);
+    actualizarSeleccion();
+}
+
+function idsSeleccionados() {
+    return Array.from(seleccion);
+}
+
 function actualizarSeleccion() {
-    const checkboxes = document.querySelectorAll('.postulante-select');
-    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const checkboxes = Array.from(document.querySelectorAll('.postulante-select'));
+    const marcadosPagina = checkboxes.filter(cb => cb.checked).length;
     const selectAll = document.getElementById('selectAll');
-    
-    if (checkboxes.length === 0) {
-        selectAll.checked = false;
-    } else {
-        selectAll.checked = checked.length === checkboxes.length;
-    }
+
+    selectAll.checked = checkboxes.length > 0 && marcadosPagina === checkboxes.length;
+    selectAll.indeterminate = marcadosPagina > 0 && marcadosPagina < checkboxes.length;
 
     const bar = document.getElementById('bulkActionsBar');
     const countText = document.getElementById('bulkCountText');
-    
-    if (checked.length > 0) {
+    const total = seleccion.size;
+
+    if (total > 0) {
         bar.style.display = 'flex';
-        countText.textContent = `${checked.length} seleccionado${checked.length === 1 ? '' : 's'}`;
+        countText.textContent = `${total} seleccionado${total === 1 ? '' : 's'}`;
     } else {
         bar.style.display = 'none';
     }
@@ -453,8 +480,7 @@ function actualizarSeleccion() {
 
 // Bulk Excel Export
 document.getElementById('btnBulkExcel').addEventListener('click', () => {
-    const checkboxes = document.querySelectorAll('.postulante-select:checked');
-    const ids = Array.from(checkboxes).map(cb => cb.value).join(',');
+    const ids = idsSeleccionados().join(',');
     if (ids) {
         window.location.href = 'api/export_postulantes_excel.php?ids=' + ids;
     }
@@ -462,8 +488,7 @@ document.getElementById('btnBulkExcel').addEventListener('click', () => {
 
 // Bulk Email
 document.getElementById('btnBulkEmail').addEventListener('click', () => {
-    const checkboxes = document.querySelectorAll('.postulante-select:checked');
-    const ids = Array.from(checkboxes).map(cb => cb.value).join(',');
+    const ids = idsSeleccionados().join(',');
     if (ids) {
         window.location.href = 'enviar_mails.php?type=postulantes&ids=' + ids;
     }
@@ -471,8 +496,7 @@ document.getElementById('btnBulkEmail').addEventListener('click', () => {
 
 // Bulk Delete
 document.getElementById('btnBulkDelete').addEventListener('click', async () => {
-    const checkboxes = document.querySelectorAll('.postulante-select:checked');
-    const ids = Array.from(checkboxes).map(cb => cb.value);
+    const ids = idsSeleccionados();
     if (ids.length === 0) return;
     
     if (!confirm(`¿Eliminar en lote los ${ids.length} postulantes seleccionados?`)) return;
@@ -488,6 +512,7 @@ document.getElementById('btnBulkDelete').addEventListener('click', async () => {
             throw new Error(data.error || 'No se pudieron eliminar los postulantes.');
         }
         document.getElementById('selectAll').checked = false;
+        seleccion.clear();
         cargar();
     } catch (e) {
         alert(e.message);

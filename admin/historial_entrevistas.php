@@ -85,9 +85,11 @@ $esAdminReal = esAdminReal();
                 </tbody>
             </table>
         </div>
+        <div id="paginadorEntrevistas"></div>
     </section>
 </main>
 
+<script src="../js/paginador.js"></script>
 <script>
 const err = document.getElementById('msgError');
 const ok = document.getElementById('msgOk');
@@ -95,23 +97,37 @@ const ok = document.getElementById('msgOk');
 document.addEventListener('DOMContentLoaded', () => {
     cargarHistorial();
     document.getElementById('selectAllEntrevistas').addEventListener('change', function () {
-        document.querySelectorAll('.entrevista-select').forEach(cb => cb.checked = this.checked);
+        document.querySelectorAll('.entrevista-select').forEach((cb) => {
+            cb.checked = this.checked;
+            if (cb.checked) seleccion.add(cb.value); else seleccion.delete(cb.value);
+        });
         actualizarSeleccionEntrevistas();
     });
     document.getElementById('btnExportarExcel').addEventListener('click', exportarExcel);
 });
 
 // ---- Selección y exportación ------------------------------
+// La selección se guarda acá para no perderla al cambiar de página.
+const seleccion = new Set();
+let paginaActual = 1;
+const POR_PAGINA = 50;
+
 function idsSeleccionados() {
-    return Array.from(document.querySelectorAll('.entrevista-select:checked')).map(cb => cb.value);
+    return Array.from(seleccion);
+}
+
+function toggleSeleccion(cb) {
+    if (cb.checked) seleccion.add(cb.value); else seleccion.delete(cb.value);
+    actualizarSeleccionEntrevistas();
 }
 
 function actualizarSeleccionEntrevistas() {
-    const todos = document.querySelectorAll('.entrevista-select');
+    const todos = Array.from(document.querySelectorAll('.entrevista-select'));
+    const marcadosPagina = todos.filter((cb) => cb.checked).length;
     const ids = idsSeleccionados();
     const selectAll = document.getElementById('selectAllEntrevistas');
-    selectAll.checked = todos.length > 0 && ids.length === todos.length;
-    selectAll.indeterminate = ids.length > 0 && ids.length < todos.length;
+    selectAll.checked = todos.length > 0 && marcadosPagina === todos.length;
+    selectAll.indeterminate = marcadosPagina > 0 && marcadosPagina < todos.length;
     document.getElementById('counterSeleccion').textContent = ids.length
         ? `· ${ids.length} seleccionada${ids.length === 1 ? '' : 's'}`
         : '';
@@ -125,14 +141,17 @@ function exportarExcel() {
     window.location.href = 'api/export_entrevistas_excel.php?estado=contratados' + (ids.length ? '&ids=' + ids.join(',') : '');
 }
 
-async function cargarHistorial() {
+async function cargarHistorial(pagina = paginaActual) {
     const tbody = document.getElementById('tbodyEntrevistas');
     const counter = document.getElementById('counterEntrevistas');
     try {
-        const res = await fetch('api/get_entrevistas.php?estado=contratados');
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al cargar el historial');
-        counter.textContent = `${data.length} contratado${data.length === 1 ? '' : 's'}`;
+        const res = await fetch('api/get_entrevistas.php?estado=contratados&per_page=' + POR_PAGINA + '&page=' + pagina);
+        const resp = await res.json();
+        if (!res.ok) throw new Error(resp.error || 'Error al cargar');
+        paginaActual = resp.page;
+        renderPaginador(document.getElementById('paginadorEntrevistas'), resp, (p) => { cargarHistorial(p); window.scrollTo({ top: document.getElementById('tbodyEntrevistas').closest('section').offsetTop, behavior: 'smooth' }); });
+        const data = resp.items;
+        counter.textContent = `${resp.total} contratado${resp.total === 1 ? '' : 's'}`;
         if (!data.length) {
             tbody.innerHTML = '<tr><td colspan="7" class="empty">Todavía no hay entrevistas contratadas.</td></tr>';
             actualizarSeleccionEntrevistas();
@@ -141,7 +160,7 @@ async function cargarHistorial() {
         tbody.innerHTML = data.map((it) => `
             <tr>
                 <td style="text-align:center;">
-                    <input type="checkbox" class="entrevista-select" value="${Number(it.id_entrevista)}" onchange="actualizarSeleccionEntrevistas()">
+                    <input type="checkbox" class="entrevista-select" value="${Number(it.id_entrevista)}" ${seleccion.has(String(it.id_entrevista)) ? 'checked' : ''} onchange="toggleSeleccion(this)">
                 </td>
                 <td>
                     <div class="name">${esc(it.nombre_completo)}</div>
@@ -208,6 +227,7 @@ async function devolverEntrevista(id) {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo actualizar la entrevista.');
         showOk('La entrevista volvió a la lista de Convocados.');
+        seleccion.delete(String(id));
         cargarHistorial();
     } catch (e) {
         showError(e.message);

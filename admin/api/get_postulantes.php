@@ -32,6 +32,11 @@ $genero = param('genero');
 $monotributista = param('monotributista');
 $tieneBaja = param('tiene_baja');
 
+// Paginación: con ?page=N responde {items, total, page, per_page, pages}.
+// Sin ?page responde la lista como antes (compatibilidad).
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 0;
+$perPage = isset($_GET['per_page']) ? min(200, max(1, (int)$_GET['per_page'])) : 50;
+
 if ($edad_desde !== '' && (!ctype_digit($edad_desde) || (int)$edad_desde < 0)) {
     http_response_code(400);
     echo json_encode(['error' => 'La edad desde debe ser un número entero válido y mayor o igual a 0']);
@@ -148,9 +153,30 @@ try {
         $sql .= " WHERE " . implode(" AND ", $where);
     }
 
-    $sql .= " ORDER BY fecha_registro DESC, id DESC LIMIT 500";
+    $sql .= " ORDER BY fecha_registro DESC, id DESC";
 
-    $stmt = $db->prepare($sql);
+    if ($page > 0) {
+        $countSql = "SELECT COUNT(*) FROM postulantes" . ($where ? " WHERE " . implode(" AND ", $where) : "");
+        $stmt = $db->prepare($countSql);
+        $stmt->execute($params);
+        $total = (int)$stmt->fetchColumn();
+        $pages = max(1, (int)ceil($total / $perPage));
+        $page = min($page, $pages);
+        $offset = ($page - 1) * $perPage;
+
+        $stmt = $db->prepare($sql . " LIMIT {$perPage} OFFSET {$offset}");
+        $stmt->execute($params);
+        echo json_encode([
+            'items' => $stmt->fetchAll(),
+            'total' => $total,
+            'page' => $page,
+            'per_page' => $perPage,
+            'pages' => $pages,
+        ]);
+        exit;
+    }
+
+    $stmt = $db->prepare($sql . " LIMIT 500");
     $stmt->execute($params);
 
     echo json_encode($stmt->fetchAll());

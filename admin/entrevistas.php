@@ -285,6 +285,7 @@ $esAdminReal = esAdminReal();
                 </tbody>
             </table>
         </div>
+        <div id="paginadorEntrevistas"></div>
     </section>
 </main>
 
@@ -303,6 +304,7 @@ $esAdminReal = esAdminReal();
     </div>
 </div>
 
+<script src="../js/paginador.js"></script>
 <script>
 let postulantes = [];
 let postulanteActual = null;
@@ -321,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btnBuscarPostulante').addEventListener('click', abrirModalPostulantes);
     document.getElementById('btnCerrarPostulantes').addEventListener('click', () => modalPostulantes.classList.remove('open'));
-    buscarPostulante.addEventListener('input', renderPostulantes);
+    buscarPostulante.addEventListener('input', programarBusquedaPostulantes);
 
     document.getElementById('tiene_vehiculo').addEventListener('change', toggleVehiculo);
     document.getElementById('tiene_familiares').addEventListener('change', toggleFamiliares);
@@ -332,23 +334,37 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', onGuardar);
 
     document.getElementById('selectAllEntrevistas').addEventListener('change', function () {
-        document.querySelectorAll('.entrevista-select').forEach(cb => cb.checked = this.checked);
+        document.querySelectorAll('.entrevista-select').forEach((cb) => {
+            cb.checked = this.checked;
+            if (cb.checked) seleccion.add(cb.value); else seleccion.delete(cb.value);
+        });
         actualizarSeleccionEntrevistas();
     });
     document.getElementById('btnExportarExcel').addEventListener('click', exportarExcel);
 });
 
 // ---- Selección y exportación ------------------------------
+// La selección se guarda acá para no perderla al cambiar de página.
+const seleccion = new Set();
+let paginaActual = 1;
+const POR_PAGINA = 50;
+
 function idsSeleccionados() {
-    return Array.from(document.querySelectorAll('.entrevista-select:checked')).map(cb => cb.value);
+    return Array.from(seleccion);
+}
+
+function toggleSeleccion(cb) {
+    if (cb.checked) seleccion.add(cb.value); else seleccion.delete(cb.value);
+    actualizarSeleccionEntrevistas();
 }
 
 function actualizarSeleccionEntrevistas() {
-    const todos = document.querySelectorAll('.entrevista-select');
+    const todos = Array.from(document.querySelectorAll('.entrevista-select'));
+    const marcadosPagina = todos.filter((cb) => cb.checked).length;
     const ids = idsSeleccionados();
     const selectAll = document.getElementById('selectAllEntrevistas');
-    selectAll.checked = todos.length > 0 && ids.length === todos.length;
-    selectAll.indeterminate = ids.length > 0 && ids.length < todos.length;
+    selectAll.checked = todos.length > 0 && marcadosPagina === todos.length;
+    selectAll.indeterminate = marcadosPagina > 0 && marcadosPagina < todos.length;
     document.getElementById('counterSeleccion').textContent = ids.length
         ? `· ${ids.length} seleccionada${ids.length === 1 ? '' : 's'}`
         : '';
@@ -364,34 +380,52 @@ function exportarExcel() {
 }
 
 // ---- Modal postulantes ------------------------------------
-async function abrirModalPostulantes() {
+function abrirModalPostulantes() {
     modalPostulantes.classList.add('open');
     buscarPostulante.focus();
-    listaPostulantes.innerHTML = '<div style="padding:1rem;color:var(--text-muted);">Cargando postulantes...</div>';
+    buscarPostulantesServidor();
+}
+
+// Busca en el servidor (toda la base), no solo en los primeros registros.
+const MAX_RESULTADOS_POSTULANTES = 30;
+let busquedaPostulantesTimer = null;
+let busquedaPostulantesId = 0;
+
+function programarBusquedaPostulantes() {
+    clearTimeout(busquedaPostulantesTimer);
+    busquedaPostulantesTimer = setTimeout(buscarPostulantesServidor, 300);
+}
+
+async function buscarPostulantesServidor() {
+    const q = buscarPostulante.value.trim();
+    const id = ++busquedaPostulantesId;
+    listaPostulantes.innerHTML = '<div style="padding:1rem;color:var(--text-muted);">Buscando...</div>';
     try {
-        const res = await fetch('api/get_postulantes.php');
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'No se pudieron cargar los postulantes.');
-        postulantes = data;
-        renderPostulantes();
+        const res = await fetch('api/get_postulantes.php?page=1&per_page=' + MAX_RESULTADOS_POSTULANTES + (q ? '&q=' + encodeURIComponent(q) : ''));
+        const resp = await res.json();
+        if (id !== busquedaPostulantesId) return; // llegó una búsqueda más nueva
+        if (!res.ok) throw new Error(resp.error || 'No se pudieron cargar los postulantes.');
+        postulantes = resp.items;
+        renderPostulantes(resp.total);
     } catch (error) {
+        if (id !== busquedaPostulantesId) return;
         listaPostulantes.innerHTML = `<div style="padding:1rem;color:var(--danger);">${esc(error.message)}</div>`;
     }
 }
 
-function renderPostulantes() {
-    const q = buscarPostulante.value.trim().toLowerCase();
-    const visibles = postulantes.filter((p) => [p.nombre_completo, p.dni, p.email, p.telefono]
-        .some((valor) => String(valor || '').toLowerCase().includes(q)));
-    if (!visibles.length) {
+function renderPostulantes(total) {
+    if (!postulantes.length) {
         listaPostulantes.innerHTML = '<div style="padding:1rem;color:var(--text-muted);">No se encontraron postulantes.</div>';
         return;
     }
-    listaPostulantes.innerHTML = visibles.map((p) => `
+    const aviso = total > postulantes.length
+        ? `<div style="padding:.6rem 1rem;color:var(--text-muted);font-size:.82rem;">Mostrando ${postulantes.length} de ${total}. Escribí nombre o DNI para encontrar a otro.</div>`
+        : '';
+    listaPostulantes.innerHTML = postulantes.map((p) => `
         <div class="postulante-item">
             <div><strong>${esc(p.nombre_completo)}</strong><small>DNI ${esc(p.dni)} · ${esc(p.email)} · ${esc(p.telefono)}</small></div>
             <button type="button" class="btn btn-primary btn-sm" data-postulante-id="${Number(p.id)}">Elegir</button>
-        </div>`).join('');
+        </div>`).join('') + aviso;
     listaPostulantes.querySelectorAll('[data-postulante-id]').forEach((button) => {
         button.addEventListener('click', () => importarPostulante(Number(button.dataset.postulanteId)));
     });
@@ -583,15 +617,18 @@ async function onGuardar(e) {
 }
 
 // ---- Historial --------------------------------------------
-async function cargarEntrevistas() {
+async function cargarEntrevistas(pagina = paginaActual) {
     const tbody = document.getElementById('tbodyEntrevistas');
     const counter = document.getElementById('counterEntrevistas');
     try {
-        const res = await fetch('api/get_entrevistas.php');
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Error al cargar entrevistas');
+        const res = await fetch('api/get_entrevistas.php?estado=pendientes&per_page=' + POR_PAGINA + '&page=' + pagina);
+        const resp = await res.json();
+        if (!res.ok) throw new Error(resp.error || 'Error al cargar');
+        paginaActual = resp.page;
+        renderPaginador(document.getElementById('paginadorEntrevistas'), resp, (p) => { cargarEntrevistas(p); window.scrollTo({ top: document.getElementById('tbodyEntrevistas').closest('section').offsetTop, behavior: 'smooth' }); });
+        const data = resp.items;
         entrevistasData = data;
-        counter.textContent = `${data.length} entrevista${data.length === 1 ? '' : 's'}`;
+        counter.textContent = `${resp.total} entrevista${resp.total === 1 ? '' : 's'}`;
         if (!data.length) {
             tbody.innerHTML = '<tr><td colspan="7" class="empty">Todavía no hay entrevistas registradas.</td></tr>';
             actualizarSeleccionEntrevistas();
@@ -600,7 +637,7 @@ async function cargarEntrevistas() {
         tbody.innerHTML = data.map((it) => `
             <tr>
                 <td style="text-align:center;">
-                    <input type="checkbox" class="entrevista-select" value="${Number(it.id_entrevista)}" onchange="actualizarSeleccionEntrevistas()">
+                    <input type="checkbox" class="entrevista-select" value="${Number(it.id_entrevista)}" ${seleccion.has(String(it.id_entrevista)) ? 'checked' : ''} onchange="toggleSeleccion(this)">
                 </td>
                 <td>
                     <div class="name">${esc(it.nombre_completo)}</div>
@@ -732,6 +769,7 @@ async function contratarEntrevista(id) {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo actualizar la entrevista.');
         showOk('Entrevista marcada como contratada. Ahora figura en la página Contratados.');
+        seleccion.delete(String(id));
         cargarEntrevistas();
     } catch (e) {
         showError(e.message);
@@ -749,6 +787,7 @@ async function convocarEntrevista(id) {
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.error || 'No se pudo actualizar la entrevista.');
         showOk('Postulante convocado. Ahora figura en la página Convocados.');
+        seleccion.delete(String(id));
         cargarEntrevistas();
     } catch (e) {
         showError(e.message);
