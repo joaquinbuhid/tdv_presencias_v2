@@ -131,6 +131,11 @@ $vigi = $stmt->fetch();
         </form>
     </div>
 
+    <!-- Informe personal de horas -->
+    <a href="mis_horas.php" class="btn btn-primary" style="text-decoration:none;">
+        &#x1F4CA; Mis horas trabajadas
+    </a>
+
 </main>
 
 <footer class="app-footer">
