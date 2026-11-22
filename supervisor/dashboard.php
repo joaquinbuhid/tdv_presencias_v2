@@ -154,6 +154,7 @@ $supNombre = $_SESSION['nombre_completo'] ?? 'Supervisor';
         <a href="dashboard.php" class="active">🟢 En vivo</a>
         <a href="informe.php">📊 Informe</a>
         <a href="asistencia.php">&#x2705; Asistencia</a>
+        <a href="../mis_horas.php">&#x1F552; Mis horas</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($supNombre) ?></strong>

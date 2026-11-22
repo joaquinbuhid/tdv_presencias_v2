@@ -260,6 +260,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <a href="dashboard.php">🟢 En vivo</a>
         <a href="informe.php" class="active">📊 Informe</a>
         <a href="asistencia.php">&#x2705; Asistencia</a>
+        <a href="../mis_horas.php">&#x1F552; Mis horas</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($supNombre) ?></strong>

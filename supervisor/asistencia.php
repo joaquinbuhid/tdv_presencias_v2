@@ -45,6 +45,7 @@ $objetivos = $stmt->fetchAll();
         <a href="dashboard.php">🟢 En vivo</a>
         <a href="informe.php">📊 Informe</a>
         <a href="asistencia.php" class="active">&#x2705; Asistencia</a>
+        <a href="../mis_horas.php">&#x1F552; Mis horas</a>
     </div>
     <div class="nav-user">
         <strong><?= htmlspecialchars($supNombre) ?></strong>
