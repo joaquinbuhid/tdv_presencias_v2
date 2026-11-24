@@ -198,7 +198,7 @@ $vigi = $stmt->fetch();
     </div>
 </div>
 
-<script src="js/app.js?v=7"></script>
+<script src="js/app.js?v=8"></script>
 
 <!-- HELP DROPDOWN -->
 <div class="help-dropdown-wrap" id="helpWrapDash">

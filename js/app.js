@@ -13,6 +13,7 @@ const API_BASE             = window.TDV_API_BASE || '';
 // ---- Inicialización ----------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
+    obtenerDispositivoId(); // deja la cookie lista también para otros envíos (reportes)
     iniciarGps();
     Promise.all([cargarTipos(), cargarEstado()]).then(() => sugerirTipo('inicio'));
 
@@ -189,6 +190,8 @@ async function onSubmit(e) {
             lat: posicion.coords.latitude,
             lng: posicion.coords.longitude,
             precision: Math.round(posicion.coords.accuracy),
+            dispositivo_id: obtenerDispositivoId(),
+            modelo_disp:    await obtenerModelo(),
         };
         if (selObj && selObj.value) payload.objetivo_id = parseInt(selObj.value);
         const resp = await apiPost(API_BASE + 'api/registrar_novedad.php', payload);
@@ -431,6 +434,45 @@ function mostrarExito(msg) {
 function ocultarMensajes() {
     document.getElementById('regError').classList.remove('show');
     document.getElementById('regSuccess').classList.remove('show');
+}
+
+// ---- Identificación del dispositivo ------------------------
+// Código propio de este navegador: se genera una vez y se guarda en localStorage
+// y en una cookie (respaldo). No es un ID de hardware: cambia si se borran los datos
+// del navegador, en modo incógnito o en otro navegador.
+
+const DISP_CLAVE  = 'tdv_dispositivo_id';
+const DISP_COOKIE = 'tdv_disp';
+
+function obtenerDispositivoId() {
+    let id = null;
+    try { id = localStorage.getItem(DISP_CLAVE); } catch (e) {}
+    if (!id) {
+        const m = document.cookie.match(new RegExp('(?:^|; )' + DISP_COOKIE + '=([^;]+)'));
+        if (m) id = decodeURIComponent(m[1]);
+    }
+    if (!id || !/^[A-Za-z0-9-]{8,64}$/.test(id)) {
+        id = (window.crypto && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 12);
+    }
+    try { localStorage.setItem(DISP_CLAVE, id); } catch (e) {}
+    const segura = location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${DISP_COOKIE}=${id}; max-age=${60 * 60 * 24 * 365 * 5}; path=/; SameSite=Lax${segura}`;
+    return id;
+}
+
+let modeloCache = null;
+async function obtenerModelo() {
+    if (modeloCache !== null) return modeloCache;
+    modeloCache = '';
+    try {
+        if (navigator.userAgentData && navigator.userAgentData.getHighEntropyValues) {
+            const d = await navigator.userAgentData.getHighEntropyValues(['model']);
+            modeloCache = (d.model || '').slice(0, 100);
+        }
+    } catch (e) {}
+    return modeloCache;
 }
 
 // ---- Utilidades API ----------------------------------------

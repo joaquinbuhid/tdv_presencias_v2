@@ -3,6 +3,7 @@ session_start();
 header('Content-Type: application/json');
 require_once '../config/db.php';
 require_once __DIR__ . '/presencias_helper.php';
+require_once __DIR__ . '/dispositivo_helper.php';
 
 if (!isset($_SESSION['empleado_id'])) {
     http_response_code(401);
@@ -34,6 +35,7 @@ if (!$tipo_id || $lat === null || $lng === null || $lat == 0 || $lng == 0) {
 }
 
 $ip          = getClientIP();
+[$dispositivo_id, $modelo_disp, $user_agent] = datosDispositivo($data);
 $empleado_id = (int)$_SESSION['empleado_id'];
 $fecha       = date('Y-m-d');
 $hora        = date('H:i:s');
@@ -121,24 +123,21 @@ try {
         }
     }
 
-    $valores = [$fecha, $hora, $tipo_id, $observaciones, $empleado_id, $ip, $lat, $lng, (int)$objetivos['id_objetivo']];
-    try {
-        $stmt = $db->prepare(
-            "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id, precision_m)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        $stmt->execute([...$valores, $precision]);
-    } catch (PDOException $e) {
-        // Si todavía no se aplicó la migración de precision_m, registrar igual sin ese dato.
-        if ($e->getCode() !== '42S22') {
-            throw $e;
-        }
-        $stmt = $db->prepare(
-            "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo, coord_lat, coord_long, objetivo_id)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        $stmt->execute($valores);
-    }
+    insertarNovedad($db, [
+        'fecha'          => $fecha,
+        'hora'           => $hora,
+        'tipo_novedad'   => $tipo_id,
+        'observaciones'  => $observaciones,
+        'empleado_id'    => $empleado_id,
+        'ip_dispositivo' => $ip,
+        'coord_lat'      => $lat,
+        'coord_long'     => $lng,
+        'objetivo_id'    => (int)$objetivos['id_objetivo'],
+    ], [
+        // Si alguna migración no se aplicó todavía, se registra igual sin esos datos.
+        ['dispositivo_id' => $dispositivo_id, 'modelo_disp' => $modelo_disp, 'user_agent' => $user_agent],
+        ['precision_m' => $precision],
+    ]);
     $db->commit();
 } catch (PDOException $e) {
     if ($db->inTransaction()) {
