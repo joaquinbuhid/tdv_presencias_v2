@@ -12,6 +12,7 @@ $navGrupos = [
         ['archivo' => 'supervisores.php', 'icono' => "\u{1F4BC}", 'texto' => 'Supervisores', 'soloAdmin' => false],
         ['archivo' => 'liquidacion.php',  'icono' => "\u{23F1}",  'texto' => 'Horas',        'soloAdmin' => false],
         ['archivo' => 'reportes.php',     'icono' => "\u{26A0}",  'texto' => 'Reportes',     'soloAdmin' => true, 'badge' => true],
+        ['archivo' => 'control_dispositivos.php', 'icono' => "\u{1F4F1}", 'texto' => 'Control de marcas', 'soloAdmin' => true],
     ],
     'Personal' => [
         ['archivo' => 'vigiladores.php',  'icono' => "\u{1F464}", 'texto' => 'Empleados',    'soloAdmin' => false],

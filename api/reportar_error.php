@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 require_once '../config/db.php';
+require_once __DIR__ . '/dispositivo_helper.php';
 
 if (!isset($_SESSION['empleado_id'])) {
     http_response_code(401);
@@ -37,10 +38,16 @@ if (!$tipo) {
 }
 
 $observaciones = trim("Reporte de problema\nAccion: " . ($accion ?: 'No informada') . "\nMensaje: " . ($mensajeError ?: 'No informado') . "\nDescripcion: " . $descripcion);
-$stmt = $db->prepare(
-    "INSERT INTO novedades (fecha, hora, tipo_novedad, observaciones, empleado_id, ip_dispositivo)
-     VALUES (?, ?, ?, ?, ?, ?)"
-);
-$stmt->execute([date('Y-m-d'), date('H:i:s'), (int)$tipo['id_tipo'], $observaciones, (int)$_SESSION['empleado_id'], getClientIP()]);
+[$dispositivo_id, $modelo_disp, $user_agent] = datosDispositivo($data);
+insertarNovedad($db, [
+    'fecha'          => date('Y-m-d'),
+    'hora'           => date('H:i:s'),
+    'tipo_novedad'   => (int)$tipo['id_tipo'],
+    'observaciones'  => $observaciones,
+    'empleado_id'    => (int)$_SESSION['empleado_id'],
+    'ip_dispositivo' => getClientIP(),
+], [
+    ['dispositivo_id' => $dispositivo_id, 'modelo_disp' => $modelo_disp, 'user_agent' => $user_agent],
+]);
 
 echo json_encode(['success' => true, 'mensaje' => 'Reporte registrado como novedad.']);

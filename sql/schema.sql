@@ -90,6 +90,9 @@ CREATE TABLE IF NOT EXISTS novedades (
   observaciones text DEFAULT NULL,
   empleado_id int(11) NOT NULL,
   ip_dispositivo varchar(50) DEFAULT NULL,
+  dispositivo_id varchar(64) DEFAULT NULL,
+  modelo_disp varchar(100) DEFAULT NULL,
+  user_agent varchar(255) DEFAULT NULL,
   coord_lat decimal(10,8) DEFAULT NULL,
   coord_long decimal(11,8) DEFAULT NULL,
   objetivo_id int(11) DEFAULT NULL,
@@ -97,7 +100,8 @@ CREATE TABLE IF NOT EXISTS novedades (
   PRIMARY KEY (id_novedad),
   KEY idx_novedades_empleado_fecha (empleado_id, fecha),
   KEY idx_novedades_tipo (tipo_novedad),
-  KEY idx_novedades_objetivo (objetivo_id)
+  KEY idx_novedades_objetivo (objetivo_id),
+  KEY idx_novedades_dispositivo (dispositivo_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS postulantes (
