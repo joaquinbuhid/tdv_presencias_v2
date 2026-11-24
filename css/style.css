@@ -194,6 +194,28 @@ textarea {
     font-size: 1.05rem;
 }
 
+/* ---- SECCIONES (pestañas bajo el header) ---- */
+.app-tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.app-tabs a {
+    flex: 1;
+    text-align: center;
+    padding: .9rem .5rem;
+    font-size: 1.02rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+}
+.app-tabs a.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
 /* ---- LAYOUT ---- */
 .app-content {
     max-width: 600px;
