@@ -130,14 +130,16 @@ $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TDV — Mis horas</title>
-    <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/style.css?v=3">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
     <style>
         input[type="date"] {
-            width: 100%; padding: .85rem 1rem; border: 2px solid var(--border);
-            border-radius: 10px; font-size: 1.05rem; color: var(--text); background: #fff;
+            width: 100%; min-width: 0; box-sizing: border-box; padding: .8rem .5rem; border: 2px solid var(--border);
+            border-radius: 10px; font-size: 1rem; color: var(--text); background: #fff;
         }
         .fechas { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
+        .fechas > div { min-width: 0; }
+        @media (max-width: 420px) { .fechas { grid-template-columns: 1fr; } }
         .obj-list { display: flex; flex-direction: column; gap: .45rem; }
         .obj-item {
             display: flex; align-items: center; gap: .7rem; margin: 0;
@@ -182,9 +184,15 @@ $h = fn($s) => htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8');
     <div class="brand"><span>&#x1F6E1;</span> TDV Seguridad</div>
     <div class="header-user">
         <strong><?= $h($nombre) ?></strong>
-        <a href="<?= $volverA ?>" style="color:rgba(255,255,255,.75);font-size:.95rem;text-decoration:none;">&larr; Volver al panel</a>
+        <a href="api/logout.php" style="color:rgba(255,255,255,.75);font-size:.95rem;text-decoration:none;">Cerrar sesión</a>
     </div>
 </header>
+
+<!-- SECCIONES -->
+<nav class="app-tabs">
+    <a href="<?= $volverA ?>"><?= !empty($_SESSION['es_supervisor']) ? '&#x1F7E2; Panel' : '&#x2705; Asistencia' ?></a>
+    <a href="mis_horas.php" class="active">&#x1F4CA; Mis horas</a>
+</nav>
 
 <main class="app-content">
 

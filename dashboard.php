@@ -31,7 +31,7 @@ $vigi = $stmt->fetch();
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>TDV — Panel</title>
-    <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/style.css?v=3">
     <link rel="icon" href="favicon.ico" type="image/x-icon">
 </head>
 <body>
@@ -48,6 +48,12 @@ $vigi = $stmt->fetch();
         </a>
     </div>
 </header>
+
+<!-- SECCIONES -->
+<nav class="app-tabs">
+    <a href="dashboard.php" class="active">&#x2705; Asistencia</a>
+    <a href="mis_horas.php">&#x1F4CA; Mis horas</a>
+</nav>
 
 <!-- CONTENIDO -->
 <main class="app-content">
@@ -130,11 +136,6 @@ $vigi = $stmt->fetch();
 
         </form>
     </div>
-
-    <!-- Informe personal de horas -->
-    <a href="mis_horas.php" class="btn btn-primary" style="text-decoration:none;">
-        &#x1F4CA; Mis horas trabajadas
-    </a>
 
 </main>
 
