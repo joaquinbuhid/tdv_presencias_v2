@@ -32,6 +32,112 @@ function cleanObs($obs): string {
     return $obs;
 }
 
+// ---- Resumen por objetivo: Nombre / DNI / Cantidad de horas ----
+if ($format === 'resumen') {
+    require_once __DIR__ . '/../../config/db.php';
+    $p = $_SESSION['liquidacion_params'] ?? null;
+    if (!$p) {
+        die("No hay datos de liquidacion para exportar. Por favor procese primero.");
+    }
+
+    $params = rangoConMargen($p['fecha_inicio'], $p['fecha_fin']);
+    $whereObj = '';
+    if ((int)$p['objetivo_id'] > 0) {
+        $whereObj = 'AND COALESCE(n.objetivo_id, e.objetivo_id) = ?';
+        $params[] = (int)$p['objetivo_id'];
+    }
+    // Se agrupa por objetivo + empleado: la clave compuesta va en vigilador_id del helper,
+    // así las horas de cada objetivo se calculan con la misma lógica que la liquidación.
+    $stmt = getDB()->prepare("
+        SELECT n.fecha, n.hora, n.tipo_novedad AS tipo, n.observaciones,
+               CONCAT(COALESCE(n.objetivo_id, e.objetivo_id, 0), '|', n.empleado_id) AS vigilador_id,
+               e.nombre AS nombre, '' AS apellido
+        FROM novedades n
+        JOIN empleados e ON n.empleado_id = e.id_empleado
+        WHERE n.fecha BETWEEN ? AND ? $whereObj
+        ORDER BY n.fecha ASC, n.hora ASC
+    ");
+    $stmt->execute($params);
+    $calc = calcularLiquidacion($stmt->fetchAll(), $p['fecha_inicio'], $p['fecha_fin']);
+
+    $db = getDB();
+    $nombresObj = $db->query("SELECT id_objetivo, nombre FROM objetivos")->fetchAll(PDO::FETCH_KEY_PAIR);
+    $dnis = $db->query("SELECT id_empleado, DNI FROM empleados")->fetchAll(PDO::FETCH_KEY_PAIR);
+
+    $porObjetivo = [];
+    foreach ($calc as $v) {
+        [$objId, $empId] = array_map('intval', explode('|', $v['vid']));
+        $horas = array_sum(array_column($v['shifts'], 'hours'));
+        if ($horas <= 0) continue; // solo quien tiene horas en ese objetivo
+        $objNombre = $nombresObj[$objId] ?? 'Sin objetivo';
+        $porObjetivo[$objNombre][] = [
+            'nombre' => $v['name'],
+            'dni'    => $dnis[$empId] ?? '',
+            'horas'  => $horas,
+        ];
+    }
+    ksort($porObjetivo, SORT_NATURAL | SORT_FLAG_CASE);
+    foreach ($porObjetivo as &$lista) {
+        usort($lista, fn($a, $b) => strcasecmp($a['nombre'], $b['nombre']));
+    }
+    unset($lista);
+
+    if (ob_get_length()) {
+        ob_clean();
+    }
+    header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
+    header('Content-Disposition: attachment; filename="liquidacion_resumen_' . date('Ymd_His') . '.xls"');
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Pragma: no-cache');
+    echo "\xEF\xBB\xBF";
+    ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        table { border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; }
+        th, td { border: 1px solid #b0bec5; padding: 6px 10px; }
+        th { background-color: #1a5276; color: #ffffff; font-weight: bold; text-align: left; }
+        td.txt { mso-number-format: "\@"; }
+        .obj td { background-color: #d6e4f0; font-weight: bold; font-size: 13px; }
+        .sub td { font-weight: bold; background-color: #f2f4f7; }
+    </style>
+</head>
+<body>
+<table>
+    <tr><td colspan="3"><b><?= excelCell($title) ?></b></td></tr>
+    <tr><td colspan="3"></td></tr>
+    <?php if (!$porObjetivo): ?>
+        <tr><td colspan="3">No hay horas registradas en el período.</td></tr>
+    <?php endif; ?>
+    <?php foreach ($porObjetivo as $objNombre => $lista): ?>
+        <tr class="obj"><td colspan="3">Objetivo: <?= excelCell($objNombre) ?></td></tr>
+        <tr>
+            <th>Nombre del vigilador</th>
+            <th>DNI</th>
+            <th>Cantidad de horas</th>
+        </tr>
+        <?php foreach ($lista as $r): ?>
+            <tr>
+                <td class="txt"><?= excelCell($r['nombre']) ?></td>
+                <td class="txt"><?= excelCell($r['dni']) ?></td>
+                <td class="txt"><?= excelCell(formatDecimalHours($r['horas'])) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        <tr class="sub">
+            <td colspan="2">Total <?= excelCell($objNombre) ?></td>
+            <td class="txt"><?= excelCell(formatDecimalHours(array_sum(array_column($lista, 'horas')))) ?></td>
+        </tr>
+        <tr><td colspan="3"></td></tr>
+    <?php endforeach; ?>
+</table>
+</body>
+</html>
+    <?php
+    exit;
+}
+
 if ($format === 'excel' || $format === 'xls') {
     if (ob_get_length()) {
         ob_clean();

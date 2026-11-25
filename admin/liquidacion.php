@@ -72,6 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'No se encontraron novedades registradas en el rango de fechas.';
             } else {
                 $_SESSION['last_liquidacion'] = $result_data;
+                // Para el resumen por objetivo (se recalcula agrupando por objetivo y vigilador).
+                $_SESSION['liquidacion_params'] = [
+                    'fecha_inicio' => $fecha_inicio,
+                    'fecha_fin'    => $fecha_fin,
+                    'objetivo_id'  => $selected_objetivo_id,
+                ];
                 $_SESSION['liquidacion_title'] = "Objetivo: " . $objNombre . " (" . date('d/m/Y', strtotime($fecha_inicio)) . " al " . date('d/m/Y', strtotime($fecha_fin)) . ")";
                 $title = $_SESSION['liquidacion_title'];
                 $mostrar_resultados = true;
@@ -157,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             border: none;
         }
         .btn-export:hover { opacity: 0.9; }
+        .btn-resumen { background: #1a5276; color: #fff; }
         .btn-pdf { background: #e74c3c; color: white; }
         .btn-excel { background: #27ae60; color: white; }
         
@@ -314,6 +321,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="export-actions">
                 <a href="api/export_liquidacion.php?format=excel" class="btn-export btn-excel" target="_blank">
                     <span>🟢 Descargar EXCEL</span>
+                </a>
+                <a href="api/export_liquidacion.php?format=resumen" class="btn-export btn-resumen" target="_blank" title="Por objetivo: nombre, DNI y cantidad de horas">
+                    <span>📋 EXCEL resumen por objetivo</span>
                 </a>
                 <a href="api/export_liquidacion.php?format=pdf" class="btn-export btn-pdf" target="_blank">
                     <span>🔴 Descargar PDF</span>
