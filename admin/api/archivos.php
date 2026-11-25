@@ -3,8 +3,9 @@
  * API del módulo Archivos (Facturas y Pagos).
  *   GET  ?accion=resumen
  *   GET  ?accion=listar&carpeta=facturas&q=texto&tipo=imagen|pdf|otro&mes=2026-11
- *   POST ?accion=subir      (carpeta, archivos[], csrf)
- *   POST ?accion=renombrar  (id, nombre, csrf)
+ *   POST ?accion=subir      (carpeta, archivos[], descripcion, csrf)
+ *         descripcion = mensaje obligatorio (tipo commit): qué es el archivo y qué contiene
+ *   POST ?accion=editar     (id, nombre, descripcion, csrf)
  *   POST ?accion=eliminar   (id, csrf)
  */
 header('Content-Type: application/json');
@@ -38,6 +39,7 @@ function formatearArchivo(array $r): array
         'extension'  => $ext,
         'tipo'       => $tipo,
         'tamanio'    => (int)$r['tamanio'],
+        'descripcion'=> $r['descripcion'],
         'miniatura'  => (int)$r['tiene_miniatura'] ? $base . '&thumb=1' : null,
         'url'        => $base,
         'descargar'  => $base . '&dl=1',
@@ -60,6 +62,18 @@ function crearMiniatura(string $origen, string $destino): bool
     $ok = imagejpeg($th, $destino, 82);
     imagedestroy($img); imagedestroy($th);
     return $ok;
+}
+
+const DESCRIPCION_MIN = 5;
+const DESCRIPCION_MAX = 500;
+
+function leerDescripcion(): string
+{
+    $d = trim(preg_replace('/[\x00-\x09\x0B-\x1F]/u', '', $_POST['descripcion'] ?? ''));
+    if (mb_strlen($d) < DESCRIPCION_MIN) {
+        responder(['error' => 'Escribí un mensaje que explique qué es el archivo y qué contiene'], 400);
+    }
+    return mb_substr($d, 0, DESCRIPCION_MAX);
 }
 
 function limpiarNombre(string $n): string
@@ -112,6 +126,7 @@ try {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') responder(['error' => 'Metodo no permitido'], 405);
         if (!archivosCsrfOk($_POST['csrf'] ?? null)) responder(['error' => 'La sesión venció, recargá la página'], 403);
         $carpeta = carpetaValida($_POST['carpeta'] ?? null);
+        $descripcion = leerDescripcion();
         if (empty($_FILES['archivos'])) responder(['error' => 'No se han recibido archivos para subir'], 400);
         if (!ARCHIVOS_DIR || !is_dir(ARCHIVOS_DIR)) responder(['error' => 'No existe la carpeta de archivos en el servidor'], 500);
 
@@ -146,9 +161,9 @@ try {
             @chmod($destino, 0640);
 
             $st = $db->prepare("INSERT INTO drive_archivos
-                (carpeta, nombre_original, nombre_disco, extension, mime, tamanio, subido_por, creado_en)
-                VALUES (?,?,?,?,?,?,?,?)");
-            $st->execute([$carpeta, limpiarNombre($nombre), $disco, $ext, $mime, $size,
+                (carpeta, nombre_original, nombre_disco, extension, mime, tamanio, descripcion, subido_por, creado_en)
+                VALUES (?,?,?,?,?,?,?,?,?)");
+            $st->execute([$carpeta, limpiarNombre($nombre), $disco, $ext, $mime, $size, $descripcion,
                           $_SESSION['nombre_completo'] ?? null, date('Y-m-d H:i:s')]);
             $id = (int)$db->lastInsertId();
 
@@ -160,13 +175,14 @@ try {
         }
         responder(['subidos' => $subidos, 'errores' => $errores], $subidos ? 200 : 400);
 
-    case 'renombrar':
+    case 'editar':
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') responder(['error' => 'Metodo no permitido'], 405);
         if (!archivosCsrfOk($_POST['csrf'] ?? null)) responder(['error' => 'La sesión venció, recargá la página'], 403);
         $nombre = limpiarNombre($_POST['nombre'] ?? '');
         if ($nombre === '') responder(['error' => 'Nombre inválido'], 400);
-        $st = $db->prepare("UPDATE drive_archivos SET nombre_original = ? WHERE id = ? AND eliminado_en IS NULL");
-        $st->execute([$nombre, (int)($_POST['id'] ?? 0)]);
+        $descripcion = leerDescripcion();
+        $st = $db->prepare("UPDATE drive_archivos SET nombre_original = ?, descripcion = ? WHERE id = ? AND eliminado_en IS NULL");
+        $st->execute([$nombre, $descripcion, (int)($_POST['id'] ?? 0)]);
         responder(['ok' => true]);
 
     case 'eliminar':
