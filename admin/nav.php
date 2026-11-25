@@ -30,7 +30,7 @@ $navGrupos = [
         ['archivo' => 'tickets.php',      'icono' => "\u{1F3AB}", 'texto' => 'Tickets',      'soloAdmin' => false],
     ],
     'Administración' => [
-        ['archivo' => '../drive/index.php', 'icono' => "\u{1F5C2}", 'texto' => 'Facturas y pagos', 'soloAdmin' => false],
+        ['archivo' => 'archivos.php', 'icono' => "\u{1F5C2}", 'texto' => 'Facturas y pagos', 'soloAdmin' => false],
     ],
     'Comunicación' => [
         ['archivo' => 'enviar_mails.php', 'icono' => "\u{2709}",  'texto' => 'Mails',        'soloAdmin' => false],

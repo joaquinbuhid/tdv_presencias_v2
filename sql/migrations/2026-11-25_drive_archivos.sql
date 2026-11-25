@@ -1,5 +1,5 @@
--- Módulo Drive: archivos de Facturas y Pagos (drive/).
--- Los archivos viven en drive/storage/<carpeta>/AAAA/MM/ con nombre aleatorio; acá queda el índice.
+-- Módulo Facturas y pagos (admin/archivos.php).
+-- Los archivos viven en archivos/<carpeta>/AAAA/MM/ con nombre aleatorio; acá queda el índice.
 CREATE TABLE IF NOT EXISTS drive_archivos (
   id              int unsigned NOT NULL AUTO_INCREMENT,
   carpeta         varchar(30)  NOT NULL,

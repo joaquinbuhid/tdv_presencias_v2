@@ -1,4 +1,4 @@
-# Nadie accede directo a esta carpeta: los archivos se sirven por drive/ver.php
+# Nadie accede directo a esta carpeta: los archivos se sirven por admin/api/ver_archivo.php
 <IfModule mod_authz_core.c>
     Require all denied
 </IfModule>
