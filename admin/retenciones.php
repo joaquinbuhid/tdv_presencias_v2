@@ -128,6 +128,7 @@ $mesActual = RETENCIONES_MESES[(int)date('n') - 1];
         </select>
         <input type="text" id="fBuscar" class="inv-search" placeholder="Buscar por número de factura u objetivo...">
         <span class="ret-total" id="total"></span>
+        <button type="button" class="btn btn-outline btn-sm" id="btnExcel" style="width:auto;white-space:nowrap;">&#x1F4CA; Exportar a Excel</button>
     </div>
 
     <div class="card inv-card-wrap" style="overflow-x:auto;">
@@ -309,6 +310,13 @@ $('tablaWrap').addEventListener('click', e => {
     if (del) return eliminarIngreso(+del.dataset.eliminar);
 });
 $('fPeriodo').addEventListener('change', pintar);
+// Exporta lo que se ve: respeta el filtro de período y la búsqueda
+$('btnExcel').addEventListener('click', () => {
+    const q = new URLSearchParams();
+    if ($('fPeriodo').value) q.set('periodo', $('fPeriodo').value);
+    if ($('fBuscar').value.trim()) q.set('q', $('fBuscar').value.trim());
+    window.location.href = 'api/export_retenciones_excel.php' + (q.toString() ? '?' + q : '');
+});
 $('fBuscar').addEventListener('input', pintar);
 
 // ---------- Alta de ingreso ----------
