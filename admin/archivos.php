@@ -91,6 +91,12 @@ $carpetaInicial = array_key_exists($_GET['c'] ?? '', ARCHIVOS_CARPETAS) ? $_GET[
             overflow:hidden;text-overflow:ellipsis;
         }
         .archivo .meta { font-size:.75rem;color:var(--text-muted);margin-top:.15rem; }
+        .archivo .desc {
+            font-size:.78rem;color:var(--text);margin-top:.2rem;line-height:1.3;
+            display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+        }
+        .archivo .desc.vacia { color:var(--text-muted);font-style:italic; }
+        .textos { min-width:0; }
         .archivo .acciones { position:absolute;top:.4rem;right:.4rem;display:none;gap:.3rem; }
         .archivo:hover .acciones { display:flex; }
         .acciones a, .acciones button {
@@ -125,7 +131,9 @@ $carpetaInicial = array_key_exists($_GET['c'] ?? '', ARCHIVOS_CARPETAS) ? $_GET[
         .galeria.lista .previa { aspect-ratio:1;width:46px;border-radius:6px; }
         .galeria.lista .icono-ext { width:28px;height:34px;font-size:.5rem;padding-bottom:.25rem; }
         .galeria.lista .icono-ext::before { border-width:0 8px 8px 0; }
-        .galeria.lista .info { padding:0;display:flex;justify-content:space-between;gap:1rem;min-width:0; }
+        .galeria.lista .info { padding:0;display:flex;justify-content:space-between;align-items:center;gap:1rem;min-width:0; }
+        .galeria.lista .desc { -webkit-line-clamp:1; }
+        .galeria.lista .meta { white-space:nowrap;margin:0; }
         .galeria.lista .acciones { position:static;display:flex; }
         .galeria.lista .acciones a, .galeria.lista .acciones button { box-shadow:none;background:transparent; }
 
@@ -169,6 +177,27 @@ $carpetaInicial = array_key_exists($_GET['c'] ?? '', ARCHIVOS_CARPETAS) ? $_GET[
         .visor-nav:hover { background:var(--primary); }
         .visor-nav.ant { left:.6rem; } .visor-nav.sig { right:.6rem; }
         .visor-pie { font-size:.8rem;color:var(--text-muted);margin-top:.6rem; }
+        .visor-desc {
+            background:#f7f9fc;border-left:4px solid var(--primary);border-radius:8px;
+            padding:.6rem .9rem;margin-bottom:.8rem;font-size:.9rem;white-space:pre-wrap;
+        }
+        .visor-desc.vacia { color:var(--text-muted);font-style:italic;border-left-color:var(--border); }
+
+        /* Subida tipo commit */
+        .modal.subida { max-width:560px; }
+        .subida-lista {
+            border:1px solid var(--border);border-radius:10px;max-height:180px;overflow-y:auto;
+            margin-bottom:1rem;
+        }
+        .subida-lista div {
+            display:flex;justify-content:space-between;gap:1rem;padding:.45rem .8rem;
+            font-size:.85rem;border-bottom:1px solid var(--bg);
+        }
+        .subida-lista div:last-child { border-bottom:0; }
+        .subida-lista span:first-child { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+        .subida-lista span:last-child { color:var(--text-muted);white-space:nowrap; }
+        .ayuda { font-size:.78rem;color:var(--text-muted);margin-top:.35rem; }
+        .modal textarea { min-height:110px;padding:.7rem .9rem;font-size:.95rem;font-family:inherit; }
 
         @media (max-width:600px) {
             .archivo .acciones { display:flex; }
@@ -199,7 +228,7 @@ $carpetaInicial = array_key_exists($_GET['c'] ?? '', ARCHIVOS_CARPETAS) ? $_GET[
         </div>
 
         <div class="filtros">
-            <input type="text" id="buscar" placeholder="Buscar por nombre...">
+            <input type="text" id="buscar" placeholder="Buscar por nombre o mensaje...">
             <select id="tipo">
                 <option value="">Todos los tipos</option>
                 <option value="imagen">Imágenes</option>
@@ -254,6 +283,7 @@ $carpetaInicial = array_key_exists($_GET['c'] ?? '', ARCHIVOS_CARPETAS) ? $_GET[
                 <button class="modal-close" id="visorCerrar">&#x2715;</button>
             </div>
         </div>
+        <div class="visor-desc" id="visorDesc"></div>
         <div class="visor-cuerpo">
             <button class="visor-nav ant" id="visorAnt" title="Anterior">&#x2039;</button>
             <div id="visorContenido" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;"></div>
@@ -263,20 +293,47 @@ $carpetaInicial = array_key_exists($_GET['c'] ?? '', ARCHIVOS_CARPETAS) ? $_GET[
     </div>
 </div>
 
-<!-- RENOMBRAR -->
+<!-- SUBIR (mensaje tipo commit) -->
+<div class="modal-overlay" id="subOverlay">
+    <div class="modal subida">
+        <div class="modal-header">
+            <span class="modal-title" id="subTitulo">Subir archivos</span>
+            <button class="modal-close" type="button" onclick="cerrarSubida()">&#x2715;</button>
+        </div>
+        <form id="formSubida">
+            <div class="subida-lista" id="subLista"></div>
+            <div class="form-group">
+                <label for="fMensaje" style="font-size:.85rem;font-weight:700;">Mensaje <span style="color:var(--danger)">*</span></label>
+                <textarea id="fMensaje" required minlength="5" maxlength="500"
+                    placeholder="¿Qué es y qué contiene? Ej: Factura A de Edenor, luz de la oficina central, período octubre 2026, $45.300. Vence 10/11."></textarea>
+                <div class="ayuda">Queda guardado junto al archivo y se puede buscar. Si subís varios, el mensaje se aplica a todos. <b>Ctrl+Enter</b> para subir.</div>
+            </div>
+            <div style="display:flex;gap:.6rem;justify-content:flex-end;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="cerrarSubida()">Cancelar</button>
+                <button type="submit" class="btn btn-primary btn-sm">&#x2B06; Subir</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- EDITAR -->
 <div class="modal-overlay" id="renOverlay">
     <div class="modal">
         <div class="modal-header">
-            <span class="modal-title">Renombrar archivo</span>
-            <button class="modal-close" onclick="cerrarRenombrar()">&#x2715;</button>
+            <span class="modal-title">Editar archivo</span>
+            <button class="modal-close" type="button" onclick="cerrarEditar()">&#x2715;</button>
         </div>
-        <form id="formRenombrar">
+        <form id="formEditar">
             <div class="form-group">
                 <label for="fNombre" style="font-size:.85rem;font-weight:700;">Nombre</label>
                 <input type="text" id="fNombre" required maxlength="255" style="padding:.6rem .9rem;font-size:.95rem;">
             </div>
+            <div class="form-group">
+                <label for="fDesc" style="font-size:.85rem;font-weight:700;">Mensaje <span style="color:var(--danger)">*</span></label>
+                <textarea id="fDesc" required minlength="5" maxlength="500" placeholder="¿Qué es y qué contiene?"></textarea>
+            </div>
             <div style="display:flex;gap:.6rem;justify-content:flex-end;">
-                <button type="button" class="btn btn-outline btn-sm" onclick="cerrarRenombrar()">Cancelar</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="cerrarEditar()">Cancelar</button>
                 <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
             </div>
         </form>
@@ -289,7 +346,7 @@ const CARPETAS = <?= json_encode(ARCHIVOS_CARPETAS, JSON_UNESCAPED_UNICODE) ?>;
 const MAX_MB   = <?= ARCHIVOS_MAX_MB ?>;
 const API      = 'api/archivos.php';
 
-const est = { carpeta: <?= json_encode($carpetaInicial) ?>, archivos: [], vista: leerVista(), idx: -1, renId: 0 };
+const est = { carpeta: <?= json_encode($carpetaInicial) ?>, archivos: [], vista: leerVista(), idx: -1, renId: 0, pendientes: [] };
 const $ = (id) => document.getElementById(id);
 
 function leerVista() { try { return localStorage.getItem('archivos_vista') || 'grilla'; } catch { return 'grilla'; } }
@@ -369,12 +426,17 @@ function pintar() {
         <div class="archivo" data-i="${i}">
             <div class="previa">${previa(a)}</div>
             <div class="info">
-                <div class="nombre" title="${esc(a.nombre)}">${esc(a.nombre)}</div>
+                <div class="textos">
+                    <div class="nombre" title="${esc(a.nombre)}">${esc(a.nombre)}</div>
+                    ${a.descripcion
+                        ? `<div class="desc" title="${esc(a.descripcion)}">${esc(a.descripcion)}</div>`
+                        : `<div class="desc vacia">Sin mensaje</div>`}
+                </div>
                 <div class="meta">${fecha(a.fecha)} · ${tam(a.tamanio)}</div>
             </div>
             <div class="acciones">
                 <a href="${esc(a.descargar)}" title="Descargar" data-accion="descargar">&#x2B07;</a>
-                <button type="button" title="Renombrar" data-accion="renombrar">&#x270E;</button>
+                <button type="button" title="Editar nombre y mensaje" data-accion="editar">&#x270E;</button>
                 <button type="button" class="borrar" title="Eliminar" data-accion="eliminar">&#x1F5D1;</button>
             </div>
         </div>`).join('');
@@ -385,23 +447,28 @@ $('galeria').addEventListener('click', e => {
     const i = +card.dataset.i, a = est.archivos[i];
     const acc = e.target.closest('[data-accion]')?.dataset.accion;
     if (acc === 'descargar') return;
-    if (acc === 'renombrar') return abrirRenombrar(a);
+    if (acc === 'editar') return abrirEditar(a);
     if (acc === 'eliminar') return eliminar(a);
     abrirVisor(i);
 });
 
-// ---------- Renombrar / eliminar ----------
-function abrirRenombrar(a) {
-    est.renId = a.id; $('fNombre').value = a.nombre;
+// ---------- Editar / eliminar ----------
+function abrirEditar(a) {
+    est.renId = a.id; $('fNombre').value = a.nombre; $('fDesc').value = a.descripcion || '';
     $('renOverlay').classList.add('open');
-    setTimeout(() => $('fNombre').select(), 50);
+    setTimeout(() => (a.descripcion ? $('fNombre') : $('fDesc')).focus(), 50);
 }
-function cerrarRenombrar() { $('renOverlay').classList.remove('open'); }
-$('formRenombrar').addEventListener('submit', async e => {
+function cerrarEditar() { $('renOverlay').classList.remove('open'); }
+$('formEditar').addEventListener('submit', async e => {
     e.preventDefault();
-    const fd = new FormData(); fd.append('id', est.renId); fd.append('nombre', $('fNombre').value); fd.append('csrf', CSRF);
-    try { await api('renombrar', {}, fd); cerrarRenombrar(); mostrarMsg('ok', 'Nombre actualizado.'); cargar(); }
-    catch (err) { mostrarMsg('error', err.message); }
+    const fd = new FormData();
+    fd.append('id', est.renId); fd.append('nombre', $('fNombre').value);
+    fd.append('descripcion', $('fDesc').value); fd.append('csrf', CSRF);
+    try {
+        await api('editar', {}, fd); cerrarEditar(); mostrarMsg('ok', 'Archivo actualizado.');
+        const abierto = est.idx; await cargar();
+        if (abierto >= 0 && est.archivos[abierto]) abrirVisor(abierto);
+    } catch (err) { mostrarMsg('error', err.message); }
 });
 
 async function eliminar(a) {
@@ -418,9 +485,33 @@ function subir(lista) {
     const validos = todos.filter(f => f.size <= MAX_MB * 1048576);
     if (grandes.length) mostrarMsg('error', `${grandes.map(f => f.name).join(', ')}: supera ${MAX_MB} MB.`);
     if (!validos.length) return;
+    abrirSubida(validos);
+}
 
+function abrirSubida(archivos) {
+    est.pendientes = archivos;
+    $('subTitulo').textContent = `Subir ${archivos.length === 1 ? '1 archivo' : archivos.length + ' archivos'} a ${CARPETAS[est.carpeta]}`;
+    $('subLista').innerHTML = archivos.map(f => `<div><span title="${esc(f.name)}">${esc(f.name)}</span><span>${tam(f.size)}</span></div>`).join('');
+    $('fMensaje').value = '';
+    $('subOverlay').classList.add('open');
+    setTimeout(() => $('fMensaje').focus(), 50);
+}
+function cerrarSubida() { $('subOverlay').classList.remove('open'); est.pendientes = []; }
+$('formSubida').addEventListener('submit', e => {
+    e.preventDefault();
+    const mensaje = $('fMensaje').value.trim();
+    if (mensaje.length < 5) { $('fMensaje').focus(); return; }
+    const archivos = est.pendientes;
+    cerrarSubida();
+    enviar(archivos, mensaje);
+});
+$('fMensaje').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) $('formSubida').requestSubmit();
+});
+
+function enviar(validos, mensaje) {
     const fd = new FormData();
-    fd.append('carpeta', est.carpeta); fd.append('csrf', CSRF);
+    fd.append('carpeta', est.carpeta); fd.append('csrf', CSRF); fd.append('descripcion', mensaje);
     validos.forEach(f => fd.append('archivos[]', f));
 
     $('progreso').classList.add('show');
@@ -463,6 +554,9 @@ function abrirVisor(i) {
     $('visorTitulo').textContent = a.nombre;
     $('visorTitulo').title = a.nombre;
     $('visorDescargar').href = a.descargar;
+    const d = $('visorDesc');
+    d.textContent = a.descripcion || 'Sin mensaje. Usá ✎ en la galería para agregar qué es este archivo.';
+    d.classList.toggle('vacia', !a.descripcion);
     $('visorPie').textContent = `${i + 1} de ${est.archivos.length} · ${fecha(a.fecha)} · ${tam(a.tamanio)}${a.subido_por ? ' · Subido por ' + a.subido_por : ''}`;
     const c = $('visorContenido');
     if (a.tipo === 'imagen') c.innerHTML = `<img src="${esc(a.url)}" alt="">`;
@@ -482,9 +576,11 @@ $('visorCerrar').onclick = cerrarVisor;
 $('visorAnt').onclick = () => moverVisor(-1);
 $('visorSig').onclick = () => moverVisor(1);
 $('visorOverlay').addEventListener('click', e => { if (e.target.id === 'visorOverlay') cerrarVisor(); });
-$('renOverlay').addEventListener('click', e => { if (e.target.id === 'renOverlay') cerrarRenombrar(); });
+$('renOverlay').addEventListener('click', e => { if (e.target.id === 'renOverlay') cerrarEditar(); });
+$('subOverlay').addEventListener('click', e => { if (e.target.id === 'subOverlay') cerrarSubida(); });
 document.addEventListener('keydown', e => {
-    if ($('renOverlay').classList.contains('open')) { if (e.key === 'Escape') cerrarRenombrar(); return; }
+    if ($('subOverlay').classList.contains('open')) { if (e.key === 'Escape') cerrarSubida(); return; }
+    if ($('renOverlay').classList.contains('open')) { if (e.key === 'Escape') cerrarEditar(); return; }
     if (!$('visorOverlay').classList.contains('open')) return;
     if (e.key === 'Escape') cerrarVisor();
     if (e.key === 'ArrowLeft') moverVisor(-1);
