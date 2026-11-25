@@ -29,9 +29,6 @@ $navGrupos = [
         ['archivo' => 'dispositivos.php', 'icono' => "\u{1F4BB}", 'texto' => 'Dispositivos', 'soloAdmin' => true],
         ['archivo' => 'tickets.php',      'icono' => "\u{1F3AB}", 'texto' => 'Tickets',      'soloAdmin' => false],
     ],
-    'Administración' => [
-        ['archivo' => 'archivos.php', 'icono' => "\u{1F5C2}", 'texto' => 'Facturas y pagos', 'soloAdmin' => false],
-    ],
     'Comunicación' => [
         ['archivo' => 'enviar_mails.php', 'icono' => "\u{2709}",  'texto' => 'Mails',        'soloAdmin' => false],
     ],

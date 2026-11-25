@@ -37,13 +37,3 @@ Cambiar o eliminar el administrador inicial antes de produccion.
 ## Postulantes
 
 La tabla `postulantes` es compartida con el formulario publico de postulacion. Los usuarios de backoffice, incluyendo `tipo=3` oficinista, pueden consultar y filtrar esos registros desde `admin/postulantes.php`.
-
-## Facturas y pagos
-
-`admin/archivos.php` (menú **Administración → Facturas y pagos**) es una galería para subir y ver comprobantes. Acceden los usuarios de backoffice (admin y oficinista).
-
-- Archivos en `archivos/facturas/` y `archivos/pagos/` (subcarpetas `AAAA/MM/`, nombre aleatorio). Cada carpeta tiene su `.gitignore`, así que nunca se suben al repo; `archivos/.htaccess` bloquea el acceso directo y se sirven por `admin/api/ver_archivo.php` con sesión.
-- Al subir se pide un **mensaje obligatorio** (como un commit) que explica qué es el archivo y qué contiene; se guarda en `drive_archivos.descripcion`, se ve en la galería y el visor, se puede buscar y editar.
-- Índice en la tabla `drive_archivos` (migración `2026-11-25_drive_archivos.sql`). Eliminar es borrado lógico (`eliminado_en`).
-- PHP necesita permiso de escritura sobre `archivos/` y las extensiones `fileinfo` y `gd`. Límite: 20 MB por archivo (revisar `upload_max_filesize` / `post_max_size`).
-- Para sumar una carpeta: agregarla en `ARCHIVOS_CARPETAS` (`admin/api/archivos_helper.php`) y crear `archivos/<clave>/.gitignore`.
