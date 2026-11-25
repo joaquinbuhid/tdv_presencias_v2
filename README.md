@@ -61,3 +61,13 @@ La tabla `postulantes` es compartida con el formulario publico de postulacion. L
 - Tablas `pagos_listas` y `pagos_items` (migración `2026-11-25_pagos_vigiladores.sql`). Se guarda quién agregó cada nombre, quién cargó cada monto y quién asignó cada banco.
 - Exportar a Excel (`admin/api/export_pagos_excel.php`): .xlsx sin formato con hojas Lista, Por banco y Resumen.
 - Eliminar listas es sólo para administradores (borrado lógico).
+
+## Descuentos
+
+`admin/descuentos.php` (menú **Administración → Descuentos**). Una lista por período (ej. "Descuentos Noviembre 2026").
+
+1. **Carga:** los usuarios de backoffice arman la tabla **Vigilador | Adelantos | Desc. Ropa/médico | Otros | Total**, varios a la vez. Cada celda se guarda sola y la pantalla se actualiza cada 8 segundos con lo que cargan los demás. Si dos personas cambian el mismo dato, el segundo recibe un aviso con el valor actual en vez de pisarlo. No se puede repetir un vigilador en la misma lista.
+2. **Revisión:** un administrador pasa la lista a revisión; desde ahí sólo los administradores pueden editar (se puede reabrir la carga). El administrador exporta el Excel **Vigilador | Total** (sólo vigiladores con descuento).
+
+- Tablas `descuentos_listas`, `descuentos_items` y `descuentos_historial` (migración `2026-11-25_descuentos.sql`). El historial registra cada alta, cambio (valor anterior y nuevo), baja y cambio de etapa, con usuario y fecha.
+- Eliminar listas es sólo para administradores (borrado lógico).
