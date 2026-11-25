@@ -1,0 +1,4 @@
+# Los adjuntos de facturas no van al repositorio; sólo se conserva la carpeta
+*
+!.gitignore
+!.htaccess

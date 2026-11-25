@@ -37,3 +37,15 @@ Cambiar o eliminar el administrador inicial antes de produccion.
 ## Postulantes
 
 La tabla `postulantes` es compartida con el formulario publico de postulacion. Los usuarios de backoffice, incluyendo `tipo=3` oficinista, pueden consultar y filtrar esos registros desde `admin/postulantes.php`.
+
+## Retenciones
+
+`admin/retenciones.php` (menú **Administración → Retenciones**). Acceden los usuarios de backoffice (admin y oficinista).
+
+1. Se registra un **ingreso**: fecha, período (mes) y monto. Queda guardado quién lo registró.
+2. Con el botón **+** de la fila se agregan una o más **facturas** a ese ingreso: número, objetivo, observaciones y adjunto opcional. Se apilan en la misma fila y queda guardado quién subió cada una.
+3. Al tocar una factura se ve el detalle y el adjunto. Eliminar ingresos o facturas es sólo para administradores (borrado lógico).
+
+- Tablas `retenciones_ingresos` y `retenciones_facturas` (migración `2026-11-25_retenciones.sql`), con `creado_por_id` (empleado) y `creado_por` (nombre).
+- Adjuntos en `retenciones/AAAA/MM/` con nombre aleatorio. `retenciones/.gitignore` evita que se suban al repo y `retenciones/.htaccess` bloquea el acceso directo; se sirven por `admin/api/ver_retencion.php` con sesión.
+- PHP necesita permiso de escritura sobre `retenciones/` y la extensión `fileinfo`. Límite: 20 MB por adjunto.
