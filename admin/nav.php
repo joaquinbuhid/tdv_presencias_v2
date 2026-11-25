@@ -32,6 +32,7 @@ $navGrupos = [
     'Administración' => [
         ['archivo' => 'retenciones.php', 'icono' => "\u{1F9FE}", 'texto' => 'Retenciones', 'soloAdmin' => false],
         ['archivo' => 'pagos.php',       'icono' => "\u{1F4B5}", 'texto' => 'Pagos vigiladores', 'soloAdmin' => false],
+        ['archivo' => 'descuentos.php',  'icono' => "\u{2796}",  'texto' => 'Descuentos',        'soloAdmin' => false],
     ],
     'Comunicación' => [
         ['archivo' => 'enviar_mails.php', 'icono' => "\u{2709}",  'texto' => 'Mails',        'soloAdmin' => false],
