@@ -49,3 +49,15 @@ La tabla `postulantes` es compartida con el formulario publico de postulacion. L
 - Tablas `retenciones_ingresos` y `retenciones_facturas` (migración `2026-11-25_retenciones.sql`), con `creado_por_id` (empleado) y `creado_por` (nombre).
 - Adjuntos en `retenciones/AAAA/MM/` con nombre aleatorio. `retenciones/.gitignore` evita que se suban al repo y `retenciones/.htaccess` bloquea el acceso directo; se sirven por `admin/api/ver_retencion.php` con sesión.
 - PHP necesita permiso de escritura sobre `retenciones/` y la extensión `fileinfo`. Límite: 20 MB por adjunto.
+
+## Pagos a vigiladores
+
+`admin/pagos.php` (menú **Administración → Pagos vigiladores**). Acceden los usuarios de backoffice (admin y oficinista). Hay una lista por cada pago (ej. "Noviembre 2026"), con historial.
+
+1. **Nombres y montos:** se agregan los nombres a mano (de a uno o pegando varios, uno por línea). Monto y observaciones se completan en la misma tabla y se guardan solos; abajo está el total y cuántos montos faltan.
+2. **Separar por banco:** se asigna el banco de cada vigilador (o de varios marcados a la vez). Se muestran agrupados por banco con subtotal y el total general.
+3. **Resumen por banco:** tabla Banco | Monto con el total, generada sola.
+
+- Tablas `pagos_listas` y `pagos_items` (migración `2026-11-25_pagos_vigiladores.sql`). Se guarda quién agregó cada nombre, quién cargó cada monto y quién asignó cada banco.
+- Exportar a Excel (`admin/api/export_pagos_excel.php`): .xlsx sin formato con hojas Lista, Por banco y Resumen.
+- Eliminar listas es sólo para administradores (borrado lógico).
