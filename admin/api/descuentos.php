@@ -9,7 +9,7 @@
  *   POST ?accion=cambiar_etapa    (id, estado=carga|revision)      sólo administradores
  *   POST ?accion=eliminar_lista   (id)                             sólo administradores
  *   POST ?accion=agregar_nombres  (id_lista, nombres)              uno por línea
- *   POST ?accion=actualizar       (id, campo, valor, anterior)     campo: nombre|adelantos|ropa_medico|otros
+ *   POST ?accion=actualizar       (id, campo, valor, anterior)     campo: nombre|empresa|adelantos|ropa_medico|otros
  *   POST ?accion=eliminar_item    (id)
  * En etapa 'carga' editan todos; en 'revision' sólo administradores.
  * "anterior" es el valor que el usuario tenía en pantalla: si otro lo cambió mientras tanto, responde 409.
@@ -22,7 +22,8 @@ require_once __DIR__ . '/descuentos_helper.php';
 requireBackofficeApi();
 
 const DESC_CAMPOS_MONTO = ['adelantos', 'ropa_medico', 'otros'];
-const DESC_NOMBRES_CAMPO = ['nombre' => 'Vigilador', 'adelantos' => 'Adelantos', 'ropa_medico' => 'Desc. Ropa/médico', 'otros' => 'Otros'];
+const DESC_EMPRESAS = ['Track Seguridad', 'TDV SRL', 'CCM', 'Limpieza'];
+const DESC_NOMBRES_CAMPO = ['nombre' => 'Vigilador', 'empresa' => 'Empresa', 'adelantos' => 'Adelantos', 'ropa_medico' => 'Desc. Ropa/médico', 'otros' => 'Otros'];
 
 function responder($data, int $code = 200): never
 {
@@ -95,6 +96,7 @@ function formatearItem(array $i): array
     return [
         'id'              => (int)$i['id'],
         'nombre'          => $i['nombre'],
+        'empresa'         => $i['empresa'],
         'adelantos'       => num($i['adelantos']),
         'ropa_medico'     => num($i['ropa_medico']),
         'otros'           => num($i['otros']),
@@ -167,6 +169,7 @@ try {
             'puede_editar'  => puedeEditar($l),
             'lista'         => formatearLista($l),
             'items'         => array_map('formatearItem', $st->fetchAll()),
+            'empresas'      => DESC_EMPRESAS,
         ]);
 
     case 'historial':
@@ -274,6 +277,10 @@ try {
             $nuevo = texto($valor, 150);
             if ($nuevo === '') responder(['error' => 'El nombre no puede quedar vacío'], 400);
             $conflicto = texto($anterior, 150) !== $actual;
+        } elseif ($campo === 'empresa') {
+            $nuevo = $valor === '' ? null : $valor;
+            if ($nuevo !== null && !in_array($nuevo, DESC_EMPRESAS, true)) responder(['error' => 'Empresa inválida'], 400);
+            $conflicto = ($anterior === '' ? null : $anterior) !== $actual;
         } else {
             $nuevo = pagosParsearMonto($valor);
             if ($nuevo === false) responder(['error' => "\"$valor\" no es un monto válido. Usá por ejemplo 150000 o 150.000,50"], 400);
@@ -298,10 +305,10 @@ try {
             }
         }
 
-        $igual = $campo === 'nombre' ? $nuevo === $actual
+        $igual = in_array($campo, ['nombre', 'empresa'], true) ? $nuevo === $actual
                : (($nuevo === null && $actual === null) || ($nuevo !== null && $actual !== null && abs($nuevo - (float)$actual) < 0.005));
         if (!$igual) {
-            $guardar = ($campo === 'nombre' || $nuevo === null) ? $nuevo : number_format($nuevo, 2, '.', '');
+            $guardar = (in_array($campo, ['nombre', 'empresa'], true) || $nuevo === null) ? $nuevo : number_format($nuevo, 2, '.', '');
             $db->prepare("UPDATE descuentos_items SET $campo = ?, actualizado_por_id = ?, actualizado_por = ?, actualizado_en = ? WHERE id = ?")
                ->execute([$guardar, $autorId, $autorNombre, $ahora, $it['id']]);
             registrar($db, (int)$it['lista_id'], (int)$it['id'], $campo === 'nombre' ? $nuevo : $it['nombre'],
