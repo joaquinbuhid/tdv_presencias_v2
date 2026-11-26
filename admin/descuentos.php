@@ -60,7 +60,11 @@ requireBackofficePage();
         .ds-input:hover:not([readonly]) { border-color:var(--border);background:#fff; }
         .ds-input:focus { border-color:var(--accent);background:#fff;outline:none; }
         .ds-input.num { text-align:right;font-variant-numeric:tabular-nums;min-width:110px; }
-        .ds-input[readonly] { cursor:default; }
+        .ds-input[readonly], .ds-input:disabled { cursor:default; }
+        select.ds-input { min-width:150px;cursor:pointer;appearance:auto; }
+        select.ds-input:disabled { color:var(--text);opacity:1;appearance:none; }
+        select.ds-input.sin-empresa { color:var(--text-muted); }
+        .ds-agregar .ds-filtro-emp { flex:0 1 180px;width:auto;padding:.6rem .8rem;font-size:.95rem; }
         .ds-input.ok { border-color:#58d68d; }
         .ds-input.error { border-color:var(--danger);background:#fdf2f0; }
         .ds-input.remoto { background:#fff6cc; }          /* lo cambió otro usuario */
@@ -79,7 +83,7 @@ requireBackofficePage();
             .ds-cab .acciones { margin-left:0;width:100%; }
             .ds-cab .acciones .btn { flex:1 1 45%; }
             .ds-vivo { margin-left:0; }
-            .ds-agregar .ds-buscar { margin-left:0;flex:1 1 100%; }
+            .ds-agregar .ds-buscar, .ds-agregar .ds-filtro-emp { margin-left:0;flex:1 1 100%; }
             .ds-table td.n { display:none !important; }
             .ds-input.num { min-width:0; }
         }
@@ -128,6 +132,7 @@ requireBackofficePage();
                 <button type="submit" class="btn btn-primary btn-sm">+ Agregar</button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="togglePegar()">&#x1F4CB; Pegar varios</button>
                 <input type="text" id="buscar" class="ds-buscar" placeholder="&#x1F50D; Buscar vigilador">
+                <select id="filtroEmpresa" class="ds-filtro-emp"><option value="">Todas las empresas</option></select>
             </form>
             <div class="ds-pegar" id="pegarWrap" hidden>
                 <textarea id="pegarNombres" placeholder="Un nombre por línea. Los que ya estén en la lista se saltean."></textarea>
@@ -179,7 +184,7 @@ const CAMPOS = ['adelantos', 'ropa_medico', 'otros'];
 const REFRESCO_MS = 8000;
 
 let esAdmin = false, puedeEditar = false;
-let listas = [], lista = null, items = [];
+let listas = [], lista = null, items = [], empresas = [];
 let modalModo = 'nueva';
 let timerVivo = null, ultimoRefresco = null, pendienteRepintar = false;
 
@@ -294,7 +299,7 @@ async function abrirLista(id) {
         const d = await get('detalle', { id });
         aplicarDetalle(d);
         $('vistaListas').hidden = true; $('vistaLista').hidden = false;
-        $('buscar').value = '';
+        $('buscar').value = ''; $('filtroEmpresa').value = '';
         history.replaceState(null, '', '?lista=' + id);
         pintarCabecera(); pintarTabla();
         iniciarVivo();
@@ -302,6 +307,11 @@ async function abrirLista(id) {
 }
 function aplicarDetalle(d) {
     esAdmin = d.es_admin; puedeEditar = d.puede_editar; lista = d.lista; items = d.items;
+    if (d.empresas && !empresas.length) {
+        empresas = d.empresas;
+        $('filtroEmpresa').innerHTML = '<option value="">Todas las empresas</option><option value="-">Sin empresa</option>' +
+            empresas.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join('');
+    }
     ultimoRefresco = Date.now();
 }
 function volverAListas() {
@@ -346,11 +356,18 @@ function celdaMonto(i, campo) {
     return `<input class="ds-input num" data-campo="${campo}" data-orig="${crudo(i[campo])}" inputmode="decimal"
         value="${montoInput(i[campo])}" ${puedeEditar ? 'placeholder="—"' : 'readonly'}>`;
 }
+function celdaEmpresa(i) {
+    return `<select class="ds-input${i.empresa ? '' : ' sin-empresa'}" data-campo="empresa" data-orig="${esc(i.empresa || '')}" ${puedeEditar ? '' : 'disabled'}>
+        <option value="">${puedeEditar ? 'Elegir...' : '—'}</option>
+        ${empresas.map(e => `<option value="${esc(e)}"${e === i.empresa ? ' selected' : ''}>${esc(e)}</option>`).join('')}
+    </select>`;
+}
 function filaHtml(i, n) {
     return `
     <tr data-id="${i.id}" title="${esc(i.actualizado_por ? 'Último cambio: ' + i.actualizado_por + ', ' + fechaHora(i.actualizado_en) : 'Agregado por ' + (i.creado_por || '—') + ', ' + fechaHora(i.creado_en))}">
         <td class="n">${n}</td>
         <td data-label="Vigilador"><div><input class="ds-input" data-campo="nombre" data-orig="${esc(i.nombre)}" value="${esc(i.nombre)}" maxlength="150" ${puedeEditar ? '' : 'readonly'}></div></td>
+        <td data-label="Empresa"><div>${celdaEmpresa(i)}</div></td>
         <td data-label="Adelantos"><div>${celdaMonto(i, 'adelantos')}</div></td>
         <td data-label="Ropa/médico"><div>${celdaMonto(i, 'ropa_medico')}</div></td>
         <td data-label="Otros"><div>${celdaMonto(i, 'otros')}</div></td>
@@ -361,10 +378,13 @@ function filaHtml(i, n) {
         </div></td>
     </tr>`;
 }
-function visibles() {
-    const q = $('buscar').value.trim().toLowerCase();
-    return q ? items.filter(i => i.nombre.toLowerCase().includes(q)) : items;
+function coincide(i) {
+    const q = $('buscar').value.trim().toLowerCase(), emp = $('filtroEmpresa').value;
+    if (q && !i.nombre.toLowerCase().includes(q)) return false;
+    if (emp === '-') return !i.empresa;
+    return !emp || i.empresa === emp;
 }
+function visibles() { return items.filter(coincide); }
 function pintarTabla(idsNuevos = []) {
     pendienteRepintar = false;
     if (!items.length) {
@@ -374,11 +394,11 @@ function pintarTabla(idsNuevos = []) {
     const lst = visibles();
     $('tablaWrap').innerHTML = `
         <table class="inv-table ds-table">
-            <thead><tr><th class="n">#</th><th style="min-width:200px;">Vigilador</th><th class="ds-num">Adelantos</th><th class="ds-num">Desc. Ropa/médico</th><th class="ds-num">Otros</th><th class="ds-num">Total</th><th style="width:64px;"></th></tr></thead>
+            <thead><tr><th class="n">#</th><th style="min-width:200px;">Vigilador</th><th>Empresa</th><th class="ds-num">Adelantos</th><th class="ds-num">Desc. Ropa/médico</th><th class="ds-num">Otros</th><th class="ds-num">Total</th><th style="width:64px;"></th></tr></thead>
             <tbody id="tbody">${lst.map(i => filaHtml(i, items.indexOf(i) + 1)).join('')}</tbody>
             <tfoot><tr class="ds-foot">
                 <td class="n"></td>
-                <td data-label="Totales">TOTALES <span class="inv-muted" style="font-weight:400;" id="totCount"></span></td>
+                <td data-label="Totales" colspan="2">TOTALES <span class="inv-muted" style="font-weight:400;" id="totCount"></span></td>
                 <td data-label="Adelantos" class="ds-num" id="totAdelantos"></td>
                 <td data-label="Ropa/médico" class="ds-num" id="totRopa"></td>
                 <td data-label="Otros" class="ds-num" id="totOtros"></td>
@@ -404,6 +424,7 @@ function refrescarFila(i) {
     tr.querySelector('[data-total]').textContent = pesos(totalItem(i));
 }
 $('buscar').addEventListener('input', () => pintarTabla());
+$('filtroEmpresa').addEventListener('change', () => pintarTabla());
 
 // Agregar
 $('formNombre').addEventListener('submit', async e => {
@@ -421,7 +442,7 @@ async function agregar(nombres, alTerminar) {
         const r = await post('agregar_nombres', { id_lista: lista.id, nombres });
         const ya = new Set(items.map(i => i.id));
         r.items.forEach(i => { if (!ya.has(i.id)) items.push(i); });
-        $('buscar').value = '';
+        $('buscar').value = ''; $('filtroEmpresa').value = '';
         pintarTabla(r.items.map(i => i.id));
         alTerminar(r);
         if (r.repetidos.length && r.items.length === 1) mostrarError(`${r.repetidos.join(', ')} ya estaba en la lista.`);
@@ -433,7 +454,7 @@ async function agregar(nombres, alTerminar) {
 
 // Guardado automático de cada celda
 $('tablaWrap').addEventListener('change', async e => {
-    const inp = e.target.closest('.ds-input'); if (!inp || inp.readOnly) return;
+    const inp = e.target.closest('.ds-input'); if (!inp || inp.readOnly || inp.disabled) return;
     const tr = inp.closest('tr'), id = +tr.dataset.id, campo = inp.dataset.campo;
     const it = items.find(i => i.id === id); if (!it) return;
     inp.classList.remove('ok', 'error', 'remoto');
@@ -459,6 +480,11 @@ $('tablaWrap').addEventListener('change', async e => {
     }
 });
 function sincronizarInput(inp, it, campo) {
+    if (campo === 'empresa') {
+        inp.value = it.empresa || ''; inp.dataset.orig = it.empresa || '';
+        inp.classList.toggle('sin-empresa', !it.empresa);
+        return;
+    }
     inp.value = campo === 'nombre' ? it.nombre : montoInput(it[campo]);
     inp.dataset.orig = campo === 'nombre' ? it.nombre : crudo(it[campo]);
 }
@@ -526,8 +552,7 @@ async function refrescar(forzar = false) {
             tr.remove();
         });
         // Filas que agregó otro usuario (respetando el buscador)
-        const q = $('buscar').value.trim().toLowerCase();
-        items.filter(i => !viejos.has(i.id) && (!q || i.nombre.toLowerCase().includes(q))).forEach(i => {
+        items.filter(i => !viejos.has(i.id) && coincide(i)).forEach(i => {
             tbody.insertAdjacentHTML('beforeend', filaHtml(i, items.indexOf(i) + 1));
             tbody.lastElementChild.classList.add('ds-fila-nueva');
         });
@@ -540,7 +565,7 @@ async function refrescar(forzar = false) {
     for (const it of items) {
         const v = viejos.get(it.id), tr = tbody.querySelector(`tr[data-id="${it.id}"]`);
         if (!tr || !v) continue;
-        for (const c of ['nombre', ...CAMPOS]) {
+        for (const c of ['nombre', 'empresa', ...CAMPOS]) {
             if (v[c] === it[c]) continue;
             const inp = tr.querySelector(`[data-campo="${c}"]`);
             if (!inp || inp === enfocado) continue;

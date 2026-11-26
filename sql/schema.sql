@@ -359,6 +359,7 @@ CREATE TABLE IF NOT EXISTS descuentos_items (
   id                int unsigned  NOT NULL AUTO_INCREMENT,
   id_lista          int unsigned  NOT NULL,
   nombre            varchar(150)  NOT NULL,             -- vigilador (nombre a mano)
+  empresa           varchar(30)   DEFAULT NULL,         -- Track Seguridad | TDV SRL | CCM | Limpieza
   adelantos         decimal(14,2) DEFAULT NULL,
   ropa_medico       decimal(14,2) DEFAULT NULL,         -- Desc. Ropa/médico
   otros             decimal(14,2) DEFAULT NULL,

@@ -66,7 +66,7 @@ La tabla `postulantes` es compartida con el formulario publico de postulacion. L
 
 `admin/descuentos.php` (menú **Administración → Descuentos**). Una lista por período (ej. "Descuentos Noviembre 2026").
 
-1. **Carga:** los usuarios de backoffice arman la tabla **Vigilador | Adelantos | Desc. Ropa/médico | Otros | Total**, varios a la vez. Cada celda se guarda sola y la pantalla se actualiza cada 8 segundos con lo que cargan los demás. Si dos personas cambian el mismo dato, el segundo recibe un aviso con el valor actual en vez de pisarlo. No se puede repetir un vigilador en la misma lista.
+1. **Carga:** los usuarios de backoffice arman la tabla **Vigilador | Empresa | Adelantos | Desc. Ropa/médico | Otros | Total** (empresa: Track Seguridad, TDV SRL, CCM o Limpieza; se puede filtrar por empresa), varios a la vez. Cada celda se guarda sola y la pantalla se actualiza cada 8 segundos con lo que cargan los demás. Si dos personas cambian el mismo dato, el segundo recibe un aviso con el valor actual en vez de pisarlo. No se puede repetir un vigilador en la misma lista.
 2. **Revisión:** un administrador pasa la lista a revisión; desde ahí sólo los administradores pueden editar (se puede reabrir la carga). El administrador exporta el Excel **Vigilador | Total** (sólo vigiladores con descuento).
 
 - Tablas `descuentos_listas`, `descuentos_items` y `descuentos_historial` (migración `2026-11-25_descuentos.sql`). El historial registra cada alta, cambio (valor anterior y nuevo), baja y cambio de etapa, con usuario y fecha.
